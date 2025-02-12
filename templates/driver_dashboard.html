@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Driver Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Available Parking Spots</h2>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Location</th>
+                <th>Price</th>
+                <th>Availability</th>
+            </tr>
+            {% for spot in spots %}
+            <tr>
+                <td>{{ spot.id }}</td>
+                <td>{{ spot.location }}</td>
+                <td>${{ spot.price }}</td>
+                <td>{{ "Available" if spot.availability else "Occupied" }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+</body>
+</html>
