@@ -1,15 +1,15 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, session
 from flask_migrate import Migrate
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from models import db, User, ParkingSpot, bcrypt  # Import models
+from models import db, User, ParkingSpot, bcrypt  # Use ParkingSpot instead of ParkingSpace # Import models
 import urllib.parse
 
 # Initialize Flask app
 app = Flask(__name__)
 
 # Database Configuration
-password = urllib.parse.quote("Student@1484")
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:{password}@localhost:5432/smart_parking_db'
+db_password = urllib.parse.quote("Student@1484")
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:{db_password}@localhost:5432/smart_parking_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your_secret_key'
 

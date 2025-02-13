@@ -22,7 +22,7 @@ import sys
 
 sys.path.append("D:/PycharmProjects/PythonProject")  # Add project path
 
-from models import db  # Import db from models.py
+from models.models import db  # Import db from models.py
 
 target_metadata = db.metadata  # Use SQLAlchemy's metadata
 
