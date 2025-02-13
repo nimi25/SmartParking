@@ -1,8 +1,13 @@
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from flask import Flask, render_template, redirect, url_for, request, flash, session
 from flask_migrate import Migrate
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from models import db, User, ParkingSpot, bcrypt  # Use ParkingSpot instead of ParkingSpace # Import models
+from models import db, User, ParkingSpot, bcrypt  # Use ParkingSpot instead of ParkingSpace
 import urllib.parse
+from routes.parking import parking_bp  # ✅ Import directly from parking.py
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -20,9 +25,16 @@ migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+# Register Blueprints
+app.register_blueprint(parking_bp, url_prefix="/parking")
+
+# ✅ Registers parking routes
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.query(User).filter_by(id=user_id).first()
+
+if __name__ == "__main__":
+    app.run(debug=True)
 
 # Remove duplicate class definitions of User and ParkingSpot
 
@@ -36,7 +48,7 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
-        password = request.form['password']
+        password = request.form.get("password")
         role = request.form['role']  # 'driver' or 'owner'
 
         existing_user = User.query.filter_by(email=email).first()
