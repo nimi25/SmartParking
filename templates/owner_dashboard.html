@@ -1,34 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Owner Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="UTF-8">
+  <title>Owner Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h2>Welcome, Owner!</h2>
-        <p>You can list your parking spaces here.</p>
-        <a href="{{ url_for('add_parking_spot') }}">Add a Parking Spot</a> |
-        <a href="{{ url_for('logout') }}">Logout</a>
-
-        <h3>Your Parking Spots</h3>
-        {% for spot in spots %}
-            <div class="parking-spot">
-                <p><strong>Location:</strong> {{ spot.location }}</p>
-                <p><strong>Price:</strong> ${{ spot.price }}</p>
-                <p><strong>Availability:</strong> {% if spot.availability %} Available {% else %} Not Available {% endif %}</p>
-
-                <!-- Delete button -->
-                <form action="{{ url_for('delete_parking_spot', spot_id=spot.id) }}" method="POST"
-                      onsubmit="return confirm('Are you sure you want to delete this spot?');">
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </div>
-        {% else %}
-            <p>No parking spots added yet.</p>
-        {% endfor %}
-    </div>
+  <div class="container">
+    <h2>Welcome, Owner!</h2>
+    <a href="{{ url_for('add_parking_spot') }}">Add a Parking Spot</a> |
+    <a href="{{ url_for('logout') }}">Logout</a>
+    <h3>Your Parking Spots</h3>
+    {% for spot in spots %}
+      <div class="parking-spot">
+        <p><strong>Location:</strong> {{ spot.location }}</p>
+        <p><strong>Price:</strong> ₹{{ spot.price }}</p>
+        <p><strong>Availability:</strong> {% if spot.availability %}Available{% else %}Not Available{% endif %}</p>
+        <p><strong>Available Hours:</strong>
+          {% if spot.available_from and spot.available_to %}
+            {{ spot.available_from.strftime('%I:%M %p') }} to {{ spot.available_to.strftime('%I:%M %p') }}
+          {% else %}
+            N/A
+          {% endif %}
+        </p>
+        <p><strong>Google Maps Link:</strong>
+          {% if spot.google_maps_link %}
+            <a href="{{ spot.google_maps_link }}" target="_blank">View Map</a>
+            <!-- Optionally, embed the map: -->
+            <iframe src="{{ spot.google_maps_link }}" width="300" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+          {% else %}
+            N/A
+          {% endif %}
+        </p>
+        <p><strong>2-Wheeler Spaces:</strong> {{ spot.two_wheeler_spaces or 0 }}</p>
+        <p><strong>4-Wheeler Spaces:</strong> {{ spot.four_wheeler_spaces or 0 }}</p>
+        <p><strong>Description:</strong> {{ spot.description or "N/A" }}</p>
+        <a href="{{ url_for('update_parking_spot', spot_id=spot.id) }}" class="btn btn-primary">Edit</a>
+        <form action="{{ url_for('delete_parking_spot', spot_id=spot.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this spot?');">
+          <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+      </div>
+    {% else %}
+      <p>No parking spots added yet.</p>
+    {% endfor %}
+  </div>
 </body>
 </html>

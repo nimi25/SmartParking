@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Update Parking Spot</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h2>Update Parking Spot</h2>
+    <form method="POST">
+      <div class="form-group">
+        <label for="location">Location</label>
+        <input type="text" id="location" name="location" class="form-control" value="{{ spot.location }}" required>
+      </div>
+
+      <div class="form-group">
+        <label for="price">Price (per hour)</label>
+        <input type="number" step="0.01" id="price" name="price" class="form-control" value="{{ spot.price }}" required>
+      </div>
+
+      <div class="form-group">
+        <label for="availability">Availability</label>
+        <input type="checkbox" id="availability" name="availability" {% if spot.availability %}checked{% endif %}> Available
+      </div>
+
+      <div class="form-group">
+        <label for="google_maps_link">Google Maps Link</label>
+        <input type="url" id="google_maps_link" name="google_maps_link" class="form-control" value="{{ spot.google_maps_link }}">
+      </div>
+
+      <div class="form-group">
+        <label for="two_wheeler_spaces">2-Wheeler Spaces</label>
+        <input type="number" id="two_wheeler_spaces" name="two_wheeler_spaces" class="form-control" value="{{ spot.two_wheeler_spaces or 0 }}">
+      </div>
+
+      <div class="form-group">
+        <label for="four_wheeler_spaces">4-Wheeler Spaces</label>
+        <input type="number" id="four_wheeler_spaces" name="four_wheeler_spaces" class="form-control" value="{{ spot.four_wheeler_spaces or 0 }}">
+      </div>
+
+      <div class="form-group">
+        <label for="available_from">Available From</label>
+        <input type="time" id="available_from" name="available_from" class="form-control" value="{{ spot.available_from.strftime('%H:%M') if spot.available_from }}">
+      </div>
+
+      <div class="form-group">
+        <label for="available_to">Available To</label>
+        <input type="time" id="available_to" name="available_to" class="form-control" value="{{ spot.available_to.strftime('%H:%M') if spot.available_to }}">
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" class="form-control">{{ spot.description }}</textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Update Spot</button>
+    </form>
+  </div>
+</body>
+</html>

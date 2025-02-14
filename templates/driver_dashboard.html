@@ -1,30 +1,189 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Driver Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="UTF-8">
+  <title>Driver Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <!-- Font Awesome for filter icon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        integrity="sha512-Fo3rlrZj/kTc7I4YWgW0E8S7zx1+Y8Y3vT94r3Z6YV1gHOb/A6z/9zsR5/sLbcX8FwHsw2cG6z1w0Oj5mwOW5w=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    /* Ribbon-style filter bar (initially hidden) */
+    .filter-bar {
+      display: none;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background-color: #f9f9f9;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      margin-right: 15px;
+    }
+    .filter-group label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      font-size: 0.9rem;
+    }
+    .filter-group input,
+    .filter-group select {
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .filter-toggle {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .map-container iframe {
+      width: 300px;
+      height: 200px;
+      border: 0;
+    }
+  </style>
+  <script>
+    function toggleFilterRibbon() {
+      var ribbon = document.getElementById('filterRibbon');
+      if (ribbon.style.display === 'none' || ribbon.style.display === '') {
+        ribbon.style.display = 'flex';
+      } else {
+        ribbon.style.display = 'none';
+      }
+    }
+  </script>
 </head>
 <body>
-    <div class="container">
-        <h2>Available Parking Spots</h2>
-        <table>
-            <tr>
-                <th>ID</th>
-                <th>Location</th>
-                <th>Price</th>
-                <th>Availability</th>
-            </tr>
-            {% for spot in spots %}
-            <tr>
-                <td>{{ spot.id }}</td>
-                <td>{{ spot.location }}</td>
-                <td>${{ spot.price }}</td>
-                <td>{{ "Available" if spot.availability else "Occupied" }}</td>
-            </tr>
-            {% endfor %}
-        </table>
+  <div class="container">
+    <h2>Available Parking Spots</h2>
 
-        <a href="{{ url_for('logout') }}">Logout</a>
+    <!-- Toggle Filter Button -->
+    <button class="filter-toggle" onclick="toggleFilterRibbon()">
+      <i class="fas fa-filter"></i> Filters
+    </button>
+
+    <!-- Ribbon-style Filter Bar -->
+    <div id="filterRibbon" class="filter-bar">
+      <form method="GET" action="{{ url_for('dashboard') }}">
+        <div class="filter-group">
+          <label for="location">Location</label>
+          <input type="text" id="location" name="location" value="{{ request.args.get('location', '') }}">
+        </div>
+        <div class="filter-group">
+          <label for="price_min">Price Min</label>
+          <input type="number" step="0.01" id="price_min" name="price_min" value="{{ request.args.get('price_min', '') }}">
+        </div>
+        <div class="filter-group">
+          <label for="price_max">Price Max</label>
+          <input type="number" step="0.01" id="price_max" name="price_max" value="{{ request.args.get('price_max', '') }}">
+        </div>
+        <div class="filter-group">
+          <label for="time_slot">Time Slot</label>
+          <select id="time_slot" name="time_slot">
+            <option value="">Any</option>
+            <option value="06:00-10:00" {% if request.args.get('time_slot') == "06:00-10:00" %}selected{% endif %}>06:00-10:00</option>
+            <option value="10:00-14:00" {% if request.args.get('time_slot') == "10:00-14:00" %}selected{% endif %}>10:00-14:00</option>
+            <option value="14:00-18:00" {% if request.args.get('time_slot') == "14:00-18:00" %}selected{% endif %}>14:00-18:00</option>
+            <option value="18:00-22:00" {% if request.args.get('time_slot') == "18:00-22:00" %}selected{% endif %}>18:00-22:00</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="vehicle_type">Vehicle Type</label>
+          <select id="vehicle_type" name="vehicle_type">
+            <option value="">Any</option>
+            <option value="2" {% if request.args.get('vehicle_type') == "2" %}selected{% endif %}>2-Wheeler</option>
+            <option value="4" {% if request.args.get('vehicle_type') == "4" %}selected{% endif %}>4-Wheeler</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <button type="submit" class="filter-toggle">Apply</button>
+        </div>
+      </form>
     </div>
+
+    <!-- Parking Spots Table -->
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Location</th>
+          <th>Price</th>
+          <th>Availability</th>
+          <th>Google Maps</th>
+          <th>Available Hours</th>
+          <th>2-Wheeler Spaces</th>
+          <th>4-Wheeler Spaces</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for spot in spots %}
+        <tr>
+          <td>{{ spot.id }}</td>
+          <td>{{ spot.location }}</td>
+          <td>₹{{ spot.price }}</td>
+          <td>{{ "Available" if spot.availability else "Occupied" }}</td>
+          <td>
+            {% if spot.google_maps_link %}
+              <div class="map-container">
+                <iframe src="{{ spot.google_maps_link }}" allowfullscreen="" loading="lazy"></iframe>
+              </div>
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if spot.available_from and spot.available_to %}
+              {{ spot.available_from.strftime('%I:%M %p') }} - {{ spot.available_to.strftime('%I:%M %p') }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>{{ spot.two_wheeler_spaces or 0 }}</td>
+          <td>{{ spot.four_wheeler_spaces or 0 }}</td>
+          <td>{{ spot.description or "N/A" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <br>
+    <a href="{{ url_for('logout') }}">Logout</a>
+  </div>
 </body>
 </html>
