@@ -22,8 +22,9 @@ class ParkingSpot(db.Model):
     # Relationship with the User model
     owner = db.relationship('User', backref=db.backref('parking_spots_owner', lazy=True))
 
-    def __init__(self, location, price, availability, owner_id, google_maps_link=None, two_wheeler_spaces=None,
-                 four_wheeler_spaces=None, description=None):
+    def __init__(self, location, price, availability, owner_id, google_maps_link=None,
+                 two_wheeler_spaces=None, four_wheeler_spaces=None, description=None,
+                 available_from=None, available_to=None):
         self.location = location
         self.price = price
         self.availability = availability
@@ -32,3 +33,6 @@ class ParkingSpot(db.Model):
         self.two_wheeler_spaces = two_wheeler_spaces
         self.four_wheeler_spaces = four_wheeler_spaces
         self.description = description
+        self.available_from = available_from
+        self.available_to = available_to
+
