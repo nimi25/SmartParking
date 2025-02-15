@@ -14,7 +14,7 @@
       margin: 0 auto;
       padding: 20px;
     }
-    /* Ribbon-style filter bar (initially hidden) */
+    /* Filter bar styles */
     .filter-bar {
       display: none;
       flex-wrap: wrap;
@@ -55,26 +55,76 @@
       gap: 5px;
       margin-bottom: 10px;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
+    .filter-apply {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
     }
-    table, th, td {
+    /* Card container and card styles */
+    .card-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .card {
+      flex: 1 1 calc(33.33% - 20px);
       border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+      background-color: #fff;
+      position: relative;
     }
-    th, td {
-      padding: 8px;
-      text-align: left;
-      vertical-align: top;
+    .card h3 {
+      margin-top: 0;
     }
-    th {
-      background-color: #f2f2f2;
+    .card p {
+      margin: 8px 0;
     }
     .map-container iframe {
-      width: 300px;
+      width: 100%;
       height: 200px;
       border: 0;
+    }
+    .book-btn {
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 400px;
+      border-radius: 8px;
+      position: relative;
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
     }
   </style>
   <script>
@@ -91,12 +141,10 @@
 <body>
   <div class="container">
     <h2>Available Parking Spots</h2>
-
     <!-- Toggle Filter Button -->
     <button class="filter-toggle" onclick="toggleFilterRibbon()">
       <i class="fas fa-filter"></i> Filters
     </button>
-
     <!-- Ribbon-style Filter Bar -->
     <div id="filterRibbon" class="filter-bar">
       <form method="GET" action="{{ url_for('dashboard') }}">
@@ -131,59 +179,105 @@
           </select>
         </div>
         <div class="filter-group">
-          <button type="submit" class="filter-toggle">Apply</button>
+          <button type="submit" class="filter-apply">Apply</button>
         </div>
       </form>
     </div>
-
-    <!-- Parking Spots Table -->
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Location</th>
-          <th>Price</th>
-          <th>Availability</th>
-          <th>Google Maps</th>
-          <th>Available Hours</th>
-          <th>2-Wheeler Spaces</th>
-          <th>4-Wheeler Spaces</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for spot in spots %}
-        <tr>
-          <td>{{ spot.id }}</td>
-          <td>{{ spot.location }}</td>
-          <td>₹{{ spot.price }}</td>
-          <td>{{ "Available" if spot.availability else "Occupied" }}</td>
-          <td>
-            {% if spot.google_maps_link %}
-              <div class="map-container">
-                <iframe src="{{ spot.google_maps_link }}" allowfullscreen="" loading="lazy"></iframe>
-              </div>
-            {% else %}
-              N/A
-            {% endif %}
-          </td>
-          <td>
+    <div class="card-container">
+      {% for spot in spots %}
+        <div class="card">
+          <h3>{{ spot.location }}</h3>
+          <p><strong>Price:</strong> ₹{{ spot.price }}</p>
+          <p><strong>Status:</strong> {{ "Available" if spot.availability else "Occupied" }}</p>
+          <p><strong>Available Hours:</strong>
             {% if spot.available_from and spot.available_to %}
-              {{ spot.available_from.strftime('%I:%M %p') }} - {{ spot.available_to.strftime('%I:%M %p') }}
+              {{ spot.available_from.strftime('%I:%M %p') }} to {{ spot.available_to.strftime('%I:%M %p') }}
             {% else %}
               N/A
             {% endif %}
-          </td>
-          <td>{{ spot.two_wheeler_spaces or 0 }}</td>
-          <td>{{ spot.four_wheeler_spaces or 0 }}</td>
-          <td>{{ spot.description or "N/A" }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
+          </p>
+          {% if spot.google_maps_link %}
+            <div class="map-container">
+              <iframe src="{{ spot.google_maps_link }}" allowfullscreen="" loading="lazy"></iframe>
+            </div>
+          {% endif %}
+          <p><strong>2-Wheeler Spaces:</strong> {{ spot.two_wheeler_spaces or 0 }}</p>
+          <p><strong>4-Wheeler Spaces:</strong> {{ spot.four_wheeler_spaces or 0 }}</p>
+          <p><strong>Description:</strong> {{ spot.description or "N/A" }}</p>
+          <!-- Book button with data attributes for spot id and available times -->
+          <button class="book-btn"
+                  data-spot-id="{{ spot.id }}"
+                  data-available-from="{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}"
+                  data-available-to="{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}">
+            Book
+          </button>
+        </div>
+      {% endfor %}
+    </div>
     <br>
     <a href="{{ url_for('logout') }}">Logout</a>
   </div>
+
+  <!-- Booking Modal -->
+  <div id="bookingModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="modalClose">&times;</span>
+      <h3>Book Parking Spot</h3>
+      <form id="bookingForm" method="POST">
+        <label for="two_wheeler">2-Wheeler Spots:</label>
+        <input type="number" id="two_wheeler" name="two_wheeler" min="0" required>
+        <br>
+        <label for="four_wheeler">4-Wheeler Spots:</label>
+        <input type="number" id="four_wheeler" name="four_wheeler" min="0" required>
+        <br>
+        <label for="booking_start">Booking Start Time (HH:MM):</label>
+        <input type="text" id="booking_start" name="booking_start" required>
+        <br>
+        <label for="booking_end">Booking End Time (HH:MM):</label>
+        <input type="text" id="booking_end" name="booking_end" required>
+        <br><br>
+        <button type="submit">Book</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Modal handling
+    var modal = document.getElementById("bookingModal");
+    var modalClose = document.getElementById("modalClose");
+    var bookingForm = document.getElementById("bookingForm");
+
+    // Close modal when clicking on the close icon
+    modalClose.onclick = function() {
+      modal.style.display = "none";
+    };
+
+    // Close modal when clicking outside the modal content
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    };
+
+    // Attach click event to all "Book" buttons
+    var bookButtons = document.getElementsByClassName("book-btn");
+    Array.from(bookButtons).forEach(function(button) {
+      button.addEventListener("click", function() {
+        var spotId = button.getAttribute("data-spot-id");
+        var availableFrom = button.getAttribute("data-available-from");
+        var availableTo = button.getAttribute("data-available-to");
+
+        // Dynamically set the booking form's action URL (e.g., /book/3)
+        bookingForm.action = "/book/" + spotId;
+
+        // Set placeholders for booking times based on available times
+        document.getElementById("booking_start").placeholder = availableFrom;
+        document.getElementById("booking_end").placeholder = availableTo;
+
+        // Show the modal
+        modal.style.display = "block";
+      });
+    });
+  </script>
 </body>
 </html>

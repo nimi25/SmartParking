@@ -9,7 +9,7 @@ class ParkingSpot(db.Model):
     location = db.Column(db.String(200), nullable=False)
     price = db.Column(db.Float, nullable=False)
     availability = db.Column(db.Boolean, default=True)
-    google_maps_link = db.Column(db.String(255), nullable=True)
+    google_maps_link = db.Column(db.Text, nullable=True)  # No character limit
     two_wheeler_spaces = db.Column(db.Integer, nullable=True)
     four_wheeler_spaces = db.Column(db.Integer, nullable=True)
     description = db.Column(db.Text, nullable=True)
@@ -22,8 +22,9 @@ class ParkingSpot(db.Model):
     # Relationship with the User model
     owner = db.relationship('User', backref=db.backref('parking_spots_owner', lazy=True))
 
-    def __init__(self, location, price, availability, owner_id, google_maps_link=None, two_wheeler_spaces=None,
-                 four_wheeler_spaces=None, description=None):
+    def __init__(self, location, price, availability, owner_id, google_maps_link=None,
+                 two_wheeler_spaces=None, four_wheeler_spaces=None, description=None,
+                 available_from=None, available_to=None):
         self.location = location
         self.price = price
         self.availability = availability
@@ -32,3 +33,6 @@ class ParkingSpot(db.Model):
         self.two_wheeler_spaces = two_wheeler_spaces
         self.four_wheeler_spaces = four_wheeler_spaces
         self.description = description
+        self.available_from = available_from
+        self.available_to = available_to
+
