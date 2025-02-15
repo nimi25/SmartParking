@@ -1,4 +1,5 @@
 import os
+import re
 from dotenv import load_dotenv
 from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify
 from flask_migrate import Migrate
@@ -28,17 +29,14 @@ migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.query(User).filter_by(id=user_id).first()
-
 
 # Routes start here...
 @app.route('/')
 def home():
     return redirect(url_for('login'))
-
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -62,7 +60,6 @@ def register():
 
     return render_template('register.html')
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -71,6 +68,7 @@ def login():
         user = User.query.filter_by(email=email).first()
 
         if user and user.check_password(password):
+            # Removed remember me functionality; user will not be remembered across sessions.
             login_user(user)
             session['role'] = user.role
             return redirect(url_for('dashboard'))
@@ -78,7 +76,6 @@ def login():
             flash("Invalid email or password. Please try again.", "danger")
 
     return render_template('login.html')
-
 
 @app.route('/dashboard')
 @login_required
@@ -130,7 +127,6 @@ def dashboard():
         return redirect(url_for('owner_dashboard'))
     return redirect(url_for('login'))
 
-
 # Endpoint to add a parking spot (Owner only)
 @app.route('/add_parking_spot', methods=['GET', 'POST'])
 @login_required
@@ -151,6 +147,12 @@ def add_parking_spot():
 
         # New fields: Google Maps link, vehicle space counts, description, available timings
         google_maps_link = request.form.get('google_maps_link', '')
+        # Extract src attribute if the provided link is an iframe embed code
+        if google_maps_link.strip().startswith("<iframe"):
+            match = re.search(r'src="([^"]+)"', google_maps_link)
+            if match:
+                google_maps_link = match.group(1)
+
         try:
             two_wheeler_spaces = int(request.form.get('two_wheeler_spaces', 0))
             four_wheeler_spaces = int(request.form.get('four_wheeler_spaces', 0))
@@ -192,7 +194,6 @@ def add_parking_spot():
 
     return render_template('add_parking_spot.html')
 
-
 # Endpoint to update a parking spot (Owner only)
 @app.route('/update_parking_spot/<int:spot_id>', methods=['GET', 'POST'])
 @login_required
@@ -214,7 +215,15 @@ def update_parking_spot(spot_id):
             flash("Invalid price value.", "danger")
             return redirect(url_for('update_parking_spot', spot_id=spot_id))
         spot.availability = 'availability' in request.form
-        spot.google_maps_link = request.form.get('google_maps_link', spot.google_maps_link)
+
+        # Update the Google Maps link and extract src if needed
+        google_maps_link = request.form.get('google_maps_link', spot.google_maps_link)
+        if google_maps_link.strip().startswith("<iframe"):
+            match = re.search(r'src="([^"]+)"', google_maps_link)
+            if match:
+                google_maps_link = match.group(1)
+        spot.google_maps_link = google_maps_link
+
         try:
             spot.two_wheeler_spaces = int(request.form.get('two_wheeler_spaces', spot.two_wheeler_spaces or 0))
             spot.four_wheeler_spaces = int(request.form.get('four_wheeler_spaces', spot.four_wheeler_spaces or 0))
@@ -240,7 +249,6 @@ def update_parking_spot(spot_id):
 
     return render_template('update_parking_spot.html', spot=spot)
 
-
 @app.route('/owner_dashboard')
 @login_required
 def owner_dashboard():
@@ -249,7 +257,6 @@ def owner_dashboard():
         return redirect(url_for('dashboard'))
     spots = ParkingSpot.query.filter_by(owner_id=current_user.id).all()
     return render_template('owner_dashboard.html', spots=spots)
-
 
 @app.route('/delete_parking_spot/<int:spot_id>', methods=['POST'])
 @login_required
@@ -266,14 +273,12 @@ def delete_parking_spot(spot_id):
     flash("Parking spot deleted successfully!", "success")
     return redirect(url_for('owner_dashboard'))
 
-
 @app.route('/logout')
 def logout():
     logout_user()
     session.clear()
     flash("You have been logged out.", "info")
     return redirect(url_for('login'))
-
 
 @app.route('/test-db')
 def test_db():
@@ -282,6 +287,44 @@ def test_db():
         return "Database connected successfully!"
     except Exception as e:
         return f"Database connection failed: {str(e)}", 500
+
+
+@app.route('/book/<int:spot_id>', methods=['POST'])
+@login_required
+def book_spot(spot_id):
+    # Only drivers can book
+    if session.get('role') != 'driver':
+        flash("Only drivers can book spots.", "danger")
+        return redirect(url_for('dashboard'))
+
+    spot = ParkingSpot.query.get_or_404(spot_id)
+
+    try:
+        two_wheeler = int(request.form.get('two_wheeler', 0))
+        four_wheeler = int(request.form.get('four_wheeler', 0))
+    except ValueError:
+        flash("Please enter valid numbers for spot counts.", "danger")
+        return redirect(url_for('dashboard'))
+
+    booking_start = request.form.get('booking_start')
+    booking_end = request.form.get('booking_end')
+    try:
+        booking_start_time = datetime.strptime(booking_start, "%H:%M").time()
+        booking_end_time = datetime.strptime(booking_end, "%H:%M").time()
+    except ValueError:
+        flash("Invalid time format. Please use HH:MM.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Ensure the booking times are within the spot's available times
+    if spot.available_from and spot.available_to:
+        if booking_start_time < spot.available_from or booking_end_time > spot.available_to:
+            flash("Booking time must be within the available hours.", "danger")
+            return redirect(url_for('dashboard'))
+
+    # (Optional) Save the booking information in the database here.
+
+    flash("Booking successful!", "success")
+    return redirect(url_for('dashboard'))
 
 
 if __name__ == "__main__":

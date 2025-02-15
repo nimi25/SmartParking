@@ -9,7 +9,7 @@ class ParkingSpot(db.Model):
     location = db.Column(db.String(200), nullable=False)
     price = db.Column(db.Float, nullable=False)
     availability = db.Column(db.Boolean, default=True)
-    google_maps_link = db.Column(db.String(255), nullable=True)
+    google_maps_link = db.Column(db.Text, nullable=True)  # No character limit
     two_wheeler_spaces = db.Column(db.Integer, nullable=True)
     four_wheeler_spaces = db.Column(db.Integer, nullable=True)
     description = db.Column(db.Text, nullable=True)
