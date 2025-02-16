@@ -1,30 +1,35 @@
 import os
 import re
 from dotenv import load_dotenv
-from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify
+from flask import Flask, render_template, redirect, url_for, request, flash, session
 from flask_migrate import Migrate
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from models import db, User, ParkingSpot, bcrypt
-import urllib.parse
+from flask_login import (
+    LoginManager, login_user, login_required, logout_user, current_user
+)
+from models import db, User, ParkingSpot, bcrypt, Booking
 from datetime import datetime
 
-# Load environment variables from .env file
+# 1. Load environment variables from .env file BEFORE using os.environ
 load_dotenv()
 
-# Initialize Flask app
+# 2. Initialize Flask app
 app = Flask(__name__)
 
-# Configuration using environment variables (with fallback defaults)
+# 3. Configuration using environment variables (with fallback defaults)
+#    IMPORTANT: Use 127.0.0.1 to avoid IPv6 (::1) issues
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
     'DATABASE_URL',
-    'postgresql://postgres:1234@localhost:5432/smart_parking_db'
+    'postgresql://postgres:student@127.0.0.1:5432/smart_parking_db'
 )
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your_secret_key')
 
-# Initialize extensions
-db.init_app(app)
-bcrypt.init_app(app)
+# Print the final DB URI to confirm it matches what you expect
+print("Final DB URI in Flask config:", app.config['SQLALCHEMY_DATABASE_URI'])
+
+# 4. Initialize extensions
+db.init_app(app)       # Links the SQLAlchemy instance to this Flask app
+bcrypt.init_app(app)   # If you want to use bcrypt features in your routes
 migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -51,7 +56,11 @@ def register():
             flash("Email already registered. Please log in.", "danger")
             return redirect(url_for('login'))
 
-        new_user = User(username=username, email=email, password=password, role=role)
+        # Create the User WITHOUT passing password=...
+        new_user = User(username=username, email=email, role=role)
+        # Now set the password hash
+        new_user.set_password(password)
+
         db.session.add(new_user)
         db.session.commit()
 
@@ -59,6 +68,7 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -77,18 +87,29 @@ def login():
 
     return render_template('login.html')
 
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
     if session.get('role') == 'driver':
-        query = ParkingSpot.query.filter_by(availability=True)
+        # Fetch filtered parking spots
+        spots = ParkingSpot.query.all()
+        print("✅ User is a driver.")  # Debugging
 
-        # Retrieve filter parameters from the query string
+        # Ensure ParkingSpot is correctly referenced
+        print("✅ Checking ParkingSpot query.")
+        query = ParkingSpot.query.filter_by(availability=True)  # Initialize the query
+
+
+        # Retrieve filter parameters from query string
         location = request.args.get('location', '')
         price_min = request.args.get('price_min', '')
         price_max = request.args.get('price_max', '')
-        time_slot = request.args.get('time_slot', '')  # Expected format: "HH:MM-HH:MM"
-        vehicle_type = request.args.get('vehicle_type', '')  # Expected: "" (any), "2", or "4"
+        time_slot = request.args.get('time_slot', '')
+        vehicle_type = request.args.get('vehicle_type', '')
+
+        print(
+            f"Filters - Location: {location}, Min Price: {price_min}, Max Price: {price_max}, Time Slot: {time_slot}, Vehicle Type: {vehicle_type}")
 
         # Filter by location (case-insensitive)
         if location:
@@ -120,11 +141,17 @@ def dashboard():
         elif vehicle_type == '4':
             query = query.filter(ParkingSpot.four_wheeler_spaces > 0)
 
-        spots = query.all()
+
+        # Debugging: Print the fetched spots
+        print(f"Filtered Parking Spots: {spots}")
+
         return render_template('driver_dashboard.html', spots=spots)
 
     elif session.get('role') == 'owner':
+        print("✅ User is an owner, redirecting.")
         return redirect(url_for('owner_dashboard'))
+
+    print("❌ No valid session role. Redirecting to login.")
     return redirect(url_for('login'))
 
 # Endpoint to add a parking spot (Owner only)
@@ -299,11 +326,21 @@ def book_spot(spot_id):
 
     spot = ParkingSpot.query.get_or_404(spot_id)
 
+    # Check if spot is already booked
+    if not spot.availability:
+        flash("This spot is already booked.", "danger")
+        return redirect(url_for('dashboard'))
+
     try:
         two_wheeler = int(request.form.get('two_wheeler', 0))
         four_wheeler = int(request.form.get('four_wheeler', 0))
     except ValueError:
         flash("Please enter valid numbers for spot counts.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Validate space availability
+    if two_wheeler > spot.two_wheeler_spaces or four_wheeler > spot.four_wheeler_spaces:
+        flash("Not enough parking spaces available.", "danger")
         return redirect(url_for('dashboard'))
 
     booking_start = request.form.get('booking_start')
@@ -315,17 +352,73 @@ def book_spot(spot_id):
         flash("Invalid time format. Please use HH:MM.", "danger")
         return redirect(url_for('dashboard'))
 
-    # Ensure the booking times are within the spot's available times
     if spot.available_from and spot.available_to:
         if booking_start_time < spot.available_from or booking_end_time > spot.available_to:
             flash("Booking time must be within the available hours.", "danger")
             return redirect(url_for('dashboard'))
 
-    # (Optional) Save the booking information in the database here.
+    try:
+        # Create a booking record
+        new_booking = Booking(
+            user_id=current_user.id,
+            spot_id=spot.id,
+            two_wheeler=two_wheeler,
+            four_wheeler=four_wheeler,
+            start_time=booking_start_time,
+            end_time=booking_end_time
+        )
+        db.session.add(new_booking)
 
-    flash("Booking successful!", "success")
+        # Update spot status
+        spot.availability = False
+        spot.booked_by = current_user.id  # Add this line to track who booked
+
+        db.session.commit()
+        flash("Booking successful!", "success")
+
+    except Exception as e:
+        db.session.rollback()
+        flash("An error occurred while booking the spot.", "danger")
+
     return redirect(url_for('dashboard'))
 
+
+@app.route('/cancel_booking/<int:spot_id>', methods=['POST'])
+@login_required
+def cancel_booking(spot_id):
+    spot = ParkingSpot.query.get_or_404(spot_id)
+
+    # Find the active booking for this spot
+    booking = Booking.query.filter_by(spot_id=spot_id, active=True).first()
+
+    if not booking:
+        flash("No active booking found for this spot!", "danger")
+        return redirect(url_for('dashboard'))
+
+    try:
+        # Check permissions
+        if current_user.role == 'driver':
+            if booking.user_id != current_user.id:
+                flash("You can only cancel your own bookings!", "danger")
+                return redirect(url_for('dashboard'))
+        elif current_user.role == 'owner':
+            if spot.owner_id != current_user.id:
+                flash("You can only cancel bookings for your own spots!", "danger")
+                return redirect(url_for('dashboard'))
+
+        # Update the booking and spot
+        booking.active = False
+        spot.availability = True
+        spot.booked_by = None  # Clear the booked_by field
+
+        db.session.commit()
+        flash("Booking canceled successfully!", "success")
+
+    except Exception as e:
+        db.session.rollback()
+        flash("An error occurred while canceling the booking.", "danger")
+
+    return redirect(url_for('dashboard'))
 
 if __name__ == "__main__":
     app.run(debug=True)

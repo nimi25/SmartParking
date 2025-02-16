@@ -6,6 +6,7 @@ class ParkingSpot(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    status = db.Column(db.String(20), default='available')  # "available" or "booked"
     location = db.Column(db.String(200), nullable=False)
     price = db.Column(db.Float, nullable=False)
     availability = db.Column(db.Boolean, default=True)

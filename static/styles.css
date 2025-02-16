@@ -32,6 +32,7 @@ input, select {
     border-radius: 5px;
 }
 
+/* Default button styling */
 button {
     width: 95%;
     padding: 10px;
@@ -41,7 +42,26 @@ button {
     cursor: pointer;
 }
 
-button:hover {
+/* Ensuring Cancel Booking button is always red */
+.button-container .cancel-btn {
+    background-color: red !important;
+    color: white !important;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* Disabled cancel button remains red */
+button.cancel-btn:disabled {
+    background-color: red !important;
+    color: white !important;
+    opacity: 1 !important;
+    cursor: not-allowed;
+}
+
+/* Fixing button hover issue */
+button:not(:disabled):hover {
     background-color: #218838;
 }
 
@@ -71,6 +91,7 @@ th {
     background-color: #f2f2f2;
 }
 
+/* Styling for links */
 a {
     display: inline-block;
     margin: 15px;

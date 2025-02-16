@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Driver Dashboard</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <!-- Font Awesome for filter icon -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
         integrity="sha512-Fo3rlrZj/kTc7I4YWgW0E8S7zx1+Y8Y3vT94r3Z6YV1gHOb/A6z/9zsR5/sLbcX8FwHsw2cG6z1w0Oj5mwOW5w=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -14,7 +13,6 @@
       margin: 0 auto;
       padding: 20px;
     }
-    /* Filter bar styles */
     .filter-bar {
       display: none;
       flex-wrap: wrap;
@@ -63,7 +61,6 @@
       border-radius: 4px;
       cursor: pointer;
     }
-    /* Card container and card styles */
     .card-container {
       display: flex;
       flex-wrap: wrap;
@@ -97,186 +94,113 @@
       border-radius: 4px;
       cursor: pointer;
       margin-top: 10px;
-    }
-    /* Modal Styles */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 100;
-      left: 0;
-      top: 0;
       width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0,0,0,0.5);
     }
-    .modal-content {
-      background-color: #fff;
-      margin: 10% auto;
-      padding: 20px;
-      border: 1px solid #888;
-      width: 400px;
-      border-radius: 8px;
-      position: relative;
-    }
-    .close {
-      color: #aaa;
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
+    .cancel-btn {
+      background-color: #dc3545 !important;
+      color: #fff !important;
+      border: none !important;
+      padding: 8px 12px !important;
+      border-radius: 4px !important;
+      cursor: pointer !important;
+      margin-top: 10px !important;
+      width: 100% !important;
     }
   </style>
-  <script>
-    function toggleFilterRibbon() {
-      var ribbon = document.getElementById('filterRibbon');
-      if (ribbon.style.display === 'none' || ribbon.style.display === '') {
-        ribbon.style.display = 'flex';
-      } else {
-        ribbon.style.display = 'none';
-      }
-    }
-  </script>
 </head>
 <body>
   <div class="container">
     <h2>Available Parking Spots</h2>
-    <!-- Toggle Filter Button -->
     <button class="filter-toggle" onclick="toggleFilterRibbon()">
       <i class="fas fa-filter"></i> Filters
     </button>
-    <!-- Ribbon-style Filter Bar -->
+
     <div id="filterRibbon" class="filter-bar">
       <form method="GET" action="{{ url_for('dashboard') }}">
         <div class="filter-group">
           <label for="location">Location</label>
-          <input type="text" id="location" name="location" value="{{ request.args.get('location', '') }}">
-        </div>
-        <div class="filter-group">
-          <label for="price_min">Price Min</label>
-          <input type="number" step="0.01" id="price_min" name="price_min" value="{{ request.args.get('price_min', '') }}">
-        </div>
-        <div class="filter-group">
-          <label for="price_max">Price Max</label>
-          <input type="number" step="0.01" id="price_max" name="price_max" value="{{ request.args.get('price_max', '') }}">
-        </div>
-        <div class="filter-group">
-          <label for="time_slot">Time Slot</label>
-          <select id="time_slot" name="time_slot">
-            <option value="">Any</option>
-            <option value="06:00-10:00" {% if request.args.get('time_slot') == "06:00-10:00" %}selected{% endif %}>06:00-10:00</option>
-            <option value="10:00-14:00" {% if request.args.get('time_slot') == "10:00-14:00" %}selected{% endif %}>10:00-14:00</option>
-            <option value="14:00-18:00" {% if request.args.get('time_slot') == "14:00-18:00" %}selected{% endif %}>14:00-18:00</option>
-            <option value="18:00-22:00" {% if request.args.get('time_slot') == "18:00-22:00" %}selected{% endif %}>18:00-22:00</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="vehicle_type">Vehicle Type</label>
-          <select id="vehicle_type" name="vehicle_type">
-            <option value="">Any</option>
-            <option value="2" {% if request.args.get('vehicle_type') == "2" %}selected{% endif %}>2-Wheeler</option>
-            <option value="4" {% if request.args.get('vehicle_type') == "4" %}selected{% endif %}>4-Wheeler</option>
-          </select>
+          <input type="text" id="location" name="location">
         </div>
         <div class="filter-group">
           <button type="submit" class="filter-apply">Apply</button>
         </div>
       </form>
     </div>
+
     <div class="card-container">
       {% for spot in spots %}
         <div class="card">
           <h3>{{ spot.location }}</h3>
           <p><strong>Price:</strong> ₹{{ spot.price }}</p>
-          <p><strong>Status:</strong> {{ "Available" if spot.availability else "Occupied" }}</p>
-          <p><strong>Available Hours:</strong>
-            {% if spot.available_from and spot.available_to %}
-              {{ spot.available_from.strftime('%I:%M %p') }} to {{ spot.available_to.strftime('%I:%M %p') }}
-            {% else %}
-              N/A
-            {% endif %}
+          <p><strong>Status:</strong>
+            <span style="color: {% if spot.availability %}green{% else %}red{% endif %};">
+              {% if spot.availability %} Available {% else %} Booked {% endif %}
+            </span>
           </p>
+          <p><strong>Available Hours:</strong>
+            {{ spot.available_from.strftime('%I:%M %p') }} - {{ spot.available_to.strftime('%I:%M %p') }}
+          </p>
+
           {% if spot.google_maps_link %}
             <div class="map-container">
               <iframe src="{{ spot.google_maps_link }}" allowfullscreen="" loading="lazy"></iframe>
             </div>
           {% endif %}
+
           <p><strong>2-Wheeler Spaces:</strong> {{ spot.two_wheeler_spaces or 0 }}</p>
           <p><strong>4-Wheeler Spaces:</strong> {{ spot.four_wheeler_spaces or 0 }}</p>
-          <p><strong>Description:</strong> {{ spot.description or "N/A" }}</p>
-          <!-- Book button with data attributes for spot id and available times -->
-          <button class="book-btn"
-                  data-spot-id="{{ spot.id }}"
-                  data-available-from="{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}"
-                  data-available-to="{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}">
-            Book
-          </button>
+
+          <div class="button-container">
+            {% if spot.availability %}
+              <button class="book-btn" data-spot-id="{{ spot.id }}">Book</button>
+            {% else %}
+              {% if spot.booked_by == current_user.id %}
+                <button class="cancel-btn">Cancel Booking</button>
+              {% elif spot.owner_id == current_user.id %}
+                <form action="{{ url_for('cancel_booking', spot_id=spot.id) }}" method="post">
+                  <button class="cancel-btn">Cancel Booking</button>
+                </form>
+              {% else %}
+                <button class="book-btn disabled-btn" disabled>Booked</button>
+              {% endif %}
+            {% endif %}
+          </div>
         </div>
       {% endfor %}
     </div>
+
     <br>
     <a href="{{ url_for('logout') }}">Logout</a>
   </div>
 
-  <!-- Booking Modal -->
-  <div id="bookingModal" class="modal">
-    <div class="modal-content">
-      <span class="close" id="modalClose">&times;</span>
-      <h3>Book Parking Spot</h3>
-      <form id="bookingForm" method="POST">
-        <label for="two_wheeler">2-Wheeler Spots:</label>
-        <input type="number" id="two_wheeler" name="two_wheeler" min="0" required>
-        <br>
-        <label for="four_wheeler">4-Wheeler Spots:</label>
-        <input type="number" id="four_wheeler" name="four_wheeler" min="0" required>
-        <br>
-        <label for="booking_start">Booking Start Time (HH:MM):</label>
-        <input type="text" id="booking_start" name="booking_start" required>
-        <br>
-        <label for="booking_end">Booking End Time (HH:MM):</label>
-        <input type="text" id="booking_end" name="booking_end" required>
-        <br><br>
-        <button type="submit">Book</button>
-      </form>
-    </div>
-  </div>
+
 
   <script>
-    // Modal handling
+    function toggleFilterRibbon() {
+      var ribbon = document.getElementById('filterRibbon');
+      ribbon.style.display = (ribbon.style.display === 'none' || ribbon.style.display === '') ? 'flex' : 'none';
+    }
+
     var modal = document.getElementById("bookingModal");
     var modalClose = document.getElementById("modalClose");
-    var bookingForm = document.getElementById("bookingForm");
 
-    // Close modal when clicking on the close icon
     modalClose.onclick = function() {
       modal.style.display = "none";
     };
 
-    // Close modal when clicking outside the modal content
     window.onclick = function(event) {
       if (event.target == modal) {
         modal.style.display = "none";
       }
     };
 
-    // Attach click event to all "Book" buttons
     var bookButtons = document.getElementsByClassName("book-btn");
     Array.from(bookButtons).forEach(function(button) {
-      button.addEventListener("click", function() {
-        var spotId = button.getAttribute("data-spot-id");
-        var availableFrom = button.getAttribute("data-available-from");
-        var availableTo = button.getAttribute("data-available-to");
-
-        // Dynamically set the booking form's action URL (e.g., /book/3)
-        bookingForm.action = "/book/" + spotId;
-
-        // Set placeholders for booking times based on available times
-        document.getElementById("booking_start").placeholder = availableFrom;
-        document.getElementById("booking_end").placeholder = availableTo;
-
-        // Show the modal
-        modal.style.display = "block";
-      });
+      if (!button.disabled) {
+        button.addEventListener("click", function() {
+          modal.style.display = "block";
+        });
+      }
     });
   </script>
 </body>
