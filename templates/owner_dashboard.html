@@ -43,15 +43,15 @@
 <body>
   <div class="container">
     <h2>Welcome, Owner!</h2>
-    <a href="{{ url_for('add_parking_spot') }}">Add a Parking Spot</a> |
-    <a href="{{ url_for('logout') }}">Logout</a>
+    <a href="{{ url_for('parking.add_parking_spot') }}">Add a Parking Spot</a> |
+    <a href="{{ url_for('auth.logout') }}">Logout</a>
     <h3>Your Parking Spots</h3>
     <div class="card-container">
       {% for spot in spots %}
         <div class="card">
           <h3>{{ spot.location }}</h3>
           <p><strong>Price:</strong> ₹{{ spot.price }}</p>
-          <p><strong>Status:</strong> {% if spot.availability %}Available{% else %}Not Available{% endif %}</p>
+          <p><strong>Status:</strong> {{ "Available" if spot.availability else "Not Available" }}</p>
           <p><strong>Available Hours:</strong>
             {% if spot.available_from and spot.available_to %}
               {{ spot.available_from.strftime('%I:%M %p') }} to {{ spot.available_to.strftime('%I:%M %p') }}
@@ -68,8 +68,8 @@
           <p><strong>4-Wheeler Spaces:</strong> {{ spot.four_wheeler_spaces or 0 }}</p>
           <p><strong>Description:</strong> {{ spot.description or "N/A" }}</p>
           <div class="card-actions">
-            <a href="{{ url_for('update_parking_spot', spot_id=spot.id) }}" class="btn btn-primary">Edit</a>
-            <form action="{{ url_for('delete_parking_spot', spot_id=spot.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this spot?');">
+            <a href="{{ url_for('parking.update_parking_spot', spot_id=spot.id) }}" class="btn btn-primary">Edit</a>
+            <form action="{{ url_for('parking.delete_parking_spot', spot_id=spot.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this spot?');">
               <button type="submit" class="btn btn-danger">Delete</button>
             </form>
           </div>

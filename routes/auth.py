@@ -17,9 +17,9 @@ def register():
             flash("Email already registered. Please log in.", "danger")
             return redirect(url_for('auth.login'))
 
-        # Ensure password hashing before storing
+        # Create a new user and hash the password
         new_user = User(username=username, email=email, role=role)
-        new_user.set_password(password)  # Ensure this method exists in User model
+        new_user.set_password(password)  # Ensure your User model has set_password()
 
         db.session.add(new_user)
         db.session.commit()
@@ -37,10 +37,10 @@ def login():
         password = request.form['password']
         user = User.query.filter_by(email=email).first()
 
-        if user and user.check_password(password):  # Ensure User model has check_password()
+        if user and user.check_password(password):  # Ensure your User model has check_password()
             login_user(user)
             session['role'] = user.role
-            return redirect(url_for('dashboard.dashboard'))  # Ensure dashboard exists
+            return redirect(url_for('dashboard.dashboard'))  # Assuming your dashboard blueprint is set up correctly
         else:
             flash("Invalid email or password. Please try again.", "danger")
 

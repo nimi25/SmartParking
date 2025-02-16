@@ -106,6 +106,34 @@
       margin-top: 10px !important;
       width: 100% !important;
     }
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 400px;
+      border-radius: 8px;
+      position: relative;
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -116,7 +144,7 @@
     </button>
 
     <div id="filterRibbon" class="filter-bar">
-      <form method="GET" action="{{ url_for('dashboard') }}">
+      <form method="GET" action="{{ url_for('dashboard.dashboard') }}">
         <div class="filter-group">
           <label for="location">Location</label>
           <input type="text" id="location" name="location">
@@ -131,14 +159,18 @@
       {% for spot in spots %}
         <div class="card">
           <h3>{{ spot.location }}</h3>
-          <p><strong>Price:</strong> ₹{{ spot.Price }}</p>
+          <p><strong>Price:</strong> ₹{{ spot.price }}</p>
           <p><strong>Status:</strong>
             <span style="color: {% if spot.availability %}green{% else %}red{% endif %};">
               {% if spot.availability %} Available {% else %} Booked {% endif %}
             </span>
           </p>
           <p><strong>Available Hours:</strong>
-            {{ spot.available_from.strftime('%I:%M %p') }} - {{ spot.available_to.strftime('%I:%M %p') }}
+            {% if spot.available_from and spot.available_to %}
+              {{ spot.available_from.strftime('%I:%M %p') }} - {{ spot.available_to.strftime('%I:%M %p') }}
+            {% else %}
+              N/A
+            {% endif %}
           </p>
 
           {% if spot.google_maps_link %}
@@ -151,93 +183,104 @@
           <p><strong>4-Wheeler Spaces:</strong> {{ spot.four_wheeler_spaces or 0 }}</p>
 
           <div class="button-container">
-    {% if spot.availability %}
-        <!-- Booking Form -->
-        <form action="{{ url_for('book_spot', spot_id=spot.id) }}" method="POST">
-            <input type="hidden" name="two_wheeler" value="1"> <!-- Adjust as needed -->
-            <input type="hidden" name="four_wheeler" value="0"> <!-- Adjust as needed -->
-            <input type="hidden" name="booking_start" value="{{ spot.available_from.strftime('%H:%M') }}">
-            <input type="hidden" name="booking_end" value="{{ spot.available_to.strftime('%H:%M') }}">
-            <button type="submit" class="book-btn">Book</button>
-        </form>
-
-    {% else %}
-        {% if spot.booked_by == current_user.id %}
-            <button class="cancel-btn">Cancel Booking</button>
-        {% elif spot.owner_id == current_user.id %}
-            <form action="{{ url_for('cancel_booking', spot_id=spot.id) }}" method="post">
+            {% if spot.availability %}
+              <!-- Instead of direct submission, trigger the booking modal -->
+              <button type="button" class="book-btn" data-spot-id="{{ spot.id }}"
+                      data-available-from="{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}"
+                      data-available-to="{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}">
+                Book
+              </button>
+            {% else %}
+              {% if spot.booked_by == current_user.id %}
                 <button class="cancel-btn">Cancel Booking</button>
-            </form>
-        {% else %}
-            <button class="book-btn disabled-btn" disabled>Booked</button>
-        {% endif %}
-    {% endif %}
-</div>
-
+              {% elif spot.owner_id == current_user.id %}
+                <form action="{{ url_for('parking.cancel_booking', spot_id=spot.id) }}" method="POST">
+                  <button class="cancel-btn">Cancel Booking</button>
+                </form>
+              {% else %}
+                <button class="book-btn disabled-btn" disabled>Booked</button>
+              {% endif %}
+            {% endif %}
+          </div>
         </div>
+      {% else %}
+        <p>No parking spots added yet.</p>
       {% endfor %}
     </div>
 
     <br>
-    <a href="{{ url_for('logout') }}">Logout</a>
+    <a href="{{ url_for('auth.logout') }}">Logout</a>
   </div>
 
-<!--I think this is so that you can actually click the book button and get the booking form -->
-
-  <div id="bookingModal" class="modal" style="display: none;">
-  <div class="modal-content">
-    <span id="modalClose" class="close">&times;</span>
-    <h3>Book Your Spot</h3>
-    <a href="{{ url_for('book_spot', spot_id=spot.id) }}">Book</a>
-
-      <input type="hidden" name="spot_id" id="modalSpotId">
-      <label for="date">Date:</label>
-      <input type="date" id="date" name="date" required>
-      <label for="time">Time:</label>
-      <input type="time" id="time" name="time" required>
-      <button type="submit">Confirm Booking</button>
-
+  <!-- Booking Modal -->
+  <div id="bookingModal" class="modal">
+    <div class="modal-content">
+      <span id="modalClose" class="close">&times;</span>
+      <h3>Book Your Spot</h3>
+      <form id="bookingForm" method="POST" action="">
+        <div class="form-group">
+          <label for="two_wheeler">2-Wheeler Spots:</label>
+          <input type="number" id="two_wheeler" name="two_wheeler" min="0" value="1" required>
+        </div>
+        <div class="form-group">
+          <label for="four_wheeler">4-Wheeler Spots:</label>
+          <input type="number" id="four_wheeler" name="four_wheeler" min="0" value="0" required>
+        </div>
+        <div class="form-group">
+          <label for="booking_start">Booking Start (HH:MM):</label>
+          <input type="time" id="booking_start" name="booking_start" required>
+        </div>
+        <div class="form-group">
+          <label for="booking_end">Booking End (HH:MM):</label>
+          <input type="time" id="booking_end" name="booking_end" required>
+        </div>
+        <button type="submit" class="book-btn">Confirm Booking</button>
+      </form>
+    </div>
+  </div>
 
   <script>
-    function toggleFilterRibbon() {
-      var ribbon = document.getElementById('filterRibbon');
-      ribbon.style.display = (ribbon.style.display === 'none' || ribbon.style.display === '') ? 'flex' : 'none';
-    }
-
+    // Modal functionality for booking details popup
     document.addEventListener("DOMContentLoaded", function () {
-    var modal = document.getElementById("bookingModal");
-    var modalClose = document.getElementById("modalClose");
+      var modal = document.getElementById("bookingModal");
+      var modalClose = document.getElementById("modalClose");
+      var bookingForm = document.getElementById("bookingForm");
 
-    if (modal && modalClose) {
-        modalClose.onclick = function () {
-            modal.style.display = "none";
-        };
+      // Attach click event to all book buttons that trigger the modal
+      var bookButtons = document.querySelectorAll(".book-btn");
+      bookButtons.forEach(function (button) {
+        if (button.hasAttribute("data-spot-id")) {
+          button.addEventListener("click", function (event) {
+            event.preventDefault();
+            var spotId = this.getAttribute("data-spot-id");
+            var availableFrom = this.getAttribute("data-available-from");
+            var availableTo = this.getAttribute("data-available-to");
 
-        window.onclick = function (event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
+            // Set the form action to book the specific spot (note the '/parking' prefix)
+            bookingForm.action = "/parking/book/" + spotId;
+
+            // Pre-fill the booking start and end times if available
+            if (availableFrom) {
+              document.getElementById("booking_start").value = availableFrom;
             }
-        };
-
-        var bookButtons = document.querySelectorAll(".book-btn");
-        bookButtons.forEach(function (button) {
-            if (!button.disabled) {
-                button.addEventListener("click", function () {
-                    document.getElementById("modalSpotId").value = this.getAttribute("data-spot-id");
-                    modal.style.display = "block";
-                });
+            if (availableTo) {
+              document.getElementById("booking_end").value = availableTo;
             }
-        });
-    }
-});
+            modal.style.display = "block";
+          });
+        }
+      });
 
+      modalClose.onclick = function () {
+        modal.style.display = "none";
+      };
+
+      window.onclick = function (event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      };
+    });
   </script>
-
-
-
-  </div>
-</div>
-
-
 </body>
 </html>

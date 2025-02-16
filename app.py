@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, redirect, url_for
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from models import db, User, bcrypt
@@ -34,6 +34,11 @@ from routes.parking import parking_bp
 app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
 app.register_blueprint(parking_bp, url_prefix="/parking")
+
+# Root route: Redirect to the login page
+@app.route('/')
+def index():
+    return redirect(url_for('auth.login'))
 
 @login_manager.user_loader
 def load_user(user_id):

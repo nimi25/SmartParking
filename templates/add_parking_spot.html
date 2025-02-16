@@ -1,61 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Add Parking Spot</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Add Parking Spot - Smart Parking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-  <div class="container">
-    <h2>Add a Parking Spot</h2>
-    <form method="POST">
-      <div class="form-group">
-        <label for="location">Location</label>
-        <input type="text" id="location" name="location" class="form-control" required>
-      </div>
+    <div class="container">
+        <h2>Add a Parking Spot</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label for="location">Location</label>
+                <input type="text" id="location" name="location" class="form-control" required>
+            </div>
 
-      <div class="form-group">
-        <label for="price">Price (per hour)</label>
-        <input type="number" step="0.01" id="price" name="price" class="form-control" required>
-      </div>
+            <div class="form-group">
+                <label for="price">Price (per hour)</label>
+                <input type="number" step="0.01" id="price" name="price" class="form-control" required>
+            </div>
 
-      <div class="form-group">
-        <label for="availability">Availability</label>
-        <input type="checkbox" id="availability" name="availability" checked> Available
-      </div>
+            <div class="form-group">
+                <label for="availability">Availability</label>
+                <input type="checkbox" id="availability" name="availability" checked> Available
+            </div>
 
-      <div class="form-group">
-        <label for="google_maps_link">Google Maps Link</label>
-        <input type="text" id="google_maps_link" name="google_maps_link" class="form-control">
-      </div>
+            <div class="form-group">
+                <label for="google_maps_link">Google Maps Link</label>
+                <input type="text" id="google_maps_link" name="google_maps_link" class="form-control">
+            </div>
 
-      <div class="form-group">
-        <label for="two_wheeler_spaces">2-Wheeler Spaces</label>
-        <input type="number" id="two_wheeler_spaces" name="two_wheeler_spaces" class="form-control" min="0" value="0">
-      </div>
+            <div class="form-group">
+                <label for="two_wheeler_spaces">2-Wheeler Spaces</label>
+                <input type="number" id="two_wheeler_spaces" name="two_wheeler_spaces" class="form-control" min="0" value="0">
+            </div>
 
-      <div class="form-group">
-        <label for="four_wheeler_spaces">4-Wheeler Spaces</label>
-        <input type="number" id="four_wheeler_spaces" name="four_wheeler_spaces" class="form-control" min="0" value="0">
-      </div>
+            <div class="form-group">
+                <label for="four_wheeler_spaces">4-Wheeler Spaces</label>
+                <input type="number" id="four_wheeler_spaces" name="four_wheeler_spaces" class="form-control" min="0" value="0">
+            </div>
 
-      <div class="form-group">
-        <label for="available_from">Available From</label>
-        <input type="time" id="available_from" name="available_from" class="form-control">
-      </div>
+            <div class="form-group">
+                <label for="available_from">Available From</label>
+                <input type="time" id="available_from" name="available_from" class="form-control">
+            </div>
 
-      <div class="form-group">
-        <label for="available_to">Available To</label>
-        <input type="time" id="available_to" name="available_to" class="form-control">
-      </div>
+            <div class="form-group">
+                <label for="available_to">Available To</label>
+                <input type="time" id="available_to" name="available_to" class="form-control">
+            </div>
 
-      <div class="form-group">
-        <label for="description">Description</label>
-        <textarea id="description" name="description" class="form-control"></textarea>
-      </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" class="form-control"></textarea>
+            </div>
 
-      <button type="submit" class="btn btn-success">Add Spot</button>
-    </form>
-  </div>
+            <button type="submit" class="btn btn-success">Add Spot</button>
+        </form>
+
+        <!-- Optional: Back link to dashboard -->
+        <p><a href="{{ url_for('dashboard.dashboard') }}">Back to Dashboard</a></p>
+    </div>
 </body>
 </html>
