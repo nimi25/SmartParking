@@ -1,5 +1,8 @@
 import os
+import sys
 import re
+import urllib.parse
+
 from dotenv import load_dotenv
 from flask import Flask, render_template, redirect, url_for, request, flash, session
 from flask_migrate import Migrate
@@ -8,6 +11,9 @@ from flask_login import (
 )
 from models import db, User, ParkingSpot, bcrypt, Booking
 from datetime import datetime
+from routes.parking import parking_bp  # ✅ Import directly from parking.py
+
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 # 1. Load environment variables from .env file BEFORE using os.environ
 load_dotenv()
@@ -34,9 +40,16 @@ migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+# Register Blueprints
+app.register_blueprint(parking_bp, url_prefix="/parking")
+
+# ✅ Registers parking routes
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.query(User).filter_by(id=user_id).first()
+
+if __name__ == "__main__":
+    app.run(debug=True)  # Keep this from master
 
 # Routes start here...
 @app.route('/')
@@ -48,7 +61,7 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
-        password = request.form['password']
+        password = request.form.get("password")
         role = request.form['role']  # 'driver' or 'owner'
 
         existing_user = User.query.filter_by(email=email).first()

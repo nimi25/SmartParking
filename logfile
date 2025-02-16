@@ -1,0 +1,4 @@
+2025-02-13 19:05:57.053 IST [2592] LOG:  redirecting log output to logging collector process
+2025-02-13 19:05:57.053 IST [2592] HINT:  Future log output will appear in directory "log".
+2025-02-13 19:10:45.256 IST [3276] LOG:  redirecting log output to logging collector process
+2025-02-13 19:10:45.256 IST [3276] HINT:  Future log output will appear in directory "log".
