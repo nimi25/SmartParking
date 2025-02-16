@@ -131,7 +131,7 @@
       {% for spot in spots %}
         <div class="card">
           <h3>{{ spot.location }}</h3>
-          <p><strong>Price:</strong> ₹{{ spot.price }}</p>
+          <p><strong>Price:</strong> ₹{{ spot.Price }}</p>
           <p><strong>Status:</strong>
             <span style="color: {% if spot.availability %}green{% else %}red{% endif %};">
               {% if spot.availability %} Available {% else %} Booked {% endif %}
@@ -151,20 +151,29 @@
           <p><strong>4-Wheeler Spaces:</strong> {{ spot.four_wheeler_spaces or 0 }}</p>
 
           <div class="button-container">
-            {% if spot.availability %}
-              <button class="book-btn" data-spot-id="{{ spot.id }}">Book</button>
-            {% else %}
-              {% if spot.booked_by == current_user.id %}
+    {% if spot.availability %}
+        <!-- Booking Form -->
+        <form action="{{ url_for('book_spot', spot_id=spot.id) }}" method="POST">
+            <input type="hidden" name="two_wheeler" value="1"> <!-- Adjust as needed -->
+            <input type="hidden" name="four_wheeler" value="0"> <!-- Adjust as needed -->
+            <input type="hidden" name="booking_start" value="{{ spot.available_from.strftime('%H:%M') }}">
+            <input type="hidden" name="booking_end" value="{{ spot.available_to.strftime('%H:%M') }}">
+            <button type="submit" class="book-btn">Book</button>
+        </form>
+
+    {% else %}
+        {% if spot.booked_by == current_user.id %}
+            <button class="cancel-btn">Cancel Booking</button>
+        {% elif spot.owner_id == current_user.id %}
+            <form action="{{ url_for('cancel_booking', spot_id=spot.id) }}" method="post">
                 <button class="cancel-btn">Cancel Booking</button>
-              {% elif spot.owner_id == current_user.id %}
-                <form action="{{ url_for('cancel_booking', spot_id=spot.id) }}" method="post">
-                  <button class="cancel-btn">Cancel Booking</button>
-                </form>
-              {% else %}
-                <button class="book-btn disabled-btn" disabled>Booked</button>
-              {% endif %}
-            {% endif %}
-          </div>
+            </form>
+        {% else %}
+            <button class="book-btn disabled-btn" disabled>Booked</button>
+        {% endif %}
+    {% endif %}
+</div>
+
         </div>
       {% endfor %}
     </div>
@@ -173,6 +182,20 @@
     <a href="{{ url_for('logout') }}">Logout</a>
   </div>
 
+<!--I think this is so that you can actually click the book button and get the booking form -->
+
+  <div id="bookingModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <span id="modalClose" class="close">&times;</span>
+    <h3>Book Your Spot</h3>
+    <a href="{{ url_for('book_spot', spot_id=spot.id) }}">Book</a>
+
+      <input type="hidden" name="spot_id" id="modalSpotId">
+      <label for="date">Date:</label>
+      <input type="date" id="date" name="date" required>
+      <label for="time">Time:</label>
+      <input type="time" id="time" name="time" required>
+      <button type="submit">Confirm Booking</button>
 
 
   <script>
@@ -181,27 +204,40 @@
       ribbon.style.display = (ribbon.style.display === 'none' || ribbon.style.display === '') ? 'flex' : 'none';
     }
 
+    document.addEventListener("DOMContentLoaded", function () {
     var modal = document.getElementById("bookingModal");
     var modalClose = document.getElementById("modalClose");
 
-    modalClose.onclick = function() {
-      modal.style.display = "none";
-    };
+    if (modal && modalClose) {
+        modalClose.onclick = function () {
+            modal.style.display = "none";
+        };
 
-    window.onclick = function(event) {
-      if (event.target == modal) {
-        modal.style.display = "none";
-      }
-    };
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        };
 
-    var bookButtons = document.getElementsByClassName("book-btn");
-    Array.from(bookButtons).forEach(function(button) {
-      if (!button.disabled) {
-        button.addEventListener("click", function() {
-          modal.style.display = "block";
+        var bookButtons = document.querySelectorAll(".book-btn");
+        bookButtons.forEach(function (button) {
+            if (!button.disabled) {
+                button.addEventListener("click", function () {
+                    document.getElementById("modalSpotId").value = this.getAttribute("data-spot-id");
+                    modal.style.display = "block";
+                });
+            }
         });
-      }
-    });
+    }
+});
+
   </script>
+
+
+
+  </div>
+</div>
+
+
 </body>
 </html>
