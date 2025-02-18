@@ -1,34 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Login - Smart Parking</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Smart Parking</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+  <style>
+    /* Body Background & Layout */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background:
+        linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+        url("{{ url_for('static', filename='images/bengaluru-map.jpg') }}") no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    /* Premium & Classy Welcome Text */
+    .animated-welcome {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .animated-welcome h1 {
+      font-size: 3rem;
+      font-weight: 600;
+      color: #fff;
+      margin: 0;
+      opacity: 0;
+      animation: fadeInDown 1.5s ease forwards;
+    }
+
+    @keyframes fadeInDown {
+      0% {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Login Container - Premium Glassmorphism */
+    .login-container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 50px;
+      width: 380px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    .login-container h2 {
+      font-size: 2.2rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+
+    /* Input Fields - Neumorphism */
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+      box-shadow: inset 3px 3px 6px rgba(255, 255, 255, 0.2),
+                  inset -3px -3px 6px rgba(0, 0, 0, 0.2);
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      transition: all 0.3s ease-in-out;
+    }
+
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    input:focus {
+      background: rgba(255, 255, 255, 0.3);
+      box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.4);
+    }
+
+    /* Premium Button */
+    button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      background: linear-gradient(45deg, #ff416c, #ff4b2b);
+      transition: all 0.3s ease-in-out;
+      box-shadow: 0 5px 15px rgba(255, 65, 108, 0.3);
+    }
+
+    button:hover {
+      background: linear-gradient(45deg, #ff4b2b, #ff416c);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255, 65, 108, 0.5);
+    }
+
+    /* Register Link */
+    .register-link {
+      margin-top: 20px;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .register-link a {
+      color: #fff;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 0.3s ease-in-out;
+    }
+
+    .register-link a:hover {
+      color: #ff416c;
+    }
+
+    /* Fade-in Animation for Login Container */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 400px) {
+      .login-container {
+        width: 90%;
+        padding: 30px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Login</h2>
+  <div class="animated-welcome">
+    <h1>Welcome to Smart Parking</h1>
+  </div>
 
-        {% with messages = get_flashed_messages(with_categories=True) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <p class="{{ category }}">{{ message }}</p>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+  <div class="login-container">
+    <h2>Login</h2>
 
-        <form method="POST" action="{{ url_for('auth.login') }}">
-            <label>Email:</label>
-            <input type="email" name="email" required>
+    {% with messages = get_flashed_messages(with_categories=True) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <p class="{{ category }}">{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
-            <label>Password:</label>
-            <input type="password" name="password" required>
+    <form method="POST" action="{{ url_for('auth.login') }}">
+      <label for="email" style="color: #fff;">Email:</label>
+      <input type="email" name="email" id="email" placeholder="Enter your email" required />
 
-            <button type="submit">Login</button>
-        </form>
+      <label for="password" style="color: #fff;">Password:</label>
+      <input type="password" name="password" id="password" placeholder="Enter your password" required />
 
-        <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a></p>
+      <button type="submit">Login</button>
+    </form>
+
+    <div class="register-link">
+      <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a></p>
     </div>
+  </div>
 </body>
 </html>

@@ -106,6 +106,10 @@
       margin-top: 10px !important;
       width: 100% !important;
     }
+    .disabled-btn {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
     /* Modal styles */
     .modal {
       display: none;
@@ -138,6 +142,7 @@
 </head>
 <body>
   <div class="container">
+    <!-- Available Spots Section -->
     <h2>Available Parking Spots</h2>
     <button class="filter-toggle" onclick="toggleFilterRibbon()">
       <i class="fas fa-filter"></i> Filters
@@ -156,15 +161,15 @@
     </div>
 
     <div class="card-container">
-      {% for spot in spots %}
+      {% for spot in available_spots %}
         <div class="card">
           <h3>{{ spot.location }}</h3>
           <p><strong>Price:</strong> ₹{{ spot.price }}</p>
-          <p><strong>Status:</strong>
-            <span style="color: {% if spot.availability %}green{% else %}red{% endif %};">
-              {% if spot.availability %} Available {% else %} Booked {% endif %}
-            </span>
-          </p>
+          {% if spot.two_wheeler_spaces == 0 and spot.four_wheeler_spaces == 0 %}
+            <p><strong>Status:</strong> <span style="color: red;">Booked Out</span></p>
+          {% else %}
+            <p><strong>Status:</strong> <span style="color: green;">Available</span></p>
+          {% endif %}
           <p><strong>Available Hours:</strong>
             {% if spot.available_from and spot.available_to %}
               {{ spot.available_from.strftime('%I:%M %p') }} - {{ spot.available_to.strftime('%I:%M %p') }}
@@ -172,39 +177,55 @@
               N/A
             {% endif %}
           </p>
-
           {% if spot.google_maps_link %}
             <div class="map-container">
               <iframe src="{{ spot.google_maps_link }}" allowfullscreen="" loading="lazy"></iframe>
             </div>
           {% endif %}
-
-          <p><strong>2-Wheeler Spaces:</strong> {{ spot.two_wheeler_spaces or 0 }}</p>
-          <p><strong>4-Wheeler Spaces:</strong> {{ spot.four_wheeler_spaces or 0 }}</p>
-
+          {% if spot.two_wheeler_spaces == 0 and spot.four_wheeler_spaces == 0 %}
+            <p class="booked-out">Booked Out</p>
+          {% else %}
+            <p><strong>2-Wheeler Spaces:</strong> {{ spot.two_wheeler_spaces or 0 }}</p>
+            <p><strong>4-Wheeler Spaces:</strong> {{ spot.four_wheeler_spaces or 0 }}</p>
+          {% endif %}
           <div class="button-container">
-            {% if spot.availability %}
-              <!-- Instead of direct submission, trigger the booking modal -->
+            {% if spot.two_wheeler_spaces > 0 or spot.four_wheeler_spaces > 0 %}
               <button type="button" class="book-btn" data-spot-id="{{ spot.id }}"
                       data-available-from="{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}"
                       data-available-to="{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}">
                 Book
               </button>
             {% else %}
-              {% if spot.booked_by == current_user.id %}
-                <button class="cancel-btn">Cancel Booking</button>
-              {% elif spot.owner_id == current_user.id %}
-                <form action="{{ url_for('parking.cancel_booking', spot_id=spot.id) }}" method="POST">
-                  <button class="cancel-btn">Cancel Booking</button>
-                </form>
-              {% else %}
-                <button class="book-btn disabled-btn" disabled>Booked</button>
-              {% endif %}
+              <button class="book-btn disabled-btn" disabled>Booked Out</button>
             {% endif %}
           </div>
         </div>
       {% else %}
-        <p>No parking spots added yet.</p>
+        <p>No available parking spots.</p>
+      {% endfor %}
+    </div>
+
+    <!-- Booked Spots Section -->
+    <h2>Booked Spots</h2>
+    <div class="card-container">
+      {% for booking in booked_spots %}
+        <div class="card">
+          <h3>{{ booking.spot.location }}</h3>
+          <p><strong>Price:</strong> ₹{{ booking.spot.price }}</p>
+          <p><strong>Booked 2-Wheeler Spots:</strong> {{ booking.two_wheeler }}</p>
+          <p><strong>Booked 4-Wheeler Spots:</strong> {{ booking.four_wheeler }}</p>
+          <p><strong>Booking Time:</strong> {{ booking.start_time.strftime('%I:%M %p') }} - {{ booking.end_time.strftime('%I:%M %p') }}</p>
+          {% if booking.spot.google_maps_link %}
+            <div class="map-container">
+              <iframe src="{{ booking.spot.google_maps_link }}" allowfullscreen="" loading="lazy"></iframe>
+            </div>
+          {% endif %}
+          <form method="POST" action="{{ url_for('parking.cancel_booking', booking_id=booking.id) }}">
+            <button type="submit" class="cancel-btn">Cancel Booking</button>
+          </form>
+        </div>
+      {% else %}
+        <p>No booked spots.</p>
       {% endfor %}
     </div>
 
@@ -281,6 +302,16 @@
         }
       };
     });
+
+    // Toggle filter ribbon display
+    function toggleFilterRibbon() {
+      var filterRibbon = document.getElementById("filterRibbon");
+      if (filterRibbon.style.display === "none" || filterRibbon.style.display === "") {
+        filterRibbon.style.display = "flex";
+      } else {
+        filterRibbon.style.display = "none";
+      }
+    }
   </script>
 </body>
 </html>

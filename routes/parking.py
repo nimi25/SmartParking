@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import login_required, current_user
-from models import db, ParkingSpot
+from models import db, ParkingSpot, Booking
 from datetime import datetime
 import re
 
@@ -132,13 +132,16 @@ def book_spot(spot_id):
     if session.get('role') != 'driver':
         flash("Only drivers can book spots.", "danger")
         return redirect(url_for('dashboard.dashboard'))
+
     spot = ParkingSpot.query.get_or_404(spot_id)
+
     try:
         two_wheeler = int(request.form.get('two_wheeler', 0))
         four_wheeler = int(request.form.get('four_wheeler', 0))
     except ValueError:
         flash("Please enter valid numbers for spot counts.", "danger")
         return redirect(url_for('dashboard.dashboard'))
+
     booking_start = request.form.get('booking_start')
     booking_end = request.form.get('booking_end')
     try:
@@ -147,21 +150,58 @@ def book_spot(spot_id):
     except ValueError:
         flash("Invalid time format. Please use HH:MM.", "danger")
         return redirect(url_for('dashboard.dashboard'))
+
     if spot.available_from and spot.available_to:
         if booking_start_time < spot.available_from or booking_end_time > spot.available_to:
             flash("Booking time must be within the available hours.", "danger")
             return redirect(url_for('dashboard.dashboard'))
-    # Booking logic (mark spot as booked, optionally record booking details)
-    spot.availability = False
-    # Optionally: spot.booked_by = current_user.id (if such a field exists)
+
+    if two_wheeler > (spot.two_wheeler_spaces or 0):
+        flash("Not enough 2-wheeler spaces available.", "danger")
+        return redirect(url_for('dashboard.dashboard'))
+    if four_wheeler > (spot.four_wheeler_spaces or 0):
+        flash("Not enough 4-wheeler spaces available.", "danger")
+        return redirect(url_for('dashboard.dashboard'))
+
+    # Subtract the booked spaces from the available count
+    spot.two_wheeler_spaces = (spot.two_wheeler_spaces or 0) - two_wheeler
+    spot.four_wheeler_spaces = (spot.four_wheeler_spaces or 0) - four_wheeler
+
+    if spot.two_wheeler_spaces == 0 and spot.four_wheeler_spaces == 0:
+        spot.availability = False
+    else:
+        spot.availability = True
+
+    # Create a booking record using your Booking model fields:
+    booking = Booking(
+        user_id=current_user.id,
+        spot_id=spot.id,
+        two_wheeler=two_wheeler,
+        four_wheeler=four_wheeler,
+        start_time=booking_start_time,
+        end_time=booking_end_time
+    )
+    db.session.add(booking)
     db.session.commit()
     flash("Spot booked successfully!", "success")
     return redirect(url_for('dashboard.dashboard'))
 
 
-@parking_bp.route('/cancel_booking/<int:spot_id>', methods=['POST'])
+@parking_bp.route('/cancel_booking/<int:booking_id>', methods=['POST'])
 @login_required
-def cancel_booking(spot_id):
-    # Implement cancellation logic here.
+def cancel_booking(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    if booking.user_id != current_user.id:
+        flash("You cannot cancel a booking you did not make.", "danger")
+        return redirect(url_for('dashboard.dashboard'))
+
+    spot = ParkingSpot.query.get(booking.spot_id)
+    # Add the booked spaces back to the parking spot
+    spot.two_wheeler_spaces = (spot.two_wheeler_spaces or 0) + booking.two_wheeler
+    spot.four_wheeler_spaces = (spot.four_wheeler_spaces or 0) + booking.four_wheeler
+    spot.availability = True  # Mark as available since the booking is cancelled
+
+    db.session.delete(booking)
+    db.session.commit()
     flash("Booking cancelled.", "success")
     return redirect(url_for('dashboard.dashboard'))
