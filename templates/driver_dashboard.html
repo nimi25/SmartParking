@@ -1,18 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Driver Dashboard</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+{% extends "base.html" %}
+
+{% block title %}
+  Driver Dashboard
+{% endblock %}
+
+{% block content %}
+  <!-- Link to Font Awesome for icons -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
         integrity="sha512-Fo3rlrZj/kTc7I4YWgW0E8S7zx1+Y8Y3vT94r3Z6YV1gHOb/A6z/9zsR5/sLbcX8FwHsw2cG6z1w0Oj5mwOW5w=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Dashboard-specific styles -->
   <style>
     .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
+  max-width: 1200px;
+  margin: 20px auto 0; /* <-- Added 40px top margin here */
+  padding: 20px;
+}
+
     .filter-bar {
       display: none;
       flex-wrap: wrap;
@@ -22,7 +28,7 @@
       background-color: #f9f9f9;
       border: 1px solid #ccc;
       border-radius: 4px;
-      margin-bottom: 20px;
+      margin-bottom: 70px;
     }
     .filter-group {
       display: flex;
@@ -74,6 +80,7 @@
       box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
       background-color: #fff;
       position: relative;
+      animation: fadeIn 1s ease-in-out;
     }
     .card h3 {
       margin-top: 0;
@@ -121,43 +128,111 @@
       height: 100%;
       overflow: auto;
       background-color: rgba(0,0,0,0.5);
+      animation: fadeIn 1s ease-in-out;
     }
     .modal-content {
-      background-color: #fff;
+      /* Dark frosted glass */
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+
+      /* Layout & shape */
       margin: 10% auto;
       padding: 20px;
-      border: 1px solid #888;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       width: 400px;
       border-radius: 8px;
       position: relative;
+
+      /* Ensure text is visible */
+      color: #fff;
     }
+
+    .modal-content .form-group label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+      /* White text for labels */
+      color: #fff;
+    }
+
+    .modal-content input[type="number"],
+    .modal-content input[type="time"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      /* Subtle border so the field is visible */
+      border: 1px solid rgba(255, 255, 255, 0.3);
+
+      /* Slightly translucent white so text is visible */
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+
+      /* Optional: placeholder color */
+      caret-color: #fff; /* cursor color */
+    }
+
     .close {
-      color: #aaa;
+      color: #fff; /* Make the 'X' white to stand out */
       float: right;
       font-size: 28px;
       font-weight: bold;
       cursor: pointer;
     }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <!-- Available Spots Section -->
-    <h2>Available Parking Spots</h2>
-    <button class="filter-toggle" onclick="toggleFilterRibbon()">
-      <i class="fas fa-filter"></i> Filters
-    </button>
 
-    <div id="filterRibbon" class="filter-bar">
-      <form method="GET" action="{{ url_for('dashboard.dashboard') }}">
-        <div class="filter-group">
-          <label for="location">Location</label>
-          <input type="text" id="location" name="location">
-        </div>
-        <div class="filter-group">
-          <button type="submit" class="filter-apply">Apply</button>
-        </div>
-      </form>
+    /* >>> Added these two rules to improve spacing <<< */
+    .container h2 {
+      margin-bottom: 20px;  /* Space below the heading */
+    }
+    .card-container {
+      margin-top: 20px;     /* Space above the cards */
+    }
+  </style>
+
+  <div class="container">
+
+    <div class="container">
+      <h2>Available Parking Spots</h2>
+      <button class="filter-toggle" onclick="toggleFilterRibbon()">
+        <i class="fas fa-filter"></i> Filters
+      </button>
+
+      <div id="filterRibbon" class="filter-bar">
+        <form method="GET" action="{{ url_for('dashboard.dashboard') }}">
+          <div class="filter-group">
+            <label for="location">Location</label>
+            <input type="text" id="location" name="location">
+          </div>
+
+          <div class="filter-group">
+            <label for="price">Price Range</label>
+            <input type="range" id="price" name="price" min="0" max="500" step="100" class="price-range">
+            <span id="priceDisplay">₹100</span>
+            </div>
+
+          <div class="filter-group">
+            <label for="time-slot">Time Slot</label>
+            <select id="time-slot" name="time-slot">
+              <option value="6-10">6:00 - 10:00 AM</option>
+              <option value="10-14">10:00 AM - 2:00 PM</option>
+              <option value="14-18">2:00 PM - 6:00 PM</option>
+              <option value="18-22">6:00 PM - 10:00 PM</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="vehicle-type">Vehicle Type</label>
+            <select id="vehicle-type" name="vehicle-type">
+              <option value="any">Any</option>
+              <option value="two-wheeler">Two-Wheeler</option>
+              <option value="four-wheeler">Four-Wheeler</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <button type="submit" class="filter-apply">Apply</button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <div class="card-container">
@@ -190,7 +265,8 @@
           {% endif %}
           <div class="button-container">
             {% if spot.two_wheeler_spaces > 0 or spot.four_wheeler_spaces > 0 %}
-              <button type="button" class="book-btn" data-spot-id="{{ spot.id }}"
+              <button type="button" class="book-btn"
+                      data-spot-id="{{ spot.id }}"
                       data-available-from="{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}"
                       data-available-to="{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}">
                 Book
@@ -261,7 +337,7 @@
   </div>
 
   <script>
-    // Modal functionality for booking details popup
+    // Modal functionality for booking details popup and price slider update
     document.addEventListener("DOMContentLoaded", function () {
       var modal = document.getElementById("bookingModal");
       var modalClose = document.getElementById("modalClose");
@@ -277,7 +353,7 @@
             var availableFrom = this.getAttribute("data-available-from");
             var availableTo = this.getAttribute("data-available-to");
 
-            // Set the form action to book the specific spot (note the '/parking' prefix)
+            // Set the form action to book the specific spot
             bookingForm.action = "/parking/book/" + spotId;
 
             // Pre-fill the booking start and end times if available
@@ -301,17 +377,31 @@
           modal.style.display = "none";
         }
       };
+
+      // Price slider dynamic display update
+      var priceSlider = document.getElementById("price");
+      var priceDisplay = document.getElementById("priceDisplay");
+
+      // Update display on page load in case slider has a preset value
+      if (priceSlider.value >= priceSlider.max) {
+        priceDisplay.innerText = "₹>" + priceSlider.max;
+      } else {
+        priceDisplay.innerText = "₹" + priceSlider.value;
+      }
+
+      priceSlider.addEventListener("input", function() {
+        if (this.value >= this.max) {
+          priceDisplay.innerText = "₹>" + this.max;
+        } else {
+          priceDisplay.innerText = "₹" + this.value;
+        }
+      });
     });
 
     // Toggle filter ribbon display
     function toggleFilterRibbon() {
       var filterRibbon = document.getElementById("filterRibbon");
-      if (filterRibbon.style.display === "none" || filterRibbon.style.display === "") {
-        filterRibbon.style.display = "flex";
-      } else {
-        filterRibbon.style.display = "none";
-      }
+      filterRibbon.style.display = filterRibbon.style.display === "none" || filterRibbon.style.display === "" ? "flex" : "none";
     }
   </script>
-</body>
-</html>
+{% endblock %}

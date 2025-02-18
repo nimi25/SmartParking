@@ -167,21 +167,25 @@ def book_spot(spot_id):
     spot.two_wheeler_spaces = (spot.two_wheeler_spaces or 0) - two_wheeler
     spot.four_wheeler_spaces = (spot.four_wheeler_spaces or 0) - four_wheeler
 
-    if spot.two_wheeler_spaces == 0 and spot.four_wheeler_spaces == 0:
-        spot.availability = False
-    else:
-        spot.availability = True
+    booked_vehicle_type = None
+    if two_wheeler > 0 and four_wheeler == 0:
+        booked_vehicle_type = "two_wheeler"
+    elif two_wheeler == 0 and four_wheeler > 0:
+        booked_vehicle_type = "four_wheeler"
+    elif two_wheeler > 0 and four_wheeler > 0:
+        booked_vehicle_type = "both"
 
-    # Create a booking record using your Booking model fields:
-    booking = Booking(
+    new_booking = Booking(
         user_id=current_user.id,
-        spot_id=spot.id,
+        spot_id=spot_id,
         two_wheeler=two_wheeler,
         four_wheeler=four_wheeler,
-        start_time=booking_start_time,
-        end_time=booking_end_time
+        booked_vehicle_type=booked_vehicle_type,  # <-- Set this!
+        start_time=booking_start,
+        end_time=booking_end,
+        active=True
     )
-    db.session.add(booking)
+    db.session.add(new_booking)
     db.session.commit()
     flash("Spot booked successfully!", "success")
     return redirect(url_for('dashboard.dashboard'))

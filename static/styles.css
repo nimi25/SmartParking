@@ -1,7 +1,11 @@
+/* -----------------------------------------------
+   EXISTING GLOBAL + AUTH (LOGIN/REGISTER) STYLES
+   (No changes, kept exactly as provided)
+----------------------------------------------- */
+
 /* Global Styles */
 body {
     font-family: 'Poppins', sans-serif;
-    /* Change the background image filename as needed */
     background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("{{ url_for('static', filename='images/bengaluru-map.jpg') }}");
     background-size: cover;
     text-align: center;
@@ -10,16 +14,56 @@ body {
     color: #fff;
 }
 
-/* Glassmorphism Container */
-.container {
-    max-width: 500px;
-    margin: auto;
+/* Premium & Classy Welcome Text */
+.animated-welcome {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.animated-welcome h1 {
+    font-size: 3rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+    opacity: 0;
+    animation: fadeInDown 1.5s ease forwards;
+}
+
+@keyframes fadeInDown {
+    0% {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Frosted Glassmorphism Container for Both Login & Register */
+.auth-container {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
-    padding: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 20px;
+    padding: 50px;
+    width: 380px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    animation: fadeIn 1s ease-in-out;
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Headings */
@@ -78,7 +122,7 @@ button:hover {
     box-shadow: 0 8px 20px rgba(255, 65, 108, 0.5);
 }
 
-/* Cancel Button Overrides */
+/* Cancel Button */
 .button-container .cancel-btn {
     background-color: red !important;
     color: white !important;
@@ -151,4 +195,264 @@ a {
 
 a:hover {
     background: linear-gradient(45deg, #ff4b2b, #ff416c);
+}
+
+/* -----------------------------------------------
+   NEW: DRIVER DASHBOARD STYLES
+   (Frosted container, filter bar, cards, etc.)
+----------------------------------------------- */
+
+/* Outer container for dashboard content */
+.container {
+    max-width: 1200px;
+    width: 90%;
+    margin: 40px auto;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 1s ease-in-out;
+    color: #fff;
+    text-align: center; /* adjust if needed */
+
+    .auth-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 50px;
+    width: 380px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    animation: fadeIn 1s ease-in-out;
+}
+
+/* The filter bar above the cards */
+.filter-bar {
+    display: none;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    text-align: left;
+}
+
+/* Filter button at top */
+.filter-toggle {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.filter-toggle:hover {
+    background-color: #0056b3;
+}
+
+/* Apply button in filter bar */
+.filter-apply {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.filter-apply:hover {
+    background-color: #218838;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    margin-right: 15px;
+}
+
+.filter-group label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    color: #fff;
+}
+
+.filter-group input,
+.filter-group select {
+    padding: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.filter-group input::placeholder {
+    color: #ccc;
+}
+
+/* The container for each group of cards */
+.card-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+/* Individual card style */
+.card {
+    flex: 1 1 calc(33.33% - 20px);
+    min-width: 280px; /* keeps them from getting too narrow */
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+    position: relative;
+    color: #fff;
+    text-align: left; /* so card text is left-aligned */
+}
+
+.card h3 {
+    margin-top: 0;
+    color: #fff;
+}
+
+.card p {
+    margin: 8px 0;
+    color: #fff;
+}
+
+.booked-out {
+    color: #ff4b2b;
+    font-weight: bold;
+}
+
+/* "Book" and "Cancel Booking" buttons on the cards */
+.book-btn {
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.book-btn:hover {
+    background-color: #218838;
+}
+
+.disabled-btn {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.cancel-btn {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+    border: none !important;
+    padding: 8px 12px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    margin-top: 10px !important;
+    width: 100% !important;
+}
+
+.cancel-btn:hover {
+    background-color: #bd2130 !important;
+}
+
+/* Map container inside cards */
+.map-container iframe {
+    width: 100%;
+    height: 200px;
+    border: 0;
+}
+
+/* Modal for booking details */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+}
+
+/* -----------------------------------------------
+   MODAL OVERRIDES FOR "Book Your Spot"
+   - Dark frosted background & white text
+----------------------------------------------- */
+.modal-content {
+    /* Dark frosted glass */
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+
+    /* Layout & shape */
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 400px;
+    border-radius: 8px;
+    position: relative;
+
+    /* Ensure text is visible */
+    color: #fff;
+}
+
+.modal-content .form-group label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+    /* White text for labels */
+    color: #fff;
+}
+
+.modal-content input[type="number"],
+.modal-content input[type="time"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    /* Subtle border so the field is visible */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+
+    /* Slightly translucent white so text is visible */
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+
+    /* Optional: placeholder color */
+    caret-color: #fff; /* cursor color */
+}
+
+.close {
+    color: #fff; /* Make the 'X' white to stand out */
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
 }

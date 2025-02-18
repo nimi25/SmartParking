@@ -3,6 +3,23 @@
 <head>
     <title>Add Parking Spot - Smart Parking</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+<style>
+    /* Body Background & Layout */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background:
+        linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+        url("{{ url_for('static', filename='images/bengaluru-map.jpg') }}") no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    </style>
 </head>
 <body>
     <div class="container">
