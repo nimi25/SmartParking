@@ -1,23 +1,35 @@
+/* Global Styles */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    font-family: 'Poppins', sans-serif;
+    /* Change the background image filename as needed */
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("{{ url_for('static', filename='images/bengaluru-map.jpg') }}");
+    background-size: cover;
     text-align: center;
     padding: 20px;
+    margin: 0;
+    color: #fff;
 }
 
+/* Glassmorphism Container */
 .container {
     max-width: 500px;
     margin: auto;
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
+/* Headings */
 h2 {
-    color: #333;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 1px;
 }
 
+/* Forms */
 form {
     display: flex;
     flex-direction: column;
@@ -26,23 +38,47 @@ form {
 
 input, select {
     width: 90%;
-    padding: 10px;
+    padding: 15px;
     margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    box-shadow: inset 3px 3px 6px rgba(255, 255, 255, 0.2),
+                inset -3px -3px 6px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease-in-out;
 }
 
-/* Default button styling */
+input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+input:focus {
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.4);
+    outline: none;
+}
+
+/* Buttons */
 button {
     width: 95%;
-    padding: 10px;
-    background-color: #28a745;
+    padding: 15px;
+    background: linear-gradient(45deg, #ff416c, #ff4b2b);
     color: white;
     border: none;
+    border-radius: 10px;
     cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 5px 15px rgba(255, 65, 108, 0.3);
 }
 
-/* Ensuring Cancel Booking button is always red */
+button:hover {
+    background: linear-gradient(45deg, #ff4b2b, #ff416c);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 65, 108, 0.5);
+}
+
+/* Cancel Button Overrides */
 .button-container .cancel-btn {
     background-color: red !important;
     color: white !important;
@@ -52,7 +88,6 @@ button {
     cursor: pointer;
 }
 
-/* Disabled cancel button remains red */
 button.cancel-btn:disabled {
     background-color: red !important;
     color: white !important;
@@ -60,48 +95,60 @@ button.cancel-btn:disabled {
     cursor: not-allowed;
 }
 
-/* Fixing button hover issue */
-button:not(:disabled):hover {
-    background-color: #218838;
-}
-
+/* Flash Messages */
 .flash-messages {
     padding: 10px;
     border-radius: 5px;
     margin: 10px 0;
 }
 
-.success { background-color: #d4edda; color: #155724; }
-.danger { background-color: #f8d7da; color: #721c24; }
-.info { background-color: #d1ecf1; color: #0c5460; }
+.success {
+    background-color: #d4edda;
+    color: #155724;
+}
 
+.danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+/* Tables */
 table {
     width: 90%;
     margin: 20px auto;
     border-collapse: collapse;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    color: #fff;
 }
 
 th, td {
     padding: 10px;
-    border: 1px solid black;
+    border: 1px solid rgba(255,255,255,0.3);
     text-align: center;
 }
 
 th {
-    background-color: #f2f2f2;
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Styling for links */
+/* Links */
 a {
     display: inline-block;
     margin: 15px;
     padding: 10px 20px;
-    background-color: #007bff;
+    background: linear-gradient(45deg, #ff416c, #ff4b2b);
     color: white;
     text-decoration: none;
-    border-radius: 5px;
+    border-radius: 10px;
+    transition: background 0.3s ease-in-out;
 }
 
 a:hover {
-    background-color: #0056b3;
+    background: linear-gradient(45deg, #ff4b2b, #ff416c);
 }
