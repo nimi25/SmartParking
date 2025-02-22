@@ -85,30 +85,30 @@ class ParkingSpot(db.Model):
 
 # ------------------- BOOKING MODEL -------------------
 class Booking(db.Model):
-    __tablename__ = 'booking'  # or 'bookings', if you prefer plural
+    __tablename__ = 'booking'
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     spot_id = db.Column(db.Integer, db.ForeignKey('parking_spot.id'), nullable=False)
-
     two_wheeler = db.Column(db.Integer, default=0)
     four_wheeler = db.Column(db.Integer, default=0)
     start_time = db.Column(db.Time, nullable=False)
-
-    active = db.Column(db.Boolean, default=True)  # Add this field
     end_time = db.Column(db.Time, nullable=False)
-
-    # Timestamp for booking creation
+    active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
-    # Relationship back to ParkingSpot and User
     spot = db.relationship('ParkingSpot', backref='booking')
     user = db.relationship('User', backref='booking')
 
-    def __init__(self, user_id, spot_id, two_wheeler, four_wheeler, start_time, end_time):
+    # Add this new field if it doesn't exist yet
+    booked_vehicle_type = db.Column(db.String(50))
+
+    def __init__(self, user_id, spot_id, two_wheeler, four_wheeler, start_time, active, end_time, booked_vehicle_type=None):
         self.user_id = user_id
         self.spot_id = spot_id
         self.two_wheeler = two_wheeler
         self.four_wheeler = four_wheeler
         self.start_time = start_time
         self.end_time = end_time
+        self.active = active
+        self.booked_vehicle_type = booked_vehicle_type
