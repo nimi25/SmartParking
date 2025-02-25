@@ -1,80 +1,317 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Add Parking Spot - Smart Parking</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="UTF-8">
+  <title>Add Parking Spot - Smart Parking</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <!-- Your Global Styles (like styles.css with the dark background) -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
-<style>
-    /* Body Background & Layout */
+  <style>
+    /* Body matches your Owner Dashboard style */
     body {
       font-family: 'Poppins', sans-serif;
-      background:
-        linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
-        url("{{ url_for('static', filename='images/bengaluru-map.jpg') }}") no-repeat center center fixed;
+      background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+                  url("{{ url_for('static', filename='images/bengaluru-map.jpg') }}") no-repeat center center fixed;
       background-size: cover;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
+      padding: 20px;
+      color: #fff; /* White text */
     }
-    </style>
+
+    /* Main container styled like your Owner Dashboard container */
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      color: #fff;
+      text-align: center;
+      max-width: 1200px;
+      width: 100%;
+      padding: 50px;
+      display: flex;
+      flex-direction: row;
+      gap: 40px; /* Increased gap for more space between form & map */
+      min-height: 80vh; /* Ensures a tall container for a big map */
+    }
+
+    /* Left column: form area */
+    .form-column {
+      flex: 0 0 35%; /* ~35% width for form, adjust if you like */
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    .form-column h2 {
+      margin-top: 0;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+      text-align: left; /* Label and input left-aligned */
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #fff;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group input[type="time"],
+    .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-size: 1rem;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      transition: all 0.3s ease-in-out;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      background: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+      outline: none;
+    }
+
+    /* Submit button style consistent with your gradient buttons */
+    button.btn {
+      background: linear-gradient(45deg, #ff416c, #ff4b2b);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+      box-shadow: 0 5px 15px rgba(255, 65, 108, 0.3);
+      font-size: 1rem;
+      width: 100%;
+      margin-top: 15px;
+    }
+    button.btn:hover {
+      background: linear-gradient(45deg, #ff4b2b, #ff416c);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255, 65, 108, 0.5);
+    }
+
+    /* Right column: big map area */
+    .map-column {
+      flex: 1; /* take the remaining space */
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    /* Large map inside the map-column */
+    #map {
+      width: 100%;
+      height: 700px; /* Increase the map height as requested */
+      border-radius: 20px;
+    }
+
+    /* Overlaid search box at top-left of the map */
+    .map-search {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 80%;
+      max-width: 400px;
+      z-index: 9999;
+    }
+    .map-search input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      outline: none;
+      font-size: 1rem;
+    }
+    .map-search input:focus {
+      background: rgba(0, 0, 0, 0.7);
+    }
+
+    /* Suggestions list below the input */
+    .suggestions {
+      position: absolute;
+      top: 44px; /* just below the input */
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 5px;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none; /* hidden by default */
+    }
+    .suggestion-item {
+      padding: 8px 10px;
+      cursor: pointer;
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .suggestion-item:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Link style */
+    a {
+      color: #fff;
+      text-decoration: none;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Add a Parking Spot</h2>
-        <form method="POST">
-            <div class="form-group">
-                <label for="location">Location</label>
-                <input type="text" id="location" name="location" class="form-control" required>
-            </div>
+  <div class="container">
+    <!-- LEFT: Form -->
+    <div class="form-column">
+      <h2>Add a Parking Spot</h2>
+      <form method="POST">
+        <div class="form-group">
+          <label for="location">Location (Search or Click on Map)</label>
+          <input type="text" id="location" name="location" required>
+        </div>
+        <!-- Hidden lat/lng fields -->
+        <input type="hidden" id="lat" name="lat" required>
+        <input type="hidden" id="lng" name="lng" required>
 
-            <div class="form-group">
-                <label for="price">Price (per hour)</label>
-                <input type="number" step="0.01" id="price" name="price" class="form-control" required>
-            </div>
+        <div class="form-group">
+          <label for="price">Price (per hour)</label>
+          <input type="number" step="0.01" id="price" name="price" required>
+        </div>
 
-            <div class="form-group">
-                <label for="availability">Availability</label>
-                <input type="checkbox" id="availability" name="availability" checked> Available
-            </div>
+        <!-- REMOVED Availability field as requested -->
 
-            <div class="form-group">
-                <label for="google_maps_link">Google Maps Link</label>
-                <input type="text" id="google_maps_link" name="google_maps_link" class="form-control">
-            </div>
+        <div class="form-group">
+          <label for="two_wheeler_spaces">2-Wheeler Spaces</label>
+          <input type="number" id="two_wheeler_spaces" name="two_wheeler_spaces" min="0" value="0">
+        </div>
 
-            <div class="form-group">
-                <label for="two_wheeler_spaces">2-Wheeler Spaces</label>
-                <input type="number" id="two_wheeler_spaces" name="two_wheeler_spaces" class="form-control" min="0" value="0">
-            </div>
+        <div class="form-group">
+          <label for="four_wheeler_spaces">4-Wheeler Spaces</label>
+          <input type="number" id="four_wheeler_spaces" name="four_wheeler_spaces" min="0" value="0">
+        </div>
 
-            <div class="form-group">
-                <label for="four_wheeler_spaces">4-Wheeler Spaces</label>
-                <input type="number" id="four_wheeler_spaces" name="four_wheeler_spaces" class="form-control" min="0" value="0">
-            </div>
+        <div class="form-group">
+          <label for="available_from">Available From</label>
+          <input type="time" id="available_from" name="available_from">
+        </div>
 
-            <div class="form-group">
-                <label for="available_from">Available From</label>
-                <input type="time" id="available_from" name="available_from" class="form-control">
-            </div>
+        <div class="form-group">
+          <label for="available_to">Available To</label>
+          <input type="time" id="available_to" name="available_to">
+        </div>
 
-            <div class="form-group">
-                <label for="available_to">Available To</label>
-                <input type="time" id="available_to" name="available_to" class="form-control">
-            </div>
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea id="description" name="description"></textarea>
+        </div>
 
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea id="description" name="description" class="form-control"></textarea>
-            </div>
-
-            <button type="submit" class="btn btn-success">Add Spot</button>
-        </form>
-
-        <!-- Optional: Back link to dashboard -->
-        <p><a href="{{ url_for('dashboard.dashboard') }}">Back to Dashboard</a></p>
+        <button type="submit" class="btn">Add Spot</button>
+      </form>
+      <br>
+      <p><a href="{{ url_for('dashboard.dashboard') }}">Back to Dashboard</a></p>
     </div>
+
+    <!-- RIGHT: Map -->
+    <div class="map-column">
+      <div class="map-search">
+        <input type="text" id="map-search-input" placeholder="Search location...">
+        <div id="suggestions" class="suggestions"></div>
+      </div>
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Leaflet map, centered on Bengaluru
+    var map = L.map('map').setView([12.9716, 77.5946], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Marker variable
+    var marker;
+
+    // On map click, drop a marker & fill lat/lng
+    map.on('click', function(e) {
+      var lat = e.latlng.lat;
+      var lng = e.latlng.lng;
+      setMarker(lat, lng);
+    });
+
+    function setMarker(lat, lng) {
+      if (marker) {
+        marker.setLatLng([lat, lng]);
+      } else {
+        marker = L.marker([lat, lng]).addTo(map);
+      }
+      document.getElementById('lat').value = lat;
+      document.getElementById('lng').value = lng;
+    }
+
+    // DOM elements for search & suggestions
+    var searchInput = document.getElementById('map-search-input');
+    var suggestionsEl = document.getElementById('suggestions');
+
+    // Listen for typing in the search box
+    searchInput.addEventListener('input', function() {
+      var query = searchInput.value.trim();
+      if (query.length < 3) {
+        suggestionsEl.innerHTML = "";
+        suggestionsEl.style.display = "none";
+        return;
+      }
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (!data || data.length === 0) {
+            suggestionsEl.innerHTML = "<div class='suggestion-item'>No results found</div>";
+            suggestionsEl.style.display = "block";
+            return;
+          }
+          // Show suggestions
+          suggestionsEl.innerHTML = "";
+          data.forEach(function(item) {
+            var div = document.createElement('div');
+            div.className = "suggestion-item";
+            div.textContent = item.display_name;
+            div.addEventListener('click', function() {
+              // Move map to selected place
+              var lat = parseFloat(item.lat);
+              var lon = parseFloat(item.lon);
+              map.setView([lat, lon], 15);
+              setMarker(lat, lon);
+
+              // Fill the location field with the display name
+              document.getElementById('location').value = item.display_name;
+              // Hide suggestions
+              suggestionsEl.innerHTML = "";
+              suggestionsEl.style.display = "none";
+            });
+            suggestionsEl.appendChild(div);
+          });
+          suggestionsEl.style.display = "block";
+        })
+        .catch(err => {
+          console.error(err);
+        });
+    });
+  </script>
 </body>
 </html>

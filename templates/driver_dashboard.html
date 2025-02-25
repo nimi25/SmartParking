@@ -5,246 +5,299 @@
 {% endblock %}
 
 {% block content %}
-  <!-- Link to Font Awesome for icons -->
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-        integrity="sha512-Fo3rlrZj/kTc7I4YWgW0E8S7zx1+Y8Y3vT94r3Z6YV1gHOb/A6z/9zsR5/sLbcX8FwHsw2cG6z1w0Oj5mwOW5w=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
-  <!-- Dashboard-specific styles -->
-  <style>
-    .container {
-  max-width: 1200px;
-  margin: 20px auto 0; /* <-- Added 40px top margin here */
-  padding: 20px;
-}
+<!-- Font Awesome for icons -->
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      integrity="sha512-Fo3rlrZj/kTc7I4YWgW0E8S7zx1+Y8Y3vT94r3Z6YV1gHOb/A6z/9zsR5/sLbcX8FwHsw2cG6z1w0Oj5mwOW5w=="
+      crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    .filter-bar {
-      display: none;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      background-color: #f9f9f9;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      margin-bottom: 70px;
-    }
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      margin-right: 15px;
-    }
-    .filter-group label {
-      font-weight: bold;
-      margin-bottom: 5px;
-      font-size: 0.9rem;
-    }
-    .filter-group input,
-    .filter-group select {
-      padding: 5px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 0.9rem;
-    }
-    .filter-toggle {
-      background-color: #007bff;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      margin-bottom: 10px;
-    }
-    .filter-apply {
-      background-color: #28a745;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .card-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
-    .card {
-      flex: 1 1 calc(33.33% - 20px);
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 15px;
-      box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
-      background-color: #fff;
-      position: relative;
-      animation: fadeIn 1s ease-in-out;
-    }
-    .card h3 {
-      margin-top: 0;
-    }
-    .card p {
-      margin: 8px 0;
-    }
-    .map-container iframe {
-      width: 100%;
-      height: 200px;
-      border: 0;
-    }
-    .book-btn {
-      background-color: #28a745;
-      color: #fff;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-top: 10px;
-      width: 100%;
-    }
-    .cancel-btn {
-      background-color: #dc3545 !important;
-      color: #fff !important;
-      border: none !important;
-      padding: 8px 12px !important;
-      border-radius: 4px !important;
-      cursor: pointer !important;
-      margin-top: 10px !important;
-      width: 100% !important;
-    }
-    .disabled-btn {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    /* Modal styles */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 100;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0,0,0,0.5);
-      animation: fadeIn 1s ease-in-out;
-    }
-    .modal-content {
-      /* Dark frosted glass */
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
+<style>
+  /* Overall page styling */
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+                url("{{ url_for('static', filename='images/bengaluru-map.jpg') }}") no-repeat center center fixed;
+    background-size: cover;
+    margin: 0;
+    padding: 20px;
+    color: #fff;
+  }
+  /* Main dashboard container: two columns */
+  .dashboard-container {
+    display: flex;
+    gap: 20px;
+    max-width: 1400px;
+    margin: 20px auto 0;
+  }
+  /* Left Column: Map (70%) */
+  .map-column {
+    flex: 7;
+    position: relative;
+  }
+  /* Right Column: Filters & Cards (30%) */
+  .cards-column {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    max-height: 80vh;
+  }
+  /* Map styling */
+  #map {
+    width: 100%;
+    height: 80vh;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 1;
+  }
+  /* Map search box with suggestions */
+  .map-search {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: 9999;
+  }
+  .map-search input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    font-size: 1rem;
+  }
+  .map-search input:focus {
+    background: rgba(0,0,0,0.7);
+    outline: none;
+  }
+  .suggestions {
+    position: absolute;
+    top: 44px;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.8);
+    border-radius: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+  }
+  .suggestion-item {
+    padding: 8px 10px;
+    cursor: pointer;
+    color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+  }
+  .suggestion-item:hover {
+    background: rgba(255,255,255,0.2);
+  }
+  /* Filter Bar (hidden by default) */
+  .filter-bar {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 10px 20px;
+    margin-bottom: 20px;
+    display: none;
+    gap: 10px;
+    align-items: center;
+  }
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+  }
+  .filter-group label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #fff;
+  }
+  /* Dark dropdown with white text */
+  .filter-group select {
+    padding: 5px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 4px;
+    background: rgba(0,0,0,0.8) !important;
+    color: #fff !important;
+    appearance: none;
+  }
+  .filter-group select option {
+    background: #000 !important;
+    color: #fff !important;
+  }
+  .filter-toggle {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 10px;
+  }
+  .filter-apply {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  /* Card styles */
+  .card {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 15px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+  }
+  .card.selected {
+    border: 2px solid #ff416c;
+  }
+  .card h3 {
+    margin: 0 0 10px;
+  }
+  /* Show available spaces on card */
+  .card p.space-info {
+    margin: 4px 0;
+  }
+  .book-btn {
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    width: 100%;
+    margin-top: 10px;
+    cursor: pointer;
+  }
+  /* Bottom Buttons Container for View My Bookings & Logout */
+  .bottom-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+  }
+  .bottom-buttons .btn {
+    flex: 1;
+    max-width: 200px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+  /* Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1500;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+  }
+  .modal-content {
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    width: 400px;
+    border-radius: 8px;
+    color: #fff;
+    position: relative;
+  }
+  .close {
+    color: #fff;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .modal-content .form-group {
+    text-align: left;
+    margin-bottom: 15px;
+  }
+  .modal-content .form-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #fff;
+  }
+  .modal-content input[type="number"],
+  .modal-content input[type="time"] {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+  }
+</style>
 
-      /* Layout & shape */
-      margin: 10% auto;
-      padding: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      width: 400px;
-      border-radius: 8px;
-      position: relative;
+<div class="dashboard-container">
+  <!-- Left Column: Map -->
+  <div class="map-column">
+    <div class="map-search">
+      <input type="text" id="mapSearchInput" placeholder="Search locality...">
+      <div id="suggestions" class="suggestions"></div>
+    </div>
+    <div id="map"></div>
+  </div>
 
-      /* Ensure text is visible */
-      color: #fff;
-    }
-
-    .modal-content .form-group label {
-      font-weight: bold;
-      display: block;
-      margin-bottom: 5px;
-      /* White text for labels */
-      color: #fff;
-    }
-
-    .modal-content input[type="number"],
-    .modal-content input[type="time"] {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 10px;
-      border-radius: 4px;
-      /* Subtle border so the field is visible */
-      border: 1px solid rgba(255, 255, 255, 0.3);
-
-      /* Slightly translucent white so text is visible */
-      background: rgba(255, 255, 255, 0.1);
-      color: #fff;
-
-      /* Optional: placeholder color */
-      caret-color: #fff; /* cursor color */
-    }
-
-    .close {
-      color: #fff; /* Make the 'X' white to stand out */
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    /* >>> Added these two rules to improve spacing <<< */
-    .container h2 {
-      margin-bottom: 20px;  /* Space below the heading */
-    }
-    .card-container {
-      margin-top: 20px;     /* Space above the cards */
-    }
-  </style>
-
-  <div class="container">
-
-    <div class="container">
-      <h2>Available Parking Spots</h2>
-      <button class="filter-toggle" onclick="toggleFilterRibbon()">
-        <i class="fas fa-filter"></i> Filters
-      </button>
-
-      <div id="filterRibbon" class="filter-bar">
-        <form method="GET" action="{{ url_for('dashboard.dashboard') }}">
-          <div class="filter-group">
-            <label for="location">Location</label>
-            <input type="text" id="location" name="location">
-          </div>
-
-          <div class="filter-group">
-            <label for="price">Price Range</label>
-            <input type="range" id="price" name="price" min="0" max="500" step="100" class="price-range">
-            <span id="priceDisplay">₹100</span>
-            </div>
-
-          <div class="filter-group">
-            <label for="time-slot">Time Slot</label>
-            <select id="time-slot" name="time-slot">
-              <option value="6-10">6:00 - 10:00 AM</option>
-              <option value="10-14">10:00 AM - 2:00 PM</option>
-              <option value="14-18">2:00 PM - 6:00 PM</option>
-              <option value="18-22">6:00 PM - 10:00 PM</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label for="vehicle-type">Vehicle Type</label>
-            <select id="vehicle-type" name="vehicle-type">
-              <option value="any">Any</option>
-              <option value="two-wheeler">Two-Wheeler</option>
-              <option value="four-wheeler">Four-Wheeler</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <button type="submit" class="filter-apply">Apply</button>
-          </div>
-        </form>
+  <!-- Right Column: Filters and Cards -->
+  <div class="cards-column">
+    <!-- Toggle button for filters -->
+    <button class="filter-toggle" onclick="toggleFilterRibbon()">
+      <i class="fas fa-filter"></i> Filters
+    </button>
+    <!-- Filter Bar (Hidden by default) -->
+    <div id="filterRibbon" class="filter-bar">
+      <div class="filter-group">
+        <label for="filterPrice">Price Range</label>
+        <select id="filterPrice" name="filterPrice">
+          <option value="all">All</option>
+          <option value="low">Low (₹0-100)</option>
+          <option value="mid">Mid (₹101-300)</option>
+          <option value="high">High (₹301+)</option>
+        </select>
       </div>
+      <div class="filter-group">
+        <label for="filterTime">Time Slot</label>
+        <select id="filterTime" name="filterTime">
+          <option value="all">All</option>
+          <option value="6-10">6:00 - 10:00 AM</option>
+          <option value="10-14">10:00 AM - 2:00 PM</option>
+          <option value="14-18">2:00 PM - 6:00 PM</option>
+          <option value="18-22">6:00 PM - 10:00 PM</option>
+        </select>
+      </div>
+      <button class="filter-apply" onclick="applyFilters()">Apply</button>
     </div>
 
-    <div class="card-container">
+    <!-- Cards List -->
+    <div id="cardsContainer">
       {% for spot in available_spots %}
-        <div class="card">
+        <div class="card" data-spot-id="{{ spot.id }}">
           <h3>{{ spot.location }}</h3>
           <p><strong>Price:</strong> ₹{{ spot.price }}</p>
-          {% if spot.two_wheeler_spaces == 0 and spot.four_wheeler_spaces == 0 %}
-            <p><strong>Status:</strong> <span style="color: red;">Booked Out</span></p>
-          {% else %}
-            <p><strong>Status:</strong> <span style="color: green;">Available</span></p>
-          {% endif %}
+          <p class="space-info"><strong>2-Wheeler Spaces:</strong> {{ spot.two_wheeler_spaces or 0 }}</p>
+          <p class="space-info"><strong>4-Wheeler Spaces:</strong> {{ spot.four_wheeler_spaces or 0 }}</p>
           <p><strong>Available Hours:</strong>
             {% if spot.available_from and spot.available_to %}
               {{ spot.available_from.strftime('%I:%M %p') }} - {{ spot.available_to.strftime('%I:%M %p') }}
@@ -252,156 +305,282 @@
               N/A
             {% endif %}
           </p>
-          {% if spot.google_maps_link %}
-            <div class="map-container">
-              <iframe src="{{ spot.google_maps_link }}" allowfullscreen="" loading="lazy"></iframe>
-            </div>
-          {% endif %}
-          {% if spot.two_wheeler_spaces == 0 and spot.four_wheeler_spaces == 0 %}
-            <p class="booked-out">Booked Out</p>
-          {% else %}
-            <p><strong>2-Wheeler Spaces:</strong> {{ spot.two_wheeler_spaces or 0 }}</p>
-            <p><strong>4-Wheeler Spaces:</strong> {{ spot.four_wheeler_spaces or 0 }}</p>
-          {% endif %}
-          <div class="button-container">
-            {% if spot.two_wheeler_spaces > 0 or spot.four_wheeler_spaces > 0 %}
-              <button type="button" class="book-btn"
-                      data-spot-id="{{ spot.id }}"
-                      data-available-from="{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}"
-                      data-available-to="{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}">
-                Book
-              </button>
-            {% else %}
-              <button class="book-btn disabled-btn" disabled>Booked Out</button>
-            {% endif %}
-          </div>
+          <button class="book-btn" data-spot-id="{{ spot.id }}"
+                  data-available-from="{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}"
+                  data-available-to="{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}">
+            Book
+          </button>
         </div>
       {% else %}
         <p>No available parking spots.</p>
       {% endfor %}
     </div>
+  </div>
+</div>
 
-    <!-- Booked Spots Section -->
-    <h2>Booked Spots</h2>
-    <div class="card-container">
+<!-- Bottom Buttons: View My Bookings & Logout -->
+<div class="bottom-buttons">
+  <button id="viewBookingsBtn" class="btn">View My Bookings</button>
+  <button id="logoutBtn" class="btn" onclick="window.location.href='{{ url_for('auth.logout') }}'">Logout</button>
+</div>
+
+<!-- Booking Modal -->
+<div id="bookingModal" class="modal">
+  <div class="modal-content">
+    <span id="bookingModalClose" class="close">&times;</span>
+    <h3>Book Your Spot</h3>
+    <form id="bookingForm" method="POST" action="">
+      <div class="form-group">
+        <label for="two_wheeler">2-Wheeler Spots:</label>
+        <input type="number" id="two_wheeler" name="two_wheeler" min="0" value="1" required>
+      </div>
+      <div class="form-group">
+        <label for="four_wheeler">4-Wheeler Spots:</label>
+        <input type="number" id="four_wheeler" name="four_wheeler" min="0" value="0" required>
+      </div>
+      <div class="form-group">
+        <label for="booking_start">Booking Start (HH:MM):</label>
+        <input type="time" id="booking_start" name="booking_start" required>
+      </div>
+      <div class="form-group">
+        <label for="booking_end">Booking End (HH:MM):</label>
+        <input type="time" id="booking_end" name="booking_end" required>
+      </div>
+      <button type="submit" class="btn">Confirm Booking</button>
+    </form>
+  </div>
+</div>
+
+<!-- My Bookings Modal -->
+<div id="bookingsModal" class="modal">
+  <div class="modal-content">
+    <span id="bookingsModalClose" class="close">&times;</span>
+    <h3>My Bookings</h3>
+    <div id="bookingsList">
       {% for booking in booked_spots %}
-        <div class="card">
-          <h3>{{ booking.spot.location }}</h3>
+        <div class="booking-card" style="margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">
+          <h4>{{ booking.spot.location }}</h4>
           <p><strong>Price:</strong> ₹{{ booking.spot.price }}</p>
           <p><strong>Booked 2-Wheeler Spots:</strong> {{ booking.two_wheeler }}</p>
           <p><strong>Booked 4-Wheeler Spots:</strong> {{ booking.four_wheeler }}</p>
-          <p><strong>Booking Time:</strong> {{ booking.start_time.strftime('%I:%M %p') }} - {{ booking.end_time.strftime('%I:%M %p') }}</p>
-          {% if booking.spot.google_maps_link %}
-            <div class="map-container">
-              <iframe src="{{ booking.spot.google_maps_link }}" allowfullscreen="" loading="lazy"></iframe>
-            </div>
-          {% endif %}
-          <form method="POST" action="{{ url_for('parking.cancel_booking', booking_id=booking.id) }}">
-            <button type="submit" class="cancel-btn">Cancel Booking</button>
-          </form>
+          <p><strong>Time:</strong> {{ booking.start_time.strftime('%I:%M %p') }} - {{ booking.end_time.strftime('%I:%M %p') }}</p>
+          <div class="booking-actions" style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="view-booking-btn btn" data-spot-id="{{ booking.spot.id }}">View on Map</button>
+            <form method="POST" action="{{ url_for('parking.cancel_booking', booking_id=booking.id) }}" onsubmit="return confirm('Are you sure you want to delete this booking?');" style="display: inline;">
+              <button type="submit" class="delete-booking-btn btn">Delete Booking</button>
+            </form>
+          </div>
         </div>
       {% else %}
-        <p>No booked spots.</p>
+        <p>No bookings found.</p>
       {% endfor %}
     </div>
-
-    <br>
-    <a href="{{ url_for('auth.logout') }}">Logout</a>
   </div>
+</div>
 
-  <!-- Booking Modal -->
-  <div id="bookingModal" class="modal">
-    <div class="modal-content">
-      <span id="modalClose" class="close">&times;</span>
-      <h3>Book Your Spot</h3>
-      <form id="bookingForm" method="POST" action="">
-        <div class="form-group">
-          <label for="two_wheeler">2-Wheeler Spots:</label>
-          <input type="number" id="two_wheeler" name="two_wheeler" min="0" value="1" required>
-        </div>
-        <div class="form-group">
-          <label for="four_wheeler">4-Wheeler Spots:</label>
-          <input type="number" id="four_wheeler" name="four_wheeler" min="0" value="0" required>
-        </div>
-        <div class="form-group">
-          <label for="booking_start">Booking Start (HH:MM):</label>
-          <input type="time" id="booking_start" name="booking_start" required>
-        </div>
-        <div class="form-group">
-          <label for="booking_end">Booking End (HH:MM):</label>
-          <input type="time" id="booking_end" name="booking_end" required>
-        </div>
-        <button type="submit" class="book-btn">Confirm Booking</button>
-      </form>
-    </div>
-  </div>
+<script>
+  // Initialize the map
+  var map = L.map('map').setView([12.9716, 77.5946], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
 
-  <script>
-    // Modal functionality for booking details popup and price slider update
-    document.addEventListener("DOMContentLoaded", function () {
-      var modal = document.getElementById("bookingModal");
-      var modalClose = document.getElementById("modalClose");
-      var bookingForm = document.getElementById("bookingForm");
+  // Create markers for available spots and prepare spotsData for filtering
+  var markers = {};
+  var spotsData = [
+    {% for spot in available_spots %}
+    {
+      id: "{{ spot.id }}",
+      price: parseFloat("{{ spot.price }}"),
+      from: "{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}",
+      to: "{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}",
+      marker: null,
+      cardEl: null
+    },
+    {% endfor %}
+  ];
 
-      // Attach click event to all book buttons that trigger the modal
-      var bookButtons = document.querySelectorAll(".book-btn");
-      bookButtons.forEach(function (button) {
-        if (button.hasAttribute("data-spot-id")) {
-          button.addEventListener("click", function (event) {
-            event.preventDefault();
-            var spotId = this.getAttribute("data-spot-id");
-            var availableFrom = this.getAttribute("data-available-from");
-            var availableTo = this.getAttribute("data-available-to");
+  {% for spot in available_spots %}
+    var marker = L.marker([{{ spot.lat }}, {{ spot.lng }}]).addTo(map)
+                  .bindPopup("<b>{{ spot.location }}</b><br>₹{{ spot.price }}");
+    markers["{{ spot.id }}"] = marker;
+  {% endfor %}
 
-            // Set the form action to book the specific spot
-            bookingForm.action = "/parking/book/" + spotId;
+  // Associate each spotData with its marker and card element
+  spotsData.forEach(function(spot) {
+    spot.marker = markers[spot.id];
+    var cardEl = document.querySelector('.card[data-spot-id="' + spot.id + '"]');
+    spot.cardEl = cardEl;
+  });
 
-            // Pre-fill the booking start and end times if available
-            if (availableFrom) {
-              document.getElementById("booking_start").value = availableFrom;
-            }
-            if (availableTo) {
-              document.getElementById("booking_end").value = availableTo;
-            }
-            modal.style.display = "block";
-          });
-        }
-      });
-
-      modalClose.onclick = function () {
-        modal.style.display = "none";
-      };
-
-      window.onclick = function (event) {
-        if (event.target == modal) {
-          modal.style.display = "none";
-        }
-      };
-
-      // Price slider dynamic display update
-      var priceSlider = document.getElementById("price");
-      var priceDisplay = document.getElementById("priceDisplay");
-
-      // Update display on page load in case slider has a preset value
-      if (priceSlider.value >= priceSlider.max) {
-        priceDisplay.innerText = "₹>" + priceSlider.max;
-      } else {
-        priceDisplay.innerText = "₹" + priceSlider.value;
-      }
-
-      priceSlider.addEventListener("input", function() {
-        if (this.value >= this.max) {
-          priceDisplay.innerText = "₹>" + this.max;
-        } else {
-          priceDisplay.innerText = "₹" + this.value;
-        }
-      });
-    });
-
-    // Toggle filter ribbon display
-    function toggleFilterRibbon() {
-      var filterRibbon = document.getElementById("filterRibbon");
-      filterRibbon.style.display = filterRibbon.style.display === "none" || filterRibbon.style.display === "" ? "flex" : "none";
+  // Map search with suggestions
+  var mapSearchInput = document.getElementById("mapSearchInput");
+  var suggestionsEl = document.getElementById("suggestions");
+  mapSearchInput.addEventListener("input", function() {
+    var query = this.value.trim();
+    if(query.length < 3) {
+      suggestionsEl.innerHTML = "";
+      suggestionsEl.style.display = "none";
+      return;
     }
-  </script>
+    fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(query))
+      .then(response => response.json())
+      .then(data => {
+         if(data && data.length > 0) {
+           suggestionsEl.innerHTML = "";
+           data.forEach(function(item) {
+             var div = document.createElement("div");
+             div.className = "suggestion-item";
+             div.textContent = item.display_name;
+             div.addEventListener("click", function() {
+               var lat = parseFloat(item.lat);
+               var lon = parseFloat(item.lon);
+               map.setView([lat, lon], 14);
+               suggestionsEl.innerHTML = "";
+               suggestionsEl.style.display = "none";
+             });
+             suggestionsEl.appendChild(div);
+           });
+           suggestionsEl.style.display = "block";
+         } else {
+           suggestionsEl.innerHTML = "<div class='suggestion-item'>No results found</div>";
+           suggestionsEl.style.display = "block";
+         }
+      });
+  });
+
+  // Card click functionality: highlight card and pan to marker
+  var cards = document.querySelectorAll(".cards-column .card");
+  cards.forEach(function(card) {
+    card.addEventListener("click", function() {
+      cards.forEach(function(c) { c.classList.remove("selected"); });
+      card.classList.add("selected");
+      var spotId = card.getAttribute("data-spot-id");
+      if(markers[spotId]) {
+         markers[spotId].openPopup();
+         map.panTo(markers[spotId].getLatLng());
+      }
+    });
+  });
+
+  // Booking Modal functionality
+  var bookingModal = document.getElementById("bookingModal");
+  var bookingModalClose = document.getElementById("bookingModalClose");
+  var bookingForm = document.getElementById("bookingForm");
+  var bookButtons = document.querySelectorAll(".book-btn[data-spot-id]");
+  bookButtons.forEach(function(button) {
+    button.addEventListener("click", function(e) {
+      e.stopPropagation();
+      var spotId = this.getAttribute("data-spot-id");
+      var availableFrom = this.getAttribute("data-available-from");
+      var availableTo = this.getAttribute("data-available-to");
+      bookingForm.action = "/parking/book/" + spotId;
+      if(availableFrom) {
+         document.getElementById("booking_start").value = availableFrom;
+      }
+      if(availableTo) {
+         document.getElementById("booking_end").value = availableTo;
+      }
+      bookingModal.style.display = "block";
+    });
+  });
+  bookingModalClose.onclick = function() {
+    bookingModal.style.display = "none";
+  };
+  window.onclick = function(event) {
+    if(event.target == bookingModal) {
+      bookingModal.style.display = "none";
+    }
+  };
+
+  // Toggle filter bar
+  function toggleFilterRibbon() {
+    var filterRibbon = document.getElementById("filterRibbon");
+    if(filterRibbon.style.display === "none" || filterRibbon.style.display === "") {
+      filterRibbon.style.display = "flex";
+    } else {
+      filterRibbon.style.display = "none";
+    }
+  }
+  window.toggleFilterRibbon = toggleFilterRibbon;
+
+  // Filter logic: filter spots based on price and time
+  function applyFilters() {
+    var priceFilter = document.getElementById("filterPrice").value;
+    var timeFilter = document.getElementById("filterTime").value;
+    spotsData.forEach(function(spot) {
+      var meetsPrice = checkPrice(spot.price, priceFilter);
+      var meetsTime  = checkTime(spot.from, spot.to, timeFilter);
+      if(meetsPrice && meetsTime) {
+        showSpot(spot);
+      } else {
+        hideSpot(spot);
+      }
+    });
+  }
+  window.applyFilters = applyFilters;
+
+  function checkPrice(price, filter) {
+    if(filter === "all") return true;
+    if(filter === "low") return (price <= 100);
+    if(filter === "mid") return (price >= 101 && price <= 300);
+    if(filter === "high") return (price >= 301);
+    return true;
+  }
+
+  function checkTime(fromStr, toStr, filter) {
+    if(filter === "all") return true;
+    var range = filter.split("-");
+    var filterStart = parseInt(range[0]);
+    var filterEnd = parseInt(range[1]);
+    if(!fromStr || !toStr) return true;
+    var fromH = parseInt(fromStr.split(":")[0]);
+    var toH = parseInt(toStr.split(":")[0]);
+    return (fromH <= filterStart) && (toH >= filterEnd);
+  }
+
+  function showSpot(spot) {
+    if(spot.cardEl) spot.cardEl.style.display = "";
+    if(!map.hasLayer(spot.marker)) {
+      spot.marker.addTo(map);
+    }
+  }
+
+  function hideSpot(spot) {
+    if(spot.cardEl) spot.cardEl.style.display = "none";
+    if(map.hasLayer(spot.marker)) {
+      map.removeLayer(spot.marker);
+    }
+  }
+
+  // My Bookings Modal functionality
+  var viewBookingsBtn = document.getElementById("viewBookingsBtn");
+  var bookingsModal = document.getElementById("bookingsModal");
+  var bookingsModalClose = document.getElementById("bookingsModalClose");
+  viewBookingsBtn.addEventListener("click", function() {
+    bookingsModal.style.display = "block";
+  });
+  bookingsModalClose.onclick = function() {
+    bookingsModal.style.display = "none";
+  };
+  window.addEventListener("click", function(event) {
+    if(event.target == bookingsModal) {
+      bookingsModal.style.display = "none";
+    }
+  });
+
+  // "View on Map" functionality in My Bookings modal
+  var viewBookingButtons = document.querySelectorAll(".view-booking-btn");
+  viewBookingButtons.forEach(function(button) {
+    button.addEventListener("click", function(e) {
+      e.stopPropagation();
+      var spotId = this.getAttribute("data-spot-id");
+      if(markers[spotId]) {
+         markers[spotId].openPopup();
+         map.panTo(markers[spotId].getLatLng());
+      }
+      bookingsModal.style.display = "none";
+    });
+  });
+</script>
 {% endblock %}

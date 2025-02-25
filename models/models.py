@@ -44,7 +44,8 @@ class ParkingSpot(db.Model):
     location = db.Column(db.String(200), nullable=False)
     price = db.Column(db.Float, nullable=False)
     availability = db.Column(db.Boolean, default=True)
-    google_maps_link = db.Column(db.String(500))
+    lat = db.Column(db.Float, nullable=False)
+    lng = db.Column(db.Float, nullable=False)
     two_wheeler_spaces = db.Column(db.Integer, default=0)
     four_wheeler_spaces = db.Column(db.Integer, default=0)
     description = db.Column(db.Text)
@@ -65,7 +66,8 @@ class ParkingSpot(db.Model):
             price,
             availability,
             owner_id,
-            google_maps_link=None,
+            lat,
+            lng,
             two_wheeler_spaces=0,
             four_wheeler_spaces=0,
             description=None,
@@ -76,7 +78,8 @@ class ParkingSpot(db.Model):
         self.price = price
         self.availability = availability
         self.owner_id = owner_id
-        self.google_maps_link = google_maps_link
+        self.lat = lat
+        self.lng = lng
         self.two_wheeler_spaces = two_wheeler_spaces
         self.four_wheeler_spaces = four_wheeler_spaces
         self.description = description
@@ -96,12 +99,10 @@ class Booking(db.Model):
     end_time = db.Column(db.Time, nullable=False)
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    booked_vehicle_type = db.Column(db.String(50))
 
     spot = db.relationship('ParkingSpot', backref='booking')
     user = db.relationship('User', backref='booking')
-
-    # Add this new field if it doesn't exist yet
-    booked_vehicle_type = db.Column(db.String(50))
 
     def __init__(self, user_id, spot_id, two_wheeler, four_wheeler, start_time, active, end_time, booked_vehicle_type=None):
         self.user_id = user_id

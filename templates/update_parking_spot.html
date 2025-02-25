@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <title>Update Parking Spot</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-
-<style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <style>
     /* Body Background & Layout */
     body {
       font-family: 'Poppins', sans-serif;
@@ -20,61 +21,114 @@
       height: 100vh;
       margin: 0;
     }
-    </style>
-
+    #map {
+      height: 300px;
+      width: 100%;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
     <h2>Update Parking Spot</h2>
     <form method="POST" action="{{ url_for('parking.update_parking_spot', spot_id=spot.id) }}">
       <div class="form-group">
-        <label for="location">Location</label>
+        <label for="location">Location (Search or Click on Map)</label>
         <input type="text" id="location" name="location" class="form-control" value="{{ spot.location }}" required>
       </div>
+
+      <!-- Map container -->
+      <div id="map"></div>
+      <!-- Hidden fields for latitude and longitude -->
+      <input type="hidden" id="lat" name="lat" value="{{ spot.lat }}">
+      <input type="hidden" id="lng" name="lng" value="{{ spot.lng }}">
 
       <div class="form-group">
         <label for="price">Price (per hour)</label>
         <input type="number" step="0.01" id="price" name="price" class="form-control" value="{{ spot.price }}" required>
       </div>
-
       <div class="form-group">
         <label for="availability">Availability</label>
         <input type="checkbox" id="availability" name="availability" {% if spot.availability %}checked{% endif %}> Available
       </div>
-
-      <div class="form-group">
-        <label for="google_maps_link">Google Maps Link</label>
-        <input type="text" id="google_maps_link" name="google_maps_link" class="form-control" value="{{ spot.google_maps_link }}">
-      </div>
-
       <div class="form-group">
         <label for="two_wheeler_spaces">2-Wheeler Spaces</label>
         <input type="number" id="two_wheeler_spaces" name="two_wheeler_spaces" class="form-control" value="{{ spot.two_wheeler_spaces or 0 }}">
       </div>
-
       <div class="form-group">
         <label for="four_wheeler_spaces">4-Wheeler Spaces</label>
         <input type="number" id="four_wheeler_spaces" name="four_wheeler_spaces" class="form-control" value="{{ spot.four_wheeler_spaces or 0 }}">
       </div>
-
       <div class="form-group">
         <label for="available_from">Available From</label>
         <input type="time" id="available_from" name="available_from" class="form-control" value="{{ spot.available_from.strftime('%H:%M') if spot.available_from }}">
       </div>
-
       <div class="form-group">
         <label for="available_to">Available To</label>
         <input type="time" id="available_to" name="available_to" class="form-control" value="{{ spot.available_to.strftime('%H:%M') if spot.available_to }}">
       </div>
-
       <div class="form-group">
         <label for="description">Description</label>
         <textarea id="description" name="description" class="form-control">{{ spot.description }}</textarea>
       </div>
-
       <button type="submit" class="btn btn-primary">Update Spot</button>
     </form>
     <p><a href="{{ url_for('dashboard.dashboard') }}">Back to Dashboard</a></p>
   </div>
+  <script>
+    // Set initial coordinates: if spot coordinates exist, use them; otherwise default to Bengaluru.
+    var initialLat = {{ spot.lat if spot.lat is defined else 12.9716 }};
+    var initialLng = {{ spot.lng if spot.lng is defined else 77.5946 }};
+    var initialZoom = {{ 15 if spot.lat is defined and spot.lng is defined else 12 }};
+
+    // Initialize the Leaflet map
+    var map = L.map('map').setView([initialLat, initialLng], initialZoom);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // If initial coordinates exist, place a marker on the map.
+    var marker;
+    if ({{ 'true' if spot.lat is defined and spot.lng is defined else 'false' }}) {
+      marker = L.marker([initialLat, initialLng]).addTo(map);
+    }
+
+    // On map click, update the marker position and hidden fields.
+    map.on('click', function(e) {
+      var lat = e.latlng.lat;
+      var lng = e.latlng.lng;
+      if (marker) {
+        marker.setLatLng([lat, lng]);
+      } else {
+        marker = L.marker([lat, lng]).addTo(map);
+      }
+      document.getElementById('lat').value = lat;
+      document.getElementById('lng').value = lng;
+    });
+
+    // Search for address using Nominatim and update the map view and marker accordingly.
+    function searchAddress() {
+      var address = document.getElementById('location').value;
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.length > 0) {
+            var lat = data[0].lat;
+            var lng = data[0].lon;
+            map.setView([lat, lng], 15);
+            if (marker) {
+              marker.setLatLng([lat, lng]);
+            } else {
+              marker = L.marker([lat, lng]).addTo(map);
+            }
+            document.getElementById('lat').value = lat;
+            document.getElementById('lng').value = lng;
+          } else {
+            alert('Address not found');
+          }
+        });
+    }
+    document.getElementById('location').addEventListener('change', searchAddress);
+  </script>
 </body>
 </html>

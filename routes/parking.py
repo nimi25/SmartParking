@@ -6,6 +6,7 @@ import re
 
 parking_bp = Blueprint('parking', __name__)
 
+
 @parking_bp.route('/add', methods=['GET', 'POST'])
 @login_required
 def add_parking_spot():
@@ -19,18 +20,22 @@ def add_parking_spot():
         except ValueError:
             flash("Price must be a number.", "danger")
             return redirect(url_for('parking.add_parking_spot'))
-        availability = 'availability' in request.form
-        google_maps_link = request.form.get('google_maps_link', '')
-        if google_maps_link.strip().startswith("<iframe"):
-            match = re.search(r'src="([^"]+)"', google_maps_link)
-            if match:
-                google_maps_link = match.group(1)
+
+        # Read latitude and longitude from hidden fields
+        try:
+            lat = float(request.form['lat'])
+            lng = float(request.form['lng'])
+        except (ValueError, KeyError):
+            flash("Could not determine location coordinates.", "danger")
+            return redirect(url_for('parking.add_parking_spot'))
+
         try:
             two_wheeler_spaces = int(request.form.get('two_wheeler_spaces', 0))
             four_wheeler_spaces = int(request.form.get('four_wheeler_spaces', 0))
         except ValueError:
             flash("Vehicle space counts must be integers.", "danger")
             return redirect(url_for('parking.add_parking_spot'))
+
         description = request.form.get('description', '')
         available_from = None
         available_to = None
@@ -44,12 +49,15 @@ def add_parking_spot():
         except ValueError:
             flash("Invalid time format. Use HH:MM.", "danger")
             return redirect(url_for('parking.add_parking_spot'))
+
+        # NEW: Always set availability to True so the spot is visible to drivers
         new_spot = ParkingSpot(
             location=location,
             price=price,
-            availability=availability,
+            lat=lat,
+            lng=lng,
             owner_id=current_user.id,
-            google_maps_link=google_maps_link,
+            availability=True,
             two_wheeler_spaces=two_wheeler_spaces,
             four_wheeler_spaces=four_wheeler_spaces,
             description=description,
@@ -80,19 +88,22 @@ def update_parking_spot(spot_id):
         except (ValueError, TypeError):
             flash("Invalid price value.", "danger")
             return redirect(url_for('parking.update_parking_spot', spot_id=spot_id))
-        spot.availability = 'availability' in request.form
-        google_maps_link = request.form.get('google_maps_link', spot.google_maps_link)
-        if google_maps_link.strip().startswith("<iframe"):
-            match = re.search(r'src="([^"]+)"', google_maps_link)
-            if match:
-                google_maps_link = match.group(1)
-        spot.google_maps_link = google_maps_link
+
+        # Update lat and lng from hidden fields
+        try:
+            spot.lat = float(request.form['lat'])
+            spot.lng = float(request.form['lng'])
+        except (ValueError, KeyError):
+            flash("Invalid location coordinates.", "danger")
+            return redirect(url_for('parking.update_parking_spot', spot_id=spot_id))
+
         try:
             spot.two_wheeler_spaces = int(request.form.get('two_wheeler_spaces', spot.two_wheeler_spaces or 0))
             spot.four_wheeler_spaces = int(request.form.get('four_wheeler_spaces', spot.four_wheeler_spaces or 0))
         except ValueError:
             flash("Vehicle space counts must be integers.", "danger")
             return redirect(url_for('parking.update_parking_spot', spot_id=spot_id))
+
         spot.description = request.form.get('description', spot.description)
         available_from_str = request.form.get('available_from', '')
         available_to_str = request.form.get('available_to', '')
@@ -104,6 +115,8 @@ def update_parking_spot(spot_id):
         except ValueError:
             flash("Invalid time format. Please use HH:MM.", "danger")
             return redirect(url_for('parking.update_parking_spot', spot_id=spot_id))
+
+        # Do not change availability; leave it as is.
         db.session.commit()
         flash("Parking spot updated successfully!", "success")
         return redirect(url_for('dashboard.dashboard'))
@@ -180,7 +193,7 @@ def book_spot(spot_id):
         spot_id=spot_id,
         two_wheeler=two_wheeler,
         four_wheeler=four_wheeler,
-        booked_vehicle_type=booked_vehicle_type,  # <-- Set this!
+        booked_vehicle_type=booked_vehicle_type,
         start_time=booking_start,
         end_time=booking_end,
         active=True
