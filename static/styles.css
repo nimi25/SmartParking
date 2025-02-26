@@ -211,3 +211,45 @@ input:focus, select:focus, textarea:focus {
 .text-center {
   text-align: center;
 }
+
+
+/* ADMIN PAGE */
+body {
+  background: url('/static/bengaluru_map.jpg') no-repeat center center fixed;
+  background-size: cover;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  background: rgba(0, 0, 0, 0.8);
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(255, 0, 0, 0.5);
+  max-width: 400px;
+  text-align: center;
+}
+
+h1 {
+  color: white;
+  font-size: 24px;
+}
+
+.button {
+  background: #b22222; /* Darker red */
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  width: 100%;
+  margin-top: 10px;
+  font-size: 16px;
+  transition: 0.3s;
+}
+
+.button:hover {
+  background: #8b0000; /* Even darker red */
+}
