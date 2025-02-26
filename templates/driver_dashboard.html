@@ -15,6 +15,10 @@
       integrity="sha512-Fo3rlrZj/kTc7I4YWgW0E8S7zx1+Y8Y3vT94r3Z6YV1gHOb/A6z/9zsR5/sLbcX8FwHsw2cG6z1w0Oj5mwOW5w=="
       crossorigin="anonymous" referrerpolicy="no-referrer" />
 
+<!-- Leaflet Routing Machine CDN Links -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
 <style>
   /* Overall page styling */
   body {
@@ -248,36 +252,32 @@
     background: rgba(255,255,255,0.1);
     color: #fff;
   }
+  /* Booking Actions Buttons */
+  .booking-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .booking-actions > button.btn,
+  .booking-actions > form {
+    flex: 1;
+    margin: 0;
+  }
+  .booking-actions > form button.btn {
+    width: 100%;
+  }
+  .booking-actions .btn {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    text-align: center;
+    cursor: pointer;
+  }
 
-  /* 1. Make the parent .booking-actions a flex container */
-.booking-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px; /* same as you have now */
-}
 
-/* 2. Force each direct child (button or form) to share equal width */
-.booking-actions > button.btn,
-.booking-actions > form {
-  flex: 1;
-  margin: 0;
-}
 
-/* 3. Ensure the button inside the form also stretches fully */
-.booking-actions > form button.btn {
-  width: 100%;
-}
-
-/* 4. Give all .booking-actions .btn a consistent red style */
-.booking-actions .btn {
-  background-color: #dc3545 !important; /* red */
-  color: #fff !important;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  text-align: center;
-  cursor: pointer;
-}
 
 
 </style>
@@ -325,7 +325,7 @@
     <!-- Cards List -->
     <div id="cardsContainer">
       {% for spot in available_spots %}
-        <div class="card" data-spot-id="{{ spot.id }}">
+        <div class="card" data-spot-id="{{ spot.id }}" data-lat="{{ spot.lat }}" data-lng="{{ spot.lng }}">
           <h3>{{ spot.location }}</h3>
           <p><strong>Price:</strong> ₹{{ spot.price }}</p>
           <p class="space-info"><strong>2-Wheeler Spaces:</strong> {{ spot.two_wheeler_spaces or 0 }}</p>
@@ -350,7 +350,7 @@
   </div>
 </div>
 
-<!-- Bottom Buttons: View My Bookings & Logout -->
+<!-- Bottom Buttons: View My Bookings & Logout (Placed below the dashboard container) -->
 <div class="bottom-buttons">
   <button id="viewBookingsBtn" class="btn">View My Bookings</button>
   <button id="logoutBtn" class="btn" onclick="window.location.href='{{ url_for('auth.logout') }}'">Logout</button>
@@ -405,11 +405,14 @@
                style="display: flex;
                       gap: 10px;
                       margin-top: 10px;">
-
-            <!-- 1. View on Map -->
-            <button class="view-booking-btn btn" data-spot-id="{{ booking.spot.id }}">
-              View on Map
+            <!-- New: View Directions -->
+            <button class="view-directions-btn btn"
+                    data-spot-id="{{ booking.spot.id }}"
+                    data-lat="{{ booking.spot.lat }}"
+                    data-lng="{{ booking.spot.lng }}">
+              View Directions
             </button>
+
 
             <!-- 2. Proceed to Payment -->
             <form method="GET" action="{{ url_for('payment.process_payment') }}" style="display: inline;">
@@ -420,17 +423,15 @@
                 Proceed to Payment
               </button>
             </form>
-
             <!-- 3. Cancel Booking -->
-<form method="POST"
-      action="{{ url_for('parking.cancel_booking', booking_id=booking.id) }}"
-      onsubmit="return confirm('Are you sure you want to delete this booking?');"
-      style="display: inline;">
-  <button type="submit" class="delete-booking-btn btn">
-    Delete Booking
-  </button>
-</form>
-
+            <form method="POST"
+                  action="{{ url_for('parking.cancel_booking', booking_id=booking.id) }}"
+                  onsubmit="return confirm('Are you sure you want to delete this booking?');"
+                  style="display: inline;">
+              <button type="submit" class="delete-booking-btn btn">
+                Delete Booking
+              </button>
+            </form>
           </div>
         </div>
       {% else %}
@@ -439,7 +440,6 @@
     </div>
   </div>
 </div>
-
 
 <script>
   // Initialize the map
@@ -510,20 +510,6 @@
            suggestionsEl.style.display = "block";
          }
       });
-  });
-
-  // Card click functionality: highlight card and pan to marker
-  var cards = document.querySelectorAll(".cards-column .card");
-  cards.forEach(function(card) {
-    card.addEventListener("click", function() {
-      cards.forEach(function(c) { c.classList.remove("selected"); });
-      card.classList.add("selected");
-      var spotId = card.getAttribute("data-spot-id");
-      if(markers[spotId]) {
-         markers[spotId].openPopup();
-         map.panTo(markers[spotId].getLatLng());
-      }
-    });
   });
 
   // Booking Modal functionality
@@ -616,6 +602,22 @@
     }
   }
 
+  // Detect the user's location and add a marker
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      var userLat = position.coords.latitude;
+      var userLng = position.coords.longitude;
+      console.log("User location:", userLat, userLng);
+      L.marker([userLat, userLng]).addTo(map)
+        .bindPopup("You are here").openPopup();
+    }, function(error) {
+      console.error("Error detecting location:", error);
+      alert("Could not determine your current location.");
+    });
+  } else {
+    alert("Geolocation is not supported by your browser.");
+  }
+
   // My Bookings Modal functionality
   var viewBookingsBtn = document.getElementById("viewBookingsBtn");
   var bookingsModal = document.getElementById("bookingsModal");
@@ -632,17 +634,62 @@
     }
   });
 
-  // "View on Map" functionality in My Bookings modal
-  var viewBookingButtons = document.querySelectorAll(".view-booking-btn");
-  viewBookingButtons.forEach(function(button) {
-    button.addEventListener("click", function(e) {
-      e.stopPropagation();
-      var spotId = this.getAttribute("data-spot-id");
-      if(markers[spotId]) {
-         markers[spotId].openPopup();
-         map.panTo(markers[spotId].getLatLng());
+  // "View Directions" functionality in My Bookings modal
+var viewDirectionsButtons = document.querySelectorAll(".view-directions-btn");
+viewDirectionsButtons.forEach(function(button) {
+  button.addEventListener("click", function(e) {
+    e.stopPropagation();
+    var destLat = parseFloat(this.getAttribute("data-lat"));
+    var destLng = parseFloat(this.getAttribute("data-lng"));
+    routeToSpot(destLat, destLng);
+    bookingsModal.style.display = "none";
+  });
+});
+
+
+  // Helper function: route from user's location to a given spot (lat, lng)
+  function routeToSpot(destLat, destLng) {
+    if (!('geolocation' in navigator)) {
+      alert("Geolocation not supported by your browser.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      function(position) {
+        const userLat = position.coords.latitude;
+        const userLng = position.coords.longitude;
+        L.Routing.control({
+          waypoints: [
+            L.latLng(userLat, userLng),
+            L.latLng(destLat, destLng)
+          ],
+          router: new L.Routing.OSRMv1({
+            serviceUrl: 'https://router.project-osrm.org/route/v1'
+          }),
+          routeWhileDragging: true,
+          showAlternatives: true
+        }).addTo(map);
+      },
+      function(error) {
+        console.error("Error detecting location:", error);
+        alert("Could not determine your current location.");
       }
-      bookingsModal.style.display = "none";
+    );
+  }
+
+  // Card click functionality: highlight card, pan to marker, and route
+  var cards = document.querySelectorAll(".cards-column .card");
+  cards.forEach(function(card) {
+    card.addEventListener("click", function() {
+      cards.forEach(function(c) { c.classList.remove("selected"); });
+      card.classList.add("selected");
+      var spotId = card.getAttribute("data-spot-id");
+      if (markers[spotId]) {
+        markers[spotId].openPopup();
+        map.panTo(markers[spotId].getLatLng());
+      }
+      var lat = parseFloat(card.getAttribute("data-lat"));
+      var lng = parseFloat(card.getAttribute("data-lng"));
+      routeToSpot(lat, lng);
     });
   });
 </script>

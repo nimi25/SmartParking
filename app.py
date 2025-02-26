@@ -35,7 +35,7 @@ from routes.payment import payment_bp
 app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
 app.register_blueprint(parking_bp, url_prefix="/parking")
-app.register_blueprint(payment_bp, url_prefix='/payment')
+app.register_blueprint(payment_bp, url_prefix="/payment")
 
 # Root route: Redirect to the login page
 @app.route('/')

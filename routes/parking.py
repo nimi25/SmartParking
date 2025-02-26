@@ -1,11 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_login import login_required, current_user
 from models import db, ParkingSpot, Booking
 from datetime import datetime
 import re
+import requests  # NEW: For making OSRM API requests
 
 parking_bp = Blueprint('parking', __name__)
-
 
 @parking_bp.route('/add', methods=['GET', 'POST'])
 @login_required
@@ -129,13 +129,25 @@ def delete_parking_spot(spot_id):
     if session.get('role') != 'owner':
         flash("Unauthorized access!", "danger")
         return redirect(url_for('dashboard.dashboard'))
+
     spot = ParkingSpot.query.get_or_404(spot_id)
     if spot.owner_id != current_user.id:
         flash("You cannot delete a spot you do not own.", "danger")
         return redirect(url_for('dashboard.dashboard'))
-    db.session.delete(spot)
-    db.session.commit()
-    flash("Parking spot deleted successfully!", "success")
+
+    active_bookings = [b for b in spot.booking if b.active]
+    if active_bookings:
+        flash("Cannot delete this spot as there is an active booking.", "danger")
+        return redirect(url_for('dashboard.dashboard'))
+
+    try:
+        db.session.delete(spot)
+        db.session.commit()
+        flash("Parking spot deleted successfully!", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash("Error deleting spot: " + str(e), "danger")
+
     return redirect(url_for('dashboard.dashboard'))
 
 
@@ -222,3 +234,31 @@ def cancel_booking(booking_id):
     db.session.commit()
     flash("Booking cancelled.", "success")
     return redirect(url_for('dashboard.dashboard'))
+
+
+# NEW: Route to fetch directions from driver's location to a parking spot using OSRM
+@parking_bp.route('/direction/<int:spot_id>', methods=['GET'])
+@login_required
+def get_directions(spot_id):
+    """
+    Expects query parameters 'lat' and 'lng' representing the driver's current location.
+    Returns JSON containing the route details from OSRM.
+    """
+    spot = ParkingSpot.query.get_or_404(spot_id)
+    driver_lat = request.args.get('lat', type=float)
+    driver_lng = request.args.get('lng', type=float)
+    if driver_lat is None or driver_lng is None:
+        return jsonify({"error": "Driver location (lat, lng) is required"}), 400
+
+    # Build OSRM API URL
+    osrm_url = (
+        f"https://router.project-osrm.org/route/v1/driving/"
+        f"{driver_lng},{driver_lat};{spot.lng},{spot.lat}"
+        f"?overview=full&geometries=geojson"
+    )
+    response = requests.get(osrm_url)
+    if response.status_code != 200:
+        return jsonify({"error": "Failed to fetch route from OSRM"}), 500
+
+    data = response.json()
+    return jsonify(data)
