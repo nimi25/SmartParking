@@ -6,14 +6,14 @@ from datetime import time
 app.app_context().push()
 
 # Create (or get) the owner with email "smpc2004@gmail.com"
-owner_email = "smpc2004@gmail.com"
+owner_email = "nimisha123@gmail.com"
 owner = User.query.filter_by(email=owner_email).first()
 if not owner:
-    owner = User(username="zidxan", email=owner_email, role="owner")
-    owner.set_password("12345")
+    owner = User(username="nimi", email=owner_email, role="owner")
+    owner.set_password("nimi")
     db.session.add(owner)
     db.session.commit()
-    print("Owner created: zidxan (", owner_email, ")")
+    print("Owner created: nimi (", owner_email, ")")
 else:
     print("Owner already exists:", owner_email)
 

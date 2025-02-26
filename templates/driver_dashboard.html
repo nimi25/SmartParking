@@ -248,6 +248,38 @@
     background: rgba(255,255,255,0.1);
     color: #fff;
   }
+
+  /* 1. Make the parent .booking-actions a flex container */
+.booking-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px; /* same as you have now */
+}
+
+/* 2. Force each direct child (button or form) to share equal width */
+.booking-actions > button.btn,
+.booking-actions > form {
+  flex: 1;
+  margin: 0;
+}
+
+/* 3. Ensure the button inside the form also stretches fully */
+.booking-actions > form button.btn {
+  width: 100%;
+}
+
+/* 4. Give all .booking-actions .btn a consistent red style */
+.booking-actions .btn {
+  background-color: #dc3545 !important; /* red */
+  color: #fff !important;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+
 </style>
 
 <div class="dashboard-container">
@@ -358,17 +390,47 @@
     <h3>My Bookings</h3>
     <div id="bookingsList">
       {% for booking in booked_spots %}
-        <div class="booking-card" style="margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">
+        <div class="booking-card"
+             style="margin-bottom: 10px;
+                    border-bottom: 1px solid rgba(255,255,255,0.2);
+                    padding-bottom: 10px;">
           <h4>{{ booking.spot.location }}</h4>
           <p><strong>Price:</strong> ₹{{ booking.spot.price }}</p>
           <p><strong>Booked 2-Wheeler Spots:</strong> {{ booking.two_wheeler }}</p>
           <p><strong>Booked 4-Wheeler Spots:</strong> {{ booking.four_wheeler }}</p>
-          <p><strong>Time:</strong> {{ booking.start_time.strftime('%I:%M %p') }} - {{ booking.end_time.strftime('%I:%M %p') }}</p>
-          <div class="booking-actions" style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="view-booking-btn btn" data-spot-id="{{ booking.spot.id }}">View on Map</button>
-            <form method="POST" action="{{ url_for('parking.cancel_booking', booking_id=booking.id) }}" onsubmit="return confirm('Are you sure you want to delete this booking?');" style="display: inline;">
-              <button type="submit" class="delete-booking-btn btn">Delete Booking</button>
+          <p><strong>Time:</strong>
+            {{ booking.start_time.strftime('%I:%M %p') }} - {{ booking.end_time.strftime('%I:%M %p') }}
+          </p>
+          <div class="booking-actions"
+               style="display: flex;
+                      gap: 10px;
+                      margin-top: 10px;">
+
+            <!-- 1. View on Map -->
+            <button class="view-booking-btn btn" data-spot-id="{{ booking.spot.id }}">
+              View on Map
+            </button>
+
+            <!-- 2. Proceed to Payment -->
+            <form method="GET" action="{{ url_for('payment.process_payment') }}" style="display: inline;">
+              <input type="hidden" name="booking_id" value="{{ booking.id }}">
+              <input type="hidden" name="amount" value="{{ booking.spot.price }}">
+              <button type="submit" class="btn"
+                      style="background-color: #ff9800; color: white;">
+                Proceed to Payment
+              </button>
             </form>
+
+            <!-- 3. Cancel Booking -->
+<form method="POST"
+      action="{{ url_for('parking.cancel_booking', booking_id=booking.id) }}"
+      onsubmit="return confirm('Are you sure you want to delete this booking?');"
+      style="display: inline;">
+  <button type="submit" class="delete-booking-btn btn">
+    Delete Booking
+  </button>
+</form>
+
           </div>
         </div>
       {% else %}
@@ -377,6 +439,7 @@
     </div>
   </div>
 </div>
+
 
 <script>
   // Initialize the map
