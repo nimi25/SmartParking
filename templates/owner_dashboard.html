@@ -62,16 +62,41 @@
     .card p {
       margin: 8px 0;
     }
-    .card-actions {
-      margin-top: 10px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    .map-container {
-      height: 200px;
-      width: 100%;
-    }
+
+    /* Card Actions Container */
+.card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* Button Styles */
+.card-actions .btn {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  background: linear-gradient(45deg, #ff416c, #ff4b2b);
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 10px rgba(255, 65, 108, 0.2);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.card-actions .btn:hover {
+  background: linear-gradient(45deg, #ff4b2b, #ff416c);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(255, 65, 108, 0.4);
+}
+
+/* Consistent Spacing for Form Button */
+.card-actions form {
+  flex: 1;
+}
+
 
     /* Original .btn style: Red gradient for Add/Edit/Delete/Logout */
     a.btn, button.btn {
@@ -110,7 +135,20 @@
       overflow-y: auto;
       z-index: 1000;
       color: #fff;
+
+      /* Make the slider a flex container */
+  display: flex;
+  flex-direction: column;
+}
     }
+
+    .history-content {
+  /* This takes remaining vertical space and becomes scrollable */
+  flex: 1 1 auto;
+  overflow-y: auto;
+  margin-top: 20px; /* optional spacing */
+}
+
     /* Left Slider (Metrics) starts hidden off-screen */
     #metricsSlider {
       left: 0;
@@ -191,6 +229,7 @@
 
     /* Close buttons at the bottom of each slider (red .btn) */
     .slider-bottom-close {
+      color: #fff;
       margin-top: 40px;
       text-align: center;
     }
@@ -203,7 +242,7 @@
     <h3 style="margin-top: 50px;">Your Metrics</h3>
     <div class="metrics-container">
       <div class="metric-card">
-        <h4>Total Bookings</h4>
+        <h4>Current Bookings</h4>
         <p>{{ total_bookings or 0 }}</p>
       </div>
       <div class="metric-card">
@@ -211,7 +250,7 @@
         <p>₹{{ total_revenue or 0 }}</p>
       </div>
       <div class="metric-card">
-        <h4>Active Spots</h4>
+        <h4>Available Spots</h4>
         <p>{{ active_spots or 0 }}</p>
       </div>
     </div>
@@ -224,6 +263,9 @@
   <!-- RIGHT SLIDER: History -->
   <div id="historySlider">
     <h3 style="margin-top: 50px;">Booking History</h3>
+
+    <!-- Scrollable container for booking items -->
+  <div class="history-content">
     {% if bookings and bookings|length > 0 %}
       {% for booking in bookings %}
         <div class="history-item">
@@ -231,24 +273,34 @@
           <p><strong>Email:</strong> {{ booking.email }}</p>
           <p><strong>Parking Spot:</strong> {{ booking.spot_location }}</p>
 
-          <!-- Created At -->
-          <p><strong>Created At:</strong>
+          <!-- Booked At Time -->
+          <p><strong>Booked At Time:</strong>
             {% if booking.created_at %}
-              {{ booking.created_at.strftime('%I:%M %p, %d-%m-%Y') }}
+              {{ booking.created_at.strftime('%I:%M %p') }}
             {% else %}
               N/A
             {% endif %}
           </p>
 
+          <!-- Booked Date -->
+          <p><strong>Booked Date:</strong>
+            {% if booking.created_at %}
+              {{ booking.created_at.strftime('%d-%m-%Y') }}
+            {% else %}
+              N/A
+            {% endif %}
+          </p>
+
+
           <!-- Start / End Times -->
-          <p><strong>Start Time:</strong>
+          <p><strong>Booked From</strong>:</strong>
             {% if booking.start_time %}
               {{ booking.start_time.strftime('%I:%M %p') }}
             {% else %}
               N/A
             {% endif %}
           </p>
-          <p><strong>End Time:</strong>
+          <p><strong>Booked Till:</strong>
             {% if booking.end_time %}
               {{ booking.end_time.strftime('%I:%M %p') }}
             {% else %}
@@ -256,14 +308,31 @@
             {% endif %}
           </p>
 
-          <!-- Vehicle Type & Active Status -->
-          <p><strong>Vehicle Type:</strong> {{ booking.vehicle_type }}</p>
-          <p><strong>Active:</strong> {{ booking.active }}</p>
+          <!-- Vehicle Type -->
+          <p><strong>Vehicle Type:</strong>
+            {% if booking.vehicle_type == 'two_wheeler' %}
+              2 Wheeler
+            {% elif booking.vehicle_type == 'four_wheeler' %}
+              4 Wheeler
+            {% else %}
+              {{ booking.vehicle_type }} <!-- fallback if it's something else (e.g. "both") -->
+            {% endif %}
+          </p>
+
+          <!-- Active Status -->
+          <p><strong>Active:</strong>
+            {% if booking.active %}
+              Yes
+            {% else %}
+              No
+            {% endif %}
+          </p>
         </div>
       {% endfor %}
     {% else %}
       <p>No booking history available.</p>
     {% endif %}
+  </div>
     <div class="slider-bottom-close">
       <button id="closeHistoryBtn" class="btn">Close</button>
     </div>

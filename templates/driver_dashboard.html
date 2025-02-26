@@ -128,42 +128,128 @@
     text-align: center; cursor: pointer;
   }
 
-  /* --- LEAFLET ROUTING MACHINE STYLING --- */
-  .leaflet-routing-container {
-    /* Translucent black background, white text */
-    background: rgba(0, 0, 0, 0.8) !important;
-    color: #fff !important;
-    border: none !important;
-    position: absolute !important;
-    top: 80px !important; /* place it below search bar */
-    right: 20px !important;
-    left: auto !important;
-    bottom: auto !important;
-    width: 300px;
-    max-height: 40vh;
-    overflow-y: auto;
-    z-index: 5000 !important;
-    border-radius: 8px;
-    padding: 10px;
-  }
-  .leaflet-routing-container a,
-  .leaflet-routing-container .leaflet-routing-instructions {
-    color: #fff !important;
-  }
-  .leaflet-routing-arrow {
-    filter: invert(1) !important; /* white arrows */
-  }
-  .leaflet-routing-container:hover {
-    background: rgba(255,255,255,0.9) !important;
-    color: #000 !important;
-  }
-  .leaflet-routing-container:hover a,
-  .leaflet-routing-container:hover .leaflet-routing-instructions {
-    color: #000 !important;
-  }
-  .leaflet-routing-container:hover .leaflet-routing-arrow {
-    filter: invert(0) !important; /* black arrows on hover */
-  }
+.close-directions-btn {
+  width: 100%;
+  text-align: center;
+  z-index: 1000;
+  position: absolute;
+  bottom: -40px; /* Adjust to position it just below the panel */
+  left: 0;
+}
+
+.close-directions {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 0 0 10px 10px;
+  background: rgba(0, 0, 0, 0);  /* Fully transparent initially */
+  color: white;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s;
+}
+
+.close-directions:hover {
+  background: #f44336;
+  color: white;
+}
+
+/* --- LEAFLET ROUTING MACHINE STYLING --- */
+.leaflet-routing-container {
+  /* Translucent black background, white text */
+  background: rgba(0, 0, 0, 0.8) !important;
+  color: #fff !important;
+  border: none !important;
+
+  /* Pin it to the top-right of the map */
+  position: absolute !important;
+  top: 80px !important; /* adjust as needed */
+  right: 20px !important;
+  left: auto !important;
+  bottom: auto !important;
+
+  /* Size & shape */
+  width: 300px;
+  overflow-y: visible;
+  z-index: 5000 !important;
+  border-radius: 8px;
+
+  /* Extra bottom space for the close button */
+  padding: 10px;
+  padding-bottom: 50px;
+}
+
+.leaflet-routing-container a,
+.leaflet-routing-container .leaflet-routing-instructions {
+  color: #fff !important;
+}
+
+.leaflet-routing-arrow {
+  filter: invert(1) !important; /* white arrows */
+}
+
+/* On hover, invert to white background & black text */
+.leaflet-routing-container:hover {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #000 !important;
+}
+.leaflet-routing-container:hover a,
+.leaflet-routing-container:hover .leaflet-routing-instructions {
+  color: #000 !important;
+}
+.leaflet-routing-container:hover .leaflet-routing-arrow {
+  filter: invert(0) !important; /* black arrows on hover */
+}
+
+/* The container for the "Close Directions" button at the bottom */
+.close-directions-btn {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  text-align: center;
+
+  /* Match the panel’s background & blur */
+  background: rgba(0, 0, 0, 0);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(10px);
+
+  border-radius: 0 0 8px 8px; /* round the bottom corners to match */
+  padding: 0;
+}
+
+/* The actual "Close Directions" button */
+.close-directions {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  background: transparent; /* inherit parent's background */
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+/* Hover effect: highlight in red while keeping text white */
+.close-directions:hover {
+  background: #f44336;
+  color: #fff;
+}
+
+/* If the panel turns white on hover, the button does too */
+.leaflet-routing-container:hover .close-directions-btn {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #000 !important;
+}
+.leaflet-routing-container:hover .close-directions {
+  color: #000 !important;
+}
+.leaflet-routing-container:hover .close-directions:hover {
+  background: #f44336;
+  color: #fff;
+}
+
+
+
 </style>
 
 <div class="dashboard-container">
@@ -324,7 +410,19 @@ if ("geolocation" in navigator) {
     var userLat = position.coords.latitude;
     var userLng = position.coords.longitude;
     console.log("User location:", userLat, userLng);
-    L.marker([userLat, userLng]).addTo(map)
+
+    // Create a custom red icon
+    var redIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+
+    // Use the red icon in the marker
+    L.marker([userLat, userLng], { icon: redIcon }).addTo(map)
       .bindPopup("You are here").openPopup();
   }, function(error) {
     console.error("Error detecting location:", error);
@@ -358,6 +456,8 @@ if ("geolocation" in navigator) {
     {% endfor %}
   ];
 
+
+
   {% for spot in available_spots %}
     var marker = L.marker([{{ spot.lat }}, {{ spot.lng }}]).addTo(map)
                   .bindPopup("<b>{{ spot.location }}</b><br>₹{{ spot.price }}");
@@ -368,6 +468,8 @@ if ("geolocation" in navigator) {
     spot.marker = markers[spot.id];
     spot.cardEl = document.querySelector('.card[data-spot-id="' + spot.id + '"]');
   });
+
+
 
   // Map search suggestions
   var mapSearchInput = document.getElementById("mapSearchInput");
@@ -402,6 +504,8 @@ if ("geolocation" in navigator) {
          }
       });
   });
+
+
 
   // Booking Modal
   var bookingModal = document.getElementById("bookingModal");
@@ -485,26 +589,69 @@ if ("geolocation" in navigator) {
     });
   });
 
-  // Helper: route from user's location to a given spot using OSRM
   function routeToSpot(destLat, destLng) {
-    if (!('geolocation' in navigator)) {
-      alert("Geolocation not supported by your browser.");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(function(position) {
-      const userLat = position.coords.latitude;
-      const userLng = position.coords.longitude;
-      L.Routing.control({
-        waypoints: [L.latLng(userLat, userLng), L.latLng(destLat, destLng)],
-        router: new L.Routing.OSRMv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
-        routeWhileDragging: true,
-        showAlternatives: true
-      }).addTo(map);
-    }, function(error) {
-      console.error("Error detecting location:", error);
-      alert("Could not determine your current location.");
-    });
+  if (!('geolocation' in navigator)) {
+    alert("Geolocation not supported by your browser.");
+    return;
   }
+  navigator.geolocation.getCurrentPosition(function(position) {
+    const userLat = position.coords.latitude;
+    const userLng = position.coords.longitude;
+
+    // Define your icons
+    var redIcon = L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41]
+    });
+    var blueIcon = L.icon({
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41]
+    });
+
+    // Create and add the routing control
+    var routingControl = L.Routing.control({
+      waypoints: [
+        L.latLng(userLat, userLng),
+        L.latLng(destLat, destLng)
+      ],
+      router: new L.Routing.OSRMv1({
+        serviceUrl: 'https://router.project-osrm.org/route/v1'
+      }),
+      routeWhileDragging: true,
+      showAlternatives: true,
+      createMarker: function(i, waypoint, n) {
+        // First waypoint (index 0) is your location (red), destination is blue.
+        var icon = (i === 0) ? redIcon : blueIcon;
+        return L.marker(waypoint.latLng, { icon: icon });
+      }
+    }).addTo(map);
+
+    // Delay to ensure the routing container exists before appending our button
+    setTimeout(function() {
+      var container = routingControl.getContainer();
+      if (container) {
+        // Append the close button as a new div inside the routing container.
+        var closeDiv = document.createElement('div');
+        closeDiv.className = 'close-directions-btn';
+        closeDiv.innerHTML = '<button class="close-directions">Close Directions</button>';
+        container.appendChild(closeDiv);
+        // When clicked, remove the routing control.
+        closeDiv.addEventListener('click', function() {
+          map.removeControl(routingControl);
+        });
+      }
+    }, 0);
+  }, function(error) {
+    console.error("Error detecting location:", error);
+    alert("Could not determine your current location.");
+  });
+}
+
+
 
   // Card click: highlight, pan, and route
   var cards = document.querySelectorAll(".cards-column .card");
