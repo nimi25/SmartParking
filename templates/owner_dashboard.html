@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <style>
+    /* Base Page Styling */
     body {
       font-family: 'Poppins', sans-serif;
       background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
@@ -19,7 +20,8 @@
       margin: 0;
       padding: 20px;
     }
-    /* Main container styled like the login container */
+
+    /* Main Container (Spot Listing) */
     .container {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(15px);
@@ -32,14 +34,16 @@
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
       color: #fff;
       text-align: center;
+      position: relative;
     }
+
+    /* Spot Cards */
     .card-container {
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
       margin-top: 20px;
     }
-    /* Individual cards now use a dark frosted style */
     .card {
       flex: 1 1 calc(33.33% - 20px);
       background: rgba(255, 255, 255, 0.1);
@@ -68,7 +72,8 @@
       height: 200px;
       width: 100%;
     }
-    /* Buttons styled consistently */
+
+    /* Original .btn style: Red gradient for Add/Edit/Delete/Logout */
     a.btn, button.btn {
       display: inline-block;
       color: #fff;
@@ -78,13 +83,201 @@
       text-decoration: none;
       border: none;
       cursor: pointer;
+      font-size: 14px;
+      text-transform: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: transform 0.2s ease;
+    }
+    /* Slight hover scale animation */
+    a.btn:hover, button.btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* Sliders (Metrics on Left, History on Right) */
+    #metricsSlider,
+    #historySlider {
+      position: fixed;
+      top: 0;
+      width: 300px;
+      height: 100vh;
+      background: rgba(40, 40, 40, 0.8);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 20px;
+      box-shadow: 10px 0 40px rgba(0, 0, 0, 0.3);
+      transition: transform 0.4s ease;
+      overflow-y: auto;
+      z-index: 1000;
+      color: #fff;
+    }
+    /* Left Slider (Metrics) starts hidden off-screen */
+    #metricsSlider {
+      left: 0;
+      transform: translateX(-310px);
+    }
+    #metricsSlider.open {
+      transform: translateX(0);
+    }
+    /* Right Slider (History) starts hidden off-screen */
+    #historySlider {
+      right: 0;
+      transform: translateX(310px);
+    }
+    #historySlider.open {
+      transform: translateX(0);
+    }
+
+    /* Toggle Buttons: pinned near top, small floating buttons */
+    .slider-toggle-btn {
+      position: fixed;
+      top: 80px; /* Adjust if you'd like them higher/lower */
+      display: inline-block;
+      width: auto;
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      text-transform: none;
+      text-decoration: none;
+      white-space: nowrap;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      z-index: 1100;
+    }
+    #toggleMetrics {
+      left: 20px;
+    }
+    #toggleHistory {
+      right: 20px;
+    }
+
+    /* Metrics inside the left slider */
+    .metrics-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-top: 50px;
+    }
+    .metric-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    /* History items inside the right slider */
+    .history-item {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 15px;
+      text-align: left;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .history-item:hover {
+      transform: scale(1.02);
+      opacity: 0.9;
+    }
+
+    /* Close buttons at the bottom of each slider (red .btn) */
+    .slider-bottom-close {
+      margin-top: 40px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
+
+  <!-- LEFT SLIDER: Metrics -->
+  <div id="metricsSlider">
+    <h3 style="margin-top: 50px;">Your Metrics</h3>
+    <div class="metrics-container">
+      <div class="metric-card">
+        <h4>Total Bookings</h4>
+        <p>{{ total_bookings or 0 }}</p>
+      </div>
+      <div class="metric-card">
+        <h4>Total Revenue</h4>
+        <p>₹{{ total_revenue or 0 }}</p>
+      </div>
+      <div class="metric-card">
+        <h4>Active Spots</h4>
+        <p>{{ active_spots or 0 }}</p>
+      </div>
+    </div>
+    <div class="slider-bottom-close">
+      <!-- Red "Close" button at the bottom -->
+      <button id="closeMetricsBtn" class="btn">Close</button>
+    </div>
+  </div>
+
+  <!-- RIGHT SLIDER: History -->
+  <div id="historySlider">
+    <h3 style="margin-top: 50px;">Booking History</h3>
+    {% if bookings and bookings|length > 0 %}
+      {% for booking in bookings %}
+        <div class="history-item">
+          <p><strong>Driver:</strong> {{ booking.driver_name }}</p>
+          <p><strong>Email:</strong> {{ booking.email }}</p>
+          <p><strong>Parking Spot:</strong> {{ booking.spot_location }}</p>
+
+          <!-- Created At -->
+          <p><strong>Created At:</strong>
+            {% if booking.created_at %}
+              {{ booking.created_at.strftime('%I:%M %p, %d-%m-%Y') }}
+            {% else %}
+              N/A
+            {% endif %}
+          </p>
+
+          <!-- Start / End Times -->
+          <p><strong>Start Time:</strong>
+            {% if booking.start_time %}
+              {{ booking.start_time.strftime('%I:%M %p') }}
+            {% else %}
+              N/A
+            {% endif %}
+          </p>
+          <p><strong>End Time:</strong>
+            {% if booking.end_time %}
+              {{ booking.end_time.strftime('%I:%M %p') }}
+            {% else %}
+              N/A
+            {% endif %}
+          </p>
+
+          <!-- Vehicle Type & Active Status -->
+          <p><strong>Vehicle Type:</strong> {{ booking.vehicle_type }}</p>
+          <p><strong>Active:</strong> {{ booking.active }}</p>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>No booking history available.</p>
+    {% endif %}
+    <div class="slider-bottom-close">
+      <button id="closeHistoryBtn" class="btn">Close</button>
+    </div>
+  </div>
+
+  <!-- Toggle Buttons -->
+  <button id="toggleMetrics" class="slider-toggle-btn">Metrics</button>
+  <button id="toggleHistory" class="slider-toggle-btn">History</button>
+
+  <!-- Main Container for Spots -->
   <div class="container">
     <h2>Welcome, Owner!</h2>
     <a href="{{ url_for('parking.add_parking_spot') }}" class="btn">Add a Parking Spot</a>
+
     <h3>Your Parking Spots</h3>
     <div class="card-container">
       {% for spot in spots %}
@@ -105,7 +298,8 @@
           <p><strong>Description:</strong> {{ spot.description or "N/A" }}</p>
           <div class="card-actions">
             <a href="{{ url_for('parking.update_parking_spot', spot_id=spot.id) }}" class="btn">Edit</a>
-            <form action="{{ url_for('parking.delete_parking_spot', spot_id=spot.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this spot?');">
+            <form action="{{ url_for('parking.delete_parking_spot', spot_id=spot.id) }}" method="POST"
+                  onsubmit="return confirm('Are you sure you want to delete this spot?');">
               <button type="submit" class="btn">Delete</button>
             </form>
           </div>
@@ -117,15 +311,49 @@
     <br><br>
     <button onclick="window.location.href='{{ url_for('auth.logout') }}'" class="btn">Logout</button>
   </div>
+
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      // Initialize Leaflet maps for each spot
       {% for spot in spots %}
         var map_{{ spot.id }} = L.map('map-{{ spot.id }}').setView([{{ spot.lat }}, {{ spot.lng }}], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution: '© OpenStreetMap contributors'
         }).addTo(map_{{ spot.id }});
         L.marker([{{ spot.lat }}, {{ spot.lng }}]).addTo(map_{{ spot.id }});
       {% endfor %}
+
+      // Sliders
+      var metricsSlider = document.getElementById('metricsSlider');
+      var historySlider = document.getElementById('historySlider');
+
+      // Buttons
+      var toggleMetricsBtn = document.getElementById('toggleMetrics');
+      var toggleHistoryBtn = document.getElementById('toggleHistory');
+      var closeMetricsBtn = document.getElementById('closeMetricsBtn');
+      var closeHistoryBtn = document.getElementById('closeHistoryBtn');
+
+      // Toggle the left slider (Metrics)
+      toggleMetricsBtn.addEventListener('click', function() {
+        metricsSlider.classList.add('open');
+        // Hide the toggle button while open
+        toggleMetricsBtn.style.display = 'none';
+      });
+      closeMetricsBtn.addEventListener('click', function() {
+        metricsSlider.classList.remove('open');
+        // Show the toggle button again when closed
+        toggleMetricsBtn.style.display = 'inline-block';
+      });
+
+      // Toggle the right slider (History)
+      toggleHistoryBtn.addEventListener('click', function() {
+        historySlider.classList.add('open');
+        toggleHistoryBtn.style.display = 'none';
+      });
+      closeHistoryBtn.addEventListener('click', function() {
+        historySlider.classList.remove('open');
+        toggleHistoryBtn.style.display = 'inline-block';
+      });
     });
   </script>
 </body>
