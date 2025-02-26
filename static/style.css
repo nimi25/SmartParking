@@ -1,0 +1,148 @@
+/* Body Styling */
+body {
+  font-family: Arial, sans-serif;
+  background: url('../static/images/bengaluru_map.jpg') no-repeat center center fixed;
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+/* Welcome Heading */
+.welcome-heading {
+  font-size: 30px;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 20px;
+}
+
+/* Login Box */
+.login-box {
+  background: rgba(0, 0, 0, 0.8);
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  color: white;
+  width: 300px;
+}
+
+/* Input Fields */
+.input-field {
+  width: 90%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  border: none;
+}
+
+/* Login Button */
+.login-btn {
+  background: red;
+  color: white;
+  padding: 10px;
+  border: none;
+  width: 100%;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Register Link */
+.register-link {
+  margin-top: 10px;
+}
+
+.register-link a {
+  color: lightblue;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+/* Popup Styling */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Dark overlay */
+  backdrop-filter: blur(8px); /* Blur effect */
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Show Popup when targeted */
+.popup:target {
+  display: flex;
+}
+
+/* Popup Content */
+.popup-content {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  text-align: center;
+  width: 580px; /* Adjusted width */
+  max-width: 90%;
+  position: relative;
+  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Role Title */
+.popup-content h2 {
+  margin-bottom: 20px; /* Adds space below the title */
+}
+
+/* Role Selection Container */
+.role-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px; /* Space between cards */
+  margin-top: 20px; /* Space from title */
+}
+
+/* Role Cards */
+.role-card {
+  flex: 1;
+  max-width: 160px; /* Slightly increased */
+  padding: 20px;
+  background: lightgray;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+  text-decoration: none;
+  color: black;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Role Card Images */
+.role-card img {
+  width: 90px;
+  height: 90px;
+}
+
+/* Role Card Text */
+.role-card p {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+/* Hover Effect */
+.role-card:hover {
+  transform: scale(1.1);
+}
+
+
+/* Close Button */
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
+  text-decoration: none;
+  color: black;
+}
+

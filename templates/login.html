@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Parking - Login</title>
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+
+    <div class="welcome-heading">Welcome to Smart Parking</div>
+
+    <div class="login-box">
+        <h2>Login</h2>
+        <input type="email" class="input-field" placeholder="Email">
+        <input type="password" class="input-field" placeholder="Password">
+        <button class="login-btn">Login</button>
+        <div class="register-link">
+            Don't have an account? <a href="#rolePopup">Register here</a>
+        </div>
+    </div>
+
+    <!-- Role selection popup -->
+    <div id="rolePopup" class="popup">
+        <div class="popup-content">
+            <a href="#" class="close-btn">&times;</a>
+            <h2>Select Your Role</h2>
+            <div class="role-container">
+                <a href="#" class="role-card">
+                    <img src="../static/images/driver_icon.jpg" alt="Driver">
+                    <p>Driver</p>
+                </a>
+                <a href="#" class="role-card">
+                    <img src="../static/images/owner_icon.jpg" alt="Owner">
+                    <p>Parking Space Owner</p>
+                </a>
+                <a href="#" class="role-card">
+                    <img src="../static/images/admin_icon.jpg" alt="Admin">
+                    <p>Administrator</p>
+                </a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
