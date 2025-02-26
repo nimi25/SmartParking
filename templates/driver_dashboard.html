@@ -319,6 +319,30 @@
     e.originalEvent.stopPropagation();
   });
 
+if ("geolocation" in navigator) {
+  navigator.geolocation.getCurrentPosition(function(position) {
+    var userLat = position.coords.latitude;
+    var userLng = position.coords.longitude;
+    console.log("User location:", userLat, userLng);
+    L.marker([userLat, userLng]).addTo(map)
+      .bindPopup("You are here").openPopup();
+  }, function(error) {
+    console.error("Error detecting location:", error);
+    alert("Could not determine your current location.");
+  }, {
+    enableHighAccuracy: true,
+    timeout: 5000,
+    maximumAge: 0
+  });
+} else {
+  alert("Geolocation is not supported by your browser.");
+}
+
+
+
+
+
+
   // Prepare markers and spotsData
   var markers = {};
   var spotsData = [
