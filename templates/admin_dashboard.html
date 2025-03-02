@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - Smart Parking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    /* Base Styles */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+          url("{{ url_for('static', filename='images/bengaluru-map.jpg') }}") no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .animated-welcome {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .animated-welcome h1 {
+      font-size: 3rem;
+      font-weight: 600;
+      color: #fff;
+      margin: 0;
+      opacity: 0;
+      animation: fadeInDown 1.5s ease forwards;
+    }
+    @keyframes fadeInDown {
+      0% {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    /* Dashboard Container (Glassmorphism) */
+    .dashboard-container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 50px;
+      width: 400px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      animation: fadeIn 1s ease-in-out;
+    }
+    .dashboard-container h2 {
+      font-size: 2.2rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+    .dashboard-container p {
+      color: #fff;
+      margin-bottom: 30px;
+    }
+    /* Option Buttons (Styled like Login Button) */
+    .option-box {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(45deg, #ff416c, #ff4b2b);
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+      box-shadow: 0 5px 15px rgba(255, 65, 108, 0.3);
+      text-decoration: none;
+    }
+    .option-box:hover {
+      background: linear-gradient(45deg, #ff4b2b, #ff416c);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255, 65, 108, 0.5);
+    }
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 30px;
+      width: 500px;
+      max-height: 80vh;
+      text-align: center;
+      color: #fff;
+      position: relative;
+      animation: fadeIn 0.5s ease-in-out;
+      overflow-y: auto;
+    }
+    .modal-content h3 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+    .modal-content p {
+      margin-bottom: 15px;
+    }
+    .modal-content ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      text-align: left;
+      color: #fff;
+    }
+    .modal-content ul li {
+      font-size: 1rem;
+      margin: 8px 0;
+    }
+    .modal-content a.action-link {
+      color: #ff416c;
+      text-decoration: none;
+      margin-right: 10px;
+      font-weight: 600;
+    }
+    .modal-content a.action-link:hover {
+      text-decoration: underline;
+    }
+    .close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 2rem;
+      color: #fff;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    /* Manage Users Modal Specific Styles */
+    .user-columns {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .user-column {
+      flex: 1;
+    }
+    .user-column h4 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .user-column ul {
+      list-style: none;
+      padding: 0;
+    }
+    .user-column ul li {
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+    /* Parking Space Modal Specific Styles */
+    .parking-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 15px;
+      max-height: 300px;
+      overflow-y: auto;
+      text-align: left;
+    }
+    .parking-item {
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="animated-welcome">
+    <h1>Admin Dashboard</h1>
+  </div>
+
+  <div class="dashboard-container">
+    <h2>Admin Dashboard</h2>
+    <p>Welcome, Admin!</p>
+    <a href="javascript:void(0)" class="option-box" onclick="openModal('usersModal')">Manage Users</a>
+    <a href="javascript:void(0)" class="option-box" onclick="openModal('reportsModal')">Reports &amp; Analytics</a>
+    <a href="javascript:void(0)" class="option-box" onclick="openModal('parkingModal')">Parking Space Management</a>
+    <a href="{{ url_for('auth.logout') }}" class="option-box">Logout</a>
+  </div>
+
+  <!-- Modal for Manage Users -->
+  <div id="usersModal" class="modal">
+    <div class="modal-content">
+      <a href="javascript:void(0)" class="close" onclick="closeModal('usersModal')">&times;</a>
+      <h3>Manage Users</h3>
+      {% set drivers = users | selectattr("role", "equalto", "driver") | list %}
+      {% set owners = users | selectattr("role", "equalto", "owner") | list %}
+      {% set admins = users | selectattr("role", "equalto", "admin") | list %}
+      <div class="user-columns">
+        <div class="user-column">
+          <h4>Drivers</h4>
+          <ul>
+            {% for user in drivers %}
+              <li>
+                {{ user.username }} - {{ user.email }}
+                <a href="{{ url_for('admin.delete_user', user_id=user.id) }}" class="action-link">Delete</a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="user-column">
+          <h4>Owners</h4>
+          <ul>
+            {% for user in owners %}
+              <li>
+                {{ user.username }} - {{ user.email }}
+                <a href="{{ url_for('admin.delete_user', user_id=user.id) }}" class="action-link">Delete</a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="user-column">
+          <h4>Admins</h4>
+          <ul>
+            {% for user in admins %}
+              <li>
+                {{ user.username }} - {{ user.email }}
+                <a href="{{ url_for('admin.delete_user', user_id=user.id) }}" class="action-link">Delete</a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Reports & Analytics -->
+  <div id="reportsModal" class="modal">
+    <div class="modal-content">
+      <a href="javascript:void(0)" class="close" onclick="closeModal('reportsModal')">&times;</a>
+      <h3>Reports &amp; Analytics</h3>
+      <p>System Stats:</p>
+      <ul>
+        <li>Total Users: {{ total_users }}</li>
+        <li>Total Parking Spots: {{ total_spots }}</li>
+        <li>Available Spots: {{ available_spots }}</li>
+        <li>Booked Spots: {{ booked_spots }}</li>
+        <li>Total Bookings: {{ total_bookings }}</li>
+        <li>Total Revenue: ₹{{ revenue }}</li>
+        <li>Total 2-Wheeler Spots: {{ total_two_wheeler }}</li>
+        <li>Total 4-Wheeler Spots: {{ total_four_wheeler }}</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Modal for Parking Space Management -->
+  <div id="parkingModal" class="modal">
+    <div class="modal-content">
+      <a href="javascript:void(0)" class="close" onclick="closeModal('parkingModal')">&times;</a>
+      <h3>Parking Space Management</h3>
+      <p>All Parking Spaces:</p>
+      <div class="parking-list">
+        {% for spot in spots %}
+          <div class="parking-item">
+            <strong>{{ spot.location }}</strong><br>
+            Status: {{ spot.status|capitalize }}<br>
+            Owner ID: {{ spot.owner_id }}<br>
+            Price: ₹{{ spot.price }}<br>
+            <a href="{{ url_for('admin.edit_spot', spot_id=spot.id) }}" class="action-link">Edit</a>
+            <a href="{{ url_for('admin.delete_spot', spot_id=spot.id) }}" class="action-link">Delete</a>
+          </div>
+        {% endfor %}
+      </div>
+      <br>
+      <p>Booked Parking Spaces:</p>
+      <div class="parking-list">
+        {% for spot in spots %}
+          {% if spot.status|lower == 'booked' %}
+            <div class="parking-item">
+              <strong>{{ spot.location }}</strong><br>
+              Booked by: {{ spot.booked_by or 'N/A' }}<br>
+              Price: ₹{{ spot.price }}<br>
+              <a href="{{ url_for('admin.edit_spot', spot_id=spot.id) }}" class="action-link">Edit</a>
+              <a href="{{ url_for('admin.delete_spot', spot_id=spot.id) }}" class="action-link">Delete</a>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal(id) {
+      document.getElementById(id).style.display = "flex";
+    }
+    function closeModal(id) {
+      document.getElementById(id).style.display = "none";
+    }
+  </script>
+</body>
+</html>
