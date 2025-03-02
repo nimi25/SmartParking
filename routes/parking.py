@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from models import db, ParkingSpot, Booking
 from datetime import datetime
 import re
-import requests  # NEW: For making OSRM API requests
+import requests  # For making OSRM API requests
 
 parking_bp = Blueprint('parking', __name__)
 
@@ -50,7 +50,7 @@ def add_parking_spot():
             flash("Invalid time format. Use HH:MM.", "danger")
             return redirect(url_for('parking.add_parking_spot'))
 
-        # NEW: Always set availability to True so the spot is visible to drivers
+        # Always set availability to True so the spot is visible to drivers
         new_spot = ParkingSpot(
             location=location,
             price=price,
@@ -200,6 +200,10 @@ def book_spot(spot_id):
     elif two_wheeler > 0 and four_wheeler > 0:
         booked_vehicle_type = "both"
 
+    # Fetch new fields from the form (vehicle_number and booking_id)
+    vehicle_number = request.form.get('vehicle_number')
+    booking_id = request.form.get('booking_id')
+
     new_booking = Booking(
         user_id=current_user.id,
         spot_id=spot_id,
@@ -208,7 +212,9 @@ def book_spot(spot_id):
         booked_vehicle_type=booked_vehicle_type,
         start_time=booking_start,
         end_time=booking_end,
-        active=True
+        active=True,
+        vehicle_number=vehicle_number,
+        booking_id=booking_id
     )
     db.session.add(new_booking)
     db.session.commit()
@@ -236,7 +242,6 @@ def cancel_booking(booking_id):
     return redirect(url_for('dashboard.dashboard'))
 
 
-# NEW: Route to fetch directions from driver's location to a parking spot using OSRM
 @parking_bp.route('/direction/<int:spot_id>', methods=['GET'])
 @login_required
 def get_directions(spot_id):
@@ -250,7 +255,6 @@ def get_directions(spot_id):
     if driver_lat is None or driver_lng is None:
         return jsonify({"error": "Driver location (lat, lng) is required"}), 400
 
-    # Build OSRM API URL
     osrm_url = (
         f"https://router.project-osrm.org/route/v1/driving/"
         f"{driver_lng},{driver_lat};{spot.lng},{spot.lat}"

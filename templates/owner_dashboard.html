@@ -1,16 +1,17 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Owner Dashboard</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <style>
-    /* Remove any fixed height constraints */
+    /* Reset margins/padding */
     html, body {
-      margin: 0;
+      margin: 10px;
       padding: 0;
     }
     body {
@@ -18,7 +19,10 @@
       background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
                   url("{{ url_for('static', filename='images/bengaluru-map.jpg') }}") no-repeat center center fixed;
       background-size: cover;
-      /* Let content naturally determine height */
+/* Allow vertical scrolling if content is tall */
+      overflow-y: auto;
+      min-height: 100vh;
+
     }
 
     /* Main Container for Spot Listing */
@@ -75,6 +79,7 @@
       text-align: center;
       padding: 10px;
       border: none;
+      /* Sharper edges */
       border-radius: 5px;
       color: white;
       background: linear-gradient(45deg, #ff416c, #ff4b2b);
@@ -89,15 +94,15 @@
       transform: translateY(-2px);
       box-shadow: 0 6px 15px rgba(255, 65, 108, 0.4);
     }
-    .card-actions form {
-      flex: 1;
-    }
+
+    /* General Button Style for .btn (applies to Edit, Delete, Close, etc.) */
     a.btn, button.btn {
       display: inline-block;
       color: #fff;
       background: linear-gradient(45deg, #ff416c, #ff4b2b);
       padding: 8px 16px;
-      border-radius: 10px;
+      /* Sharper edges */
+      border-radius: 5px;
       text-decoration: none;
       border: none;
       cursor: pointer;
@@ -110,31 +115,33 @@
       transform: scale(1.05);
     }
 
-    /* Sliders (Metrics & History) remain fixed */
+    /* Remove hover scaling from the booking history items */
+    .history-item:hover {
+      transform: none !important;
+      opacity: 1 !important;
+    }
+
+    /* SLIDERS (METRICS & HISTORY) */
     #metricsSlider,
     #historySlider {
       position: fixed;
       top: 0;
+      bottom: 0; /* ensures full height from top to bottom */
       width: 300px;
-      height: 100vh;
       background: rgba(40, 40, 40, 0.8);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 20px;
       box-shadow: 10px 0 40px rgba(0, 0, 0, 0.3);
       transition: transform 0.4s ease;
-      overflow-y: auto;
       z-index: 1000;
       color: #fff;
       display: flex;
       flex-direction: column;
+      overflow-y: auto; /* scroll if content is taller than screen */
     }
-    .history-content {
-      flex: 1;
-      overflow-y: auto;
-      margin-top: 20px;
-    }
+
+    /* METRICS SLIDER */
     #metricsSlider {
       left: 0;
       transform: translateX(-310px);
@@ -142,6 +149,8 @@
     #metricsSlider.open {
       transform: translateX(0);
     }
+
+    /* HISTORY SLIDER */
     #historySlider {
       right: 0;
       transform: translateX(310px);
@@ -150,10 +159,43 @@
       transform: translateX(0);
     }
 
-    /* Toggle Buttons */
+    /* METRICS SCROLL AREA */
+    .metrics-container {
+      margin-top: 20px;
+      padding: 0 10px;
+    }
+    .metric-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    /* HISTORY SCROLL AREA */
+    .history-content {
+      margin-top: 20px;
+      padding: 0 10px;
+    }
+    .history-item {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    /* SLIDER TOGGLE BUTTONS */
     .slider-toggle-btn {
       position: fixed;
-      top: 80px;
+      top: 20px; /* near the top */
       display: inline-block;
       width: auto;
       background: rgba(0, 0, 0, 0.6);
@@ -175,48 +217,34 @@
     #toggleHistory {
       right: 20px;
     }
-    .metrics-container {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      margin-top: 50px;
-    }
-    .metric-card {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      text-align: center;
-    }
-    .history-item {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      padding: 10px;
-      margin-bottom: 15px;
-      text-align: left;
-      transition: transform 0.3s ease, opacity 0.3s ease;
-    }
-    .history-item:hover {
-      transform: scale(1.02);
-      opacity: 0.9;
-    }
+
+    /* Close button pinned to the bottom inside each slider */
     .slider-bottom-close {
-      color: #fff;
-      margin-top: 40px;
+      margin-top: auto; /* pushes the Close button down */
       text-align: center;
+      margin-bottom: 20px; /* spacing from bottom */
     }
+    .slider-bottom-close button.btn {
+      width: calc(100% - 40px);
+      margin: 0 auto;
+      display: block;
+    }
+
+    .container {
+  margin-top: 120px !important; /* Increase if needed */
+}
+
+.slider-toggle-btn {
+  top: 80px !important; /* Moves the toggle buttons down */
+}
+
+
   </style>
 </head>
 <body>
-  <!-- LEFT SLIDER: Metrics -->
+  <!-- METRICS SLIDER -->
   <div id="metricsSlider">
-    <h3 style="margin-top: 50px;">Your Metrics</h3>
+    <h3 style="margin-top: 20px; text-align: center;">Your Metrics</h3>
     <div class="metrics-container">
       <div class="metric-card">
         <h4>Current Bookings</h4>
@@ -236,9 +264,9 @@
     </div>
   </div>
 
-  <!-- RIGHT SLIDER: History -->
+  <!-- HISTORY SLIDER -->
   <div id="historySlider">
-    <h3 style="margin-top: 50px;">Booking History</h3>
+    <h3 style="margin-top: 20px; text-align: center;">Booking History</h3>
     <div class="history-content">
       {% if bookings and bookings|length > 0 %}
         {% for booking in bookings %}
@@ -290,6 +318,9 @@
                 No
               {% endif %}
             </p>
+            <!-- Vehicle Number & Booking ID -->
+            <p><strong>Vehicle Number:</strong> {{ booking.vehicle_number }}</p>
+            <p><strong>Booking ID:</strong> {{ booking.booking_id }}</p>
           </div>
         {% endfor %}
       {% else %}
@@ -305,7 +336,7 @@
   <button id="toggleMetrics" class="slider-toggle-btn">Metrics</button>
   <button id="toggleHistory" class="slider-toggle-btn">History</button>
 
-  <!-- Main Container for Spots -->
+  <!-- Main Container -->
   <div class="container">
     <h2>Welcome, Owner!</h2>
     <a href="{{ url_for('parking.add_parking_spot') }}" class="btn">Add a Parking Spot</a>
@@ -323,7 +354,7 @@
               N/A
             {% endif %}
           </p>
-          <div class="map-container" id="map-{{ spot.id }}"></div>
+          <div class="map-container" id="map-{{ spot.id }}" style="height: 200px;"></div>
           <p><strong>2-Wheeler Spaces:</strong> {{ spot.two_wheeler_spaces or 0 }}</p>
           <p><strong>4-Wheeler Spaces:</strong> {{ spot.four_wheeler_spaces or 0 }}</p>
           <p><strong>Description:</strong> {{ spot.description or "N/A" }}</p>
@@ -362,6 +393,7 @@
       var closeMetricsBtn = document.getElementById('closeMetricsBtn');
       var closeHistoryBtn = document.getElementById('closeHistoryBtn');
 
+      // Metrics Slider
       toggleMetricsBtn.addEventListener('click', function() {
         metricsSlider.classList.add('open');
         toggleMetricsBtn.style.display = 'none';
@@ -370,6 +402,8 @@
         metricsSlider.classList.remove('open');
         toggleMetricsBtn.style.display = 'inline-block';
       });
+
+      // History Slider
       toggleHistoryBtn.addEventListener('click', function() {
         historySlider.classList.add('open');
         toggleHistoryBtn.style.display = 'none';

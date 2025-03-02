@@ -21,7 +21,7 @@ def dashboard():
         # 1) Get all parking spots for this owner
         spots = ParkingSpot.query.filter_by(owner_id=current_user.id).all()
 
-        # 2) Gather all bookings referencing these spots, along with the driver (User) info
+        # 2) Gather all bookings for these spots with driver (User) info
         joined_data = (
             db.session.query(Booking, User, ParkingSpot)
             .join(User, Booking.user_id == User.id)
@@ -34,16 +34,16 @@ def dashboard():
         all_bookings = []
         for booking_obj, user_obj, spot_obj in joined_data:
             booking_dict = {
-                "driver_name": user_obj.username,      # or user_obj.email
+                "driver_name": user_obj.username,
                 "email": user_obj.email,
                 "spot_location": spot_obj.location,
-                # Times
                 "created_at": booking_obj.created_at,
                 "start_time": booking_obj.start_time,
                 "end_time": booking_obj.end_time,
-                # Booking status / vehicle
                 "vehicle_type": booking_obj.booked_vehicle_type or "N/A",
-                "active": booking_obj.active
+                "active": booking_obj.active,
+                "vehicle_number": booking_obj.vehicle_number,  # New field
+                "booking_id": booking_obj.booking_id           # New field
             }
             all_bookings.append(booking_dict)
 
@@ -52,7 +52,7 @@ def dashboard():
         total_revenue = sum(spot_obj.price for (b_obj, u_obj, spot_obj) in joined_data)
         active_spots = sum(1 for s in spots if s.availability)
 
-        # 5) Render the owner dashboard with these new variables
+        # 5) Render the owner dashboard with these variables
         return render_template(
             'owner_dashboard.html',
             spots=spots,
@@ -63,7 +63,6 @@ def dashboard():
         )
 
     # --------------- ADMIN DASHBOARD ---------------
-    # For admin dashboard branch:
     elif role == 'admin':
         users = User.query.all()
         total_users = User.query.count()
@@ -74,7 +73,6 @@ def dashboard():
         revenue = db.session.query(func.sum(ParkingSpot.price)).filter(ParkingSpot.status == 'booked').scalar() or 0
         spots = ParkingSpot.query.all()
 
-        # Calculate available two wheeler and four wheeler spaces:
         total_two_wheeler = db.session.query(func.sum(ParkingSpot.two_wheeler_spaces)) \
                                 .filter(ParkingSpot.availability == True).scalar() or 0
         total_four_wheeler = db.session.query(func.sum(ParkingSpot.four_wheeler_spaces)) \

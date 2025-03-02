@@ -226,7 +226,8 @@
     font-weight: bold;
   }
   .modal-content input[type="number"],
-  .modal-content input[type="time"] {
+  .modal-content input[type="time"],
+  .modal-content input[type="text"] {
     width: 100%;
     padding: 8px;
     border-radius: 4px;
@@ -370,6 +371,11 @@
         <label for="four_wheeler">4-Wheeler Spots:</label>
         <input type="number" id="four_wheeler" name="four_wheeler" min="0" value="0" required>
       </div>
+      <!-- New Vehicle Number Field -->
+      <div class="form-group">
+        <label for="vehicle_number">Vehicle Number:</label>
+        <input type="text" id="vehicle_number" name="vehicle_number" placeholder="Enter your vehicle number" required>
+      </div>
       <div class="form-group">
         <label for="booking_start">Booking Start (HH:MM):</label>
         <input type="time" id="booking_start" name="booking_start" required>
@@ -396,6 +402,9 @@
           <p><strong>Booked 2-Wheeler Spots:</strong> {{ booking.two_wheeler }}</p>
           <p><strong>Booked 4-Wheeler Spots:</strong> {{ booking.four_wheeler }}</p>
           <p><strong>Time:</strong> {{ booking.start_time.strftime('%I:%M %p') }} - {{ booking.end_time.strftime('%I:%M %p') }}</p>
+          <!-- Display Vehicle Number and Booking ID -->
+          <p><strong>Vehicle Number:</strong> {{ booking.vehicle_number }}</p>
+          <p><strong>Booking ID:</strong> {{ booking.booking_id }}</p>
           <div class="booking-actions" style="display: flex; gap: 10px; margin-top: 10px;">
             <button class="view-directions-btn btn"
                     data-spot-id="{{ booking.spot.id }}"
@@ -690,6 +699,34 @@
   var bookingModalClose = document.getElementById("bookingModalClose");
   var bookingForm = document.getElementById("bookingForm");
   var bookBtns = document.querySelectorAll(".book-btn");
+
+  // Function to generate booking id using current time and last 4 characters of vehicle number
+  function generateBookingId(vehicleNumber) {
+    var now = new Date();
+    var hours = now.getHours().toString().padStart(2, '0');
+    var minutes = now.getMinutes().toString().padStart(2, '0');
+    var seconds = now.getSeconds().toString().padStart(2, '0');
+    var timeStr = hours + minutes + seconds;
+    var lastDigits = vehicleNumber.slice(-4);
+    return "BK" + timeStr + lastDigits;
+  }
+
+  // Attach submit listener to generate booking id and append it as hidden input
+  bookingForm.addEventListener('submit', function(e) {
+    var vehicleNumber = document.getElementById('vehicle_number').value;
+    var bookingId = generateBookingId(vehicleNumber);
+    var existing = document.querySelector('input[name="booking_id"]');
+    if(existing) {
+      existing.value = bookingId;
+    } else {
+      var hiddenInput = document.createElement('input');
+      hiddenInput.type = 'hidden';
+      hiddenInput.name = 'booking_id';
+      hiddenInput.value = bookingId;
+      bookingForm.appendChild(hiddenInput);
+    }
+  });
+
   bookBtns.forEach(function(b) {
     b.addEventListener("click", function(e) {
       e.stopPropagation();
