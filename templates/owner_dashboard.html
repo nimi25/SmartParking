@@ -2,26 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Owner Dashboard</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <style>
-    /* Base Page Styling */
+    /* Remove any fixed height constraints */
+    html, body {
+      margin: 0;
+      padding: 0;
+    }
     body {
       font-family: 'Poppins', sans-serif;
       background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
                   url("{{ url_for('static', filename='images/bengaluru-map.jpg') }}") no-repeat center center fixed;
       background-size: cover;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
+      /* Let content naturally determine height */
     }
 
-    /* Main Container (Spot Listing) */
+    /* Main Container for Spot Listing */
     .container {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(15px);
@@ -35,6 +35,7 @@
       color: #fff;
       text-align: center;
       position: relative;
+      margin: 20px auto;
     }
 
     /* Spot Cards */
@@ -63,42 +64,34 @@
       margin: 8px 0;
     }
 
-    /* Card Actions Container */
-.card-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-/* Button Styles */
-.card-actions .btn {
-  flex: 1;
-  text-align: center;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  color: white;
-  background: linear-gradient(45deg, #ff416c, #ff4b2b);
-  cursor: pointer;
-  transition: all 0.3s ease-in-out;
-  box-shadow: 0 4px 10px rgba(255, 65, 108, 0.2);
-  text-decoration: none;
-  display: inline-block;
-}
-
-.card-actions .btn:hover {
-  background: linear-gradient(45deg, #ff4b2b, #ff416c);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(255, 65, 108, 0.4);
-}
-
-/* Consistent Spacing for Form Button */
-.card-actions form {
-  flex: 1;
-}
-
-
-    /* Original .btn style: Red gradient for Add/Edit/Delete/Logout */
+    /* Card Actions */
+    .card-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .card-actions .btn {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      background: linear-gradient(45deg, #ff416c, #ff4b2b);
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+      box-shadow: 0 4px 10px rgba(255, 65, 108, 0.2);
+      text-decoration: none;
+      display: inline-block;
+    }
+    .card-actions .btn:hover {
+      background: linear-gradient(45deg, #ff4b2b, #ff416c);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(255, 65, 108, 0.4);
+    }
+    .card-actions form {
+      flex: 1;
+    }
     a.btn, button.btn {
       display: inline-block;
       color: #fff;
@@ -113,12 +106,11 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
       transition: transform 0.2s ease;
     }
-    /* Slight hover scale animation */
     a.btn:hover, button.btn:hover {
       transform: scale(1.05);
     }
 
-    /* Sliders (Metrics on Left, History on Right) */
+    /* Sliders (Metrics & History) remain fixed */
     #metricsSlider,
     #historySlider {
       position: fixed;
@@ -135,21 +127,14 @@
       overflow-y: auto;
       z-index: 1000;
       color: #fff;
-
-      /* Make the slider a flex container */
-  display: flex;
-  flex-direction: column;
-}
+      display: flex;
+      flex-direction: column;
     }
-
     .history-content {
-  /* This takes remaining vertical space and becomes scrollable */
-  flex: 1 1 auto;
-  overflow-y: auto;
-  margin-top: 20px; /* optional spacing */
-}
-
-    /* Left Slider (Metrics) starts hidden off-screen */
+      flex: 1;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
     #metricsSlider {
       left: 0;
       transform: translateX(-310px);
@@ -157,7 +142,6 @@
     #metricsSlider.open {
       transform: translateX(0);
     }
-    /* Right Slider (History) starts hidden off-screen */
     #historySlider {
       right: 0;
       transform: translateX(310px);
@@ -166,10 +150,10 @@
       transform: translateX(0);
     }
 
-    /* Toggle Buttons: pinned near top, small floating buttons */
+    /* Toggle Buttons */
     .slider-toggle-btn {
       position: fixed;
-      top: 80px; /* Adjust if you'd like them higher/lower */
+      top: 80px;
       display: inline-block;
       width: auto;
       background: rgba(0, 0, 0, 0.6);
@@ -191,8 +175,6 @@
     #toggleHistory {
       right: 20px;
     }
-
-    /* Metrics inside the left slider */
     .metrics-container {
       display: flex;
       flex-direction: column;
@@ -209,8 +191,6 @@
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
       text-align: center;
     }
-
-    /* History items inside the right slider */
     .history-item {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
@@ -226,8 +206,6 @@
       transform: scale(1.02);
       opacity: 0.9;
     }
-
-    /* Close buttons at the bottom of each slider (red .btn) */
     .slider-bottom-close {
       color: #fff;
       margin-top: 40px;
@@ -236,7 +214,6 @@
   </style>
 </head>
 <body>
-
   <!-- LEFT SLIDER: Metrics -->
   <div id="metricsSlider">
     <h3 style="margin-top: 50px;">Your Metrics</h3>
@@ -255,7 +232,6 @@
       </div>
     </div>
     <div class="slider-bottom-close">
-      <!-- Red "Close" button at the bottom -->
       <button id="closeMetricsBtn" class="btn">Close</button>
     </div>
   </div>
@@ -263,76 +239,63 @@
   <!-- RIGHT SLIDER: History -->
   <div id="historySlider">
     <h3 style="margin-top: 50px;">Booking History</h3>
-
-    <!-- Scrollable container for booking items -->
-  <div class="history-content">
-    {% if bookings and bookings|length > 0 %}
-      {% for booking in bookings %}
-        <div class="history-item">
-          <p><strong>Driver:</strong> {{ booking.driver_name }}</p>
-          <p><strong>Email:</strong> {{ booking.email }}</p>
-          <p><strong>Parking Spot:</strong> {{ booking.spot_location }}</p>
-
-          <!-- Booked At Time -->
-          <p><strong>Booked At Time:</strong>
-            {% if booking.created_at %}
-              {{ booking.created_at.strftime('%I:%M %p') }}
-            {% else %}
-              N/A
-            {% endif %}
-          </p>
-
-          <!-- Booked Date -->
-          <p><strong>Booked Date:</strong>
-            {% if booking.created_at %}
-              {{ booking.created_at.strftime('%d-%m-%Y') }}
-            {% else %}
-              N/A
-            {% endif %}
-          </p>
-
-
-          <!-- Start / End Times -->
-          <p><strong>Booked From</strong>:</strong>
-            {% if booking.start_time %}
-              {{ booking.start_time.strftime('%I:%M %p') }}
-            {% else %}
-              N/A
-            {% endif %}
-          </p>
-          <p><strong>Booked Till:</strong>
-            {% if booking.end_time %}
-              {{ booking.end_time.strftime('%I:%M %p') }}
-            {% else %}
-              N/A
-            {% endif %}
-          </p>
-
-          <!-- Vehicle Type -->
-          <p><strong>Vehicle Type:</strong>
-            {% if booking.vehicle_type == 'two_wheeler' %}
-              2 Wheeler
-            {% elif booking.vehicle_type == 'four_wheeler' %}
-              4 Wheeler
-            {% else %}
-              {{ booking.vehicle_type }} <!-- fallback if it's something else (e.g. "both") -->
-            {% endif %}
-          </p>
-
-          <!-- Active Status -->
-          <p><strong>Active:</strong>
-            {% if booking.active %}
-              Yes
-            {% else %}
-              No
-            {% endif %}
-          </p>
-        </div>
-      {% endfor %}
-    {% else %}
-      <p>No booking history available.</p>
-    {% endif %}
-  </div>
+    <div class="history-content">
+      {% if bookings and bookings|length > 0 %}
+        {% for booking in bookings %}
+          <div class="history-item">
+            <p><strong>Driver:</strong> {{ booking.driver_name }}</p>
+            <p><strong>Email:</strong> {{ booking.email }}</p>
+            <p><strong>Parking Spot:</strong> {{ booking.spot_location }}</p>
+            <p><strong>Booked At Time:</strong>
+              {% if booking.created_at %}
+                {{ booking.created_at.strftime('%I:%M %p') }}
+              {% else %}
+                N/A
+              {% endif %}
+            </p>
+            <p><strong>Booked Date:</strong>
+              {% if booking.created_at %}
+                {{ booking.created_at.strftime('%d-%m-%Y') }}
+              {% else %}
+                N/A
+              {% endif %}
+            </p>
+            <p><strong>Booked From:</strong>
+              {% if booking.start_time %}
+                {{ booking.start_time.strftime('%I:%M %p') }}
+              {% else %}
+                N/A
+              {% endif %}
+            </p>
+            <p><strong>Booked Till:</strong>
+              {% if booking.end_time %}
+                {{ booking.end_time.strftime('%I:%M %p') }}
+              {% else %}
+                N/A
+              {% endif %}
+            </p>
+            <p><strong>Vehicle Type:</strong>
+              {% if booking.vehicle_type == 'two_wheeler' %}
+                2 Wheeler
+              {% elif booking.vehicle_type == 'four_wheeler' %}
+                4 Wheeler
+              {% else %}
+                {{ booking.vehicle_type }}
+              {% endif %}
+            </p>
+            <p><strong>Active:</strong>
+              {% if booking.active %}
+                Yes
+              {% else %}
+                No
+              {% endif %}
+            </p>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>No booking history available.</p>
+      {% endif %}
+    </div>
     <div class="slider-bottom-close">
       <button id="closeHistoryBtn" class="btn">Close</button>
     </div>
@@ -346,7 +309,6 @@
   <div class="container">
     <h2>Welcome, Owner!</h2>
     <a href="{{ url_for('parking.add_parking_spot') }}" class="btn">Add a Parking Spot</a>
-
     <h3>Your Parking Spots</h3>
     <div class="card-container">
       {% for spot in spots %}
@@ -392,29 +354,22 @@
         L.marker([{{ spot.lat }}, {{ spot.lng }}]).addTo(map_{{ spot.id }});
       {% endfor %}
 
-      // Sliders
+      // Slider functionality
       var metricsSlider = document.getElementById('metricsSlider');
       var historySlider = document.getElementById('historySlider');
-
-      // Buttons
       var toggleMetricsBtn = document.getElementById('toggleMetrics');
       var toggleHistoryBtn = document.getElementById('toggleHistory');
       var closeMetricsBtn = document.getElementById('closeMetricsBtn');
       var closeHistoryBtn = document.getElementById('closeHistoryBtn');
 
-      // Toggle the left slider (Metrics)
       toggleMetricsBtn.addEventListener('click', function() {
         metricsSlider.classList.add('open');
-        // Hide the toggle button while open
         toggleMetricsBtn.style.display = 'none';
       });
       closeMetricsBtn.addEventListener('click', function() {
         metricsSlider.classList.remove('open');
-        // Show the toggle button again when closed
         toggleMetricsBtn.style.display = 'inline-block';
       });
-
-      // Toggle the right slider (History)
       toggleHistoryBtn.addEventListener('click', function() {
         historySlider.classList.add('open');
         toggleHistoryBtn.style.display = 'none';

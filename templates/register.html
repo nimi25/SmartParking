@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block content %}
+  {% set selected_role = request.args.get('role', 'driver') %}
   <!-- Animated Welcome Heading (same as login) -->
   <div class="animated-welcome">
     <h1>Welcome to Smart Parking</h1>
@@ -12,8 +13,6 @@
 
   <!-- Registration Card (same style as login) -->
   <div class="auth-container" style="width: 380px; animation: fadeIn 1s ease-in-out;">
-
-
     <h2>Register</h2>
 
     {% with messages = get_flashed_messages(with_categories=True) %}
@@ -36,11 +35,11 @@
       <label for="password" style="color: #fff;">Password:</label>
       <input type="password" name="password" id="password" required>
 
+      <!-- Display the selected role instead of a dropdown -->
       <label for="role" style="color: #fff;">Role:</label>
-      <select name="role" id="role" required>
-        <option value="driver">Driver</option>
-        <option value="owner">Owner</option>
-      </select>
+      <p style="color: #fff; font-weight:600; margin-bottom: 20px;">{{ selected_role|capitalize }}</p>
+      <!-- Added id="role" to match the label -->
+      <input type="hidden" id="role" name="role" value="{{ selected_role }}">
 
       <button type="submit">Register</button>
     </form>
@@ -50,4 +49,3 @@
     </div>
   </div>
 {% endblock %}
-
