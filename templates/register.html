@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Parking - Register</title>
+  <style>
+    /* Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    body {
+      background: #121212 url("../static/images/background.jpg") no-repeat center center;
+      background-size: cover;
+      color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    /* Welcome Text Outside the Box */
+    .welcome-text {
+      font-size: 3rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+      color: #00e5ff;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
+    }
+    /* Register Container */
+    .register-container {
+      background: #1f1f1f;
+      padding: 2rem;
+      border-radius: 8px;
+      width: 350px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      animation: fadeIn 1s ease;
+      text-align: center;
+    }
+    .register-header {
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      color: #e0e0e0;
+    }
+    .register-form label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #cfcfcf;
+      text-align: center;
+    }
+    .register-form input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: none;
+      border-radius: 4px;
+      background: #333;
+      color: #e0e0e0;
+      font-size: 1rem;
+    }
+    .register-form button {
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 4px;
+      background: #00e5ff;
+      color: #000;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .register-form button:hover {
+      background: #00cce0;
+    }
+    .login-text {
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+    .login-text a {
+      color: #00e5ff;
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .login-text a:hover {
+      text-decoration: underline;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Welcome Text -->
+  <div class="welcome-text">Welcome to Smart Parking</div>
+  
+  <!-- Register Container -->
+  <div class="register-container">
+    <div class="register-header">Register</div>
+    <form class="register-form">
+      <label for="username">Username</label>
+      <input type="text" id="username" placeholder="Username" required />
+      
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="Email" required />
+      
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Password" required />
+      
+      <button type="submit">Register</button>
+    </form>
+    <div class="login-text">
+      Already have an account? <a href="login.html">Login here</a>
+    </div>
+  </div>
+</body>
+</html>

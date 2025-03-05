@@ -2,593 +2,211 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Driver Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Parking - Driver Dashboard</title>
   <style>
-    /* RESET / BASE STYLES */
+    /* Base Styles */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
     }
     body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)),
-                  url("../static/images/bengaluru_map.jpg") no-repeat center center fixed;
+      background: #121212 url("../static/images/background.jpg") no-repeat center center;
       background-size: cover;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #fff;
-      overflow: hidden; /* prevent scrollbars if panel slides in */
+      color: #e0e0e0;
     }
-
-    /* MAIN DASHBOARD CONTAINER */
-    .dashboard-container {
-      position: relative;
-      width: 80%;
-      max-width: 1200px;
-      height: 80%;
-      background: rgba(0, 0, 0, 0.4);
-      border-radius: 15px;
-      overflow: hidden;
+    header {
+      background: #1f1f1f;
+      padding: 1rem 2rem;
       display: flex;
-      flex-direction: column;
       justify-content: space-between;
-      backdrop-filter: blur(8px);
+      align-items: center;
+      border-bottom: 2px solid #333;
     }
-
-    /* Driver heading & button area */
-    .driver-heading {
-      text-align: center;
-      margin-top: 20px; /* spacing at top */
+    header h1 {
+      font-size: 1.75rem;
+      letter-spacing: 1px;
     }
-    .driver-heading h2 {
-      font-size: 2rem;
-      margin-bottom: 10px;
-      font-weight: 600;
-    }
-    .driver-heading .btn {
-      background: linear-gradient(45deg, #ff416c, #ff4b2b);
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      padding: 10px 20px;
-      cursor: pointer;
-      font-size: 16px;
-      box-shadow: 0 4px 10px rgba(255, 65, 108, 0.4);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    /* Nav Icons */
+    nav a {
+      margin-left: 1.5rem;
       text-decoration: none;
-      display: inline-block;
-      margin-bottom: 10px;
+      transition: opacity 0.3s;
     }
-    .driver-heading .btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 15px rgba(255, 65, 108, 0.6);
+    nav a img {
+      width: 40px;
+      height: 40px;
+      vertical-align: middle;
     }
-
-    /* SEARCH BAR */
-    .search-bar {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
+    nav a:hover {
+      opacity: 0.8;
     }
-    .search-bar input {
-      width: 50%;
-      max-width: 600px;
-      padding: 10px 15px;
-      border-radius: 25px;
-      border: none;
-      outline: none;
-      font-size: 1rem;
-      background-color: #333;
-      color: #fff;
-      text-align: center;
+    /* Dashboard Layout */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: calc(100vh - 70px);
     }
-
-    /* CONTENT AREA */
-    .content-area {
-      flex: 1;
-      margin: 0 20px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 10px;
-    }
-
-    /* BOTTOM BUTTONS (LOGOUT) */
-    .buttons-container {
+    .sidebar {
+      background: #1f1f1f;
+      padding: 2rem 1rem;
+      border-right: 2px solid #333;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      margin: 20px;
+      gap: 1rem;
     }
-    .buttons-container button {
-      width: 200px;
-      padding: 15px 20px;
-      margin: 10px 0;
-      font-size: 1rem;
-      font-weight: 500;
-      color: #fff;
-      background-color: #ff4c61;
-      border: none;
-      border-radius: 25px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-    .buttons-container button:hover {
-      background-color: #ff3348;
-    }
-
-    /* SIDE PANEL (INITIALLY HIDDEN) */
-    #sidePanel {
-      position: fixed;
-      top: 0;
-      left: -250px; /* hidden by default */
-      width: 250px;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(6px);
-      padding: 20px;
-      transition: left 0.3s ease;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-    }
-    #sidePanel.open {
-      left: 0; /* slides in */
-    }
-    #sidePanel h2 {
-      margin-bottom: 30px;
-      font-size: 1.3rem;
-    }
-    .nav-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      flex: 1;
-    }
-    .nav-list li {
-      display: flex;
-      align-items: center;
-      margin-bottom: 20px;
-      font-size: 22px;
-      cursor: pointer;
-      color: #fff;
-      transition: color 0.2s ease;
-    }
-    .nav-list li:hover {
-      color: #ff3348;
-    }
-    .sidebar-icon {
-      margin-right: 10px;
-      font-size: 1.2rem;
-    }
-    .panel-close-btn {
-      margin-top: auto;
-      width: 100%;
-      padding: 12px 0;
-      font-size: 1rem;
-      font-weight: 500;
-      color: #fff;
-      background-color: #ff4c61;
-      border: none;
-      border-radius: 25px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-    .panel-close-btn:hover {
-      background-color: #ff3348;
-    }
-
-    /* TOGGLE BUTTON (MADE BIGGER) */
-    #toggleButton {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      z-index: 999;
-      background-color: #ff4c61;
-      color: #fff;
-      /* Increase padding & font-size for bigger look */
-      padding: 12px 24px; 
-      font-size: 20px; 
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-    #toggleButton:hover {
-      background-color: #ff3348;
-    }
-
-    /* PROFILE ICON (TOP-RIGHT) */
-    #profileIconBtn {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 1100;
-      background: #fff;
-      color: #333;
-      border: 2px solid #333;
-      border-radius: 50%;
-      padding: 10px;
-      cursor: pointer;
-      font-size: 22px;
-      width: 50px;
-      height: 50px;
-      text-align: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      transition: transform 0.2s ease;
-    }
-    #profileIconBtn:hover {
-      transform: scale(1.05);
-    }
-
-    /* MY BOOKINGS MODAL */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 2000;
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-overlay.open {
-      display: flex;
-    }
-    .modal-content {
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(8px);
-      padding: 20px 30px;
-      border-radius: 10px;
-      max-width: 400px;
-      width: 90%;
-      text-align: center;
-      position: relative;
-    }
-    .modal-close-btn {
-      position: absolute;
-      top: 10px; right: 10px;
-      font-size: 1.2rem;
-      cursor: pointer;
-      background: none;
-      border: none;
-      color: #fff;
-    }
-    .modal-close-btn:hover {
-      color: #ff3348;
-    }
-    .modal-content h2 {
-      margin-bottom: 15px;
-      font-size: 1.3rem;
-    }
-    .field-group {
-      text-align: left;
-      margin-bottom: 12px;
-    }
-    .field-group label {
+    .sidebar a {
       display: block;
-      margin-bottom: 5px;
-      font-weight: 500;
-      color: #fff;
+      padding: 0.75rem 1rem;
+      color: #e0e0e0;
+      text-decoration: none;
+      border-left: 4px solid transparent;
+      transition: background 0.3s, border-color 0.3s;
     }
-    .field-group input {
-      width: 100%;
-      padding: 8px 10px;
-      font-size: 1rem;
-      border-radius: 5px;
-      border: none;
-      outline: none;
-    }
-    .directions-button {
-      display: block;
-      width: 80%;
-      margin: 20px auto 10px auto;
-      padding: 12px 15px;
-      font-size: 1rem;
-      font-weight: 500;
-      color: #fff;
-      background-color: #ff4c61;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-    .directions-button:hover {
-      background-color: #ff3348;
-    }
-    .modal-button-group {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin: 10px 0;
-    }
-    .modal-button {
-      padding: 10px 15px;
-      font-size: 1rem;
-      font-weight: 500;
-      color: #fff;
-      background-color: #ff4c61;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-    .modal-button:hover {
-      background-color: #ff3348;
-    }
-    .modal-close-bottom {
-      margin-top: 10px;
-      padding: 10px 15px;
-      font-size: 1rem;
-      font-weight: 500;
-      color: #fff;
-      background-color: #444;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-    .modal-close-bottom:hover {
-      background-color: #666;
-    }
-
-    /* PROFILE OVERLAY */
-    #profileOverlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(5px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1300;
-    }
-    #profileOverlay.open {
-      display: flex;
-    }
-    #profileContent {
-      background: rgba(0, 0, 0, 0.85);
-      color: #fff;
-      border-radius: 10px;
-      padding: 20px;
-      width: 320px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-    }
-    #profileContent h2 {
-      margin-top: 0;
-      margin-bottom: 15px;
-      text-align: center;
-    }
-    #profileContent label {
-      display: block;
-      margin: 10px 0 5px;
-    }
-    #profileContent input[type="text"],
-    #profileContent input[type="email"],
-    #profileContent input[type="file"] {
-      width: 100%;
-      padding: 6px;
-      border: 1px solid #555;
-      border-radius: 4px;
+    .sidebar a:hover {
       background: #333;
-      color: #fff;
+      border-left: 4px solid #00e5ff;
     }
-    #profileContent input::placeholder {
-      color: #ccc;
+    .sidebar a.active {
+      background: #333;
+      border-left: 4px solid #00e5ff;
     }
-    #profileButtons {
+    .content {
+      padding: 2rem;
       display: flex;
-      justify-content: space-between;
-      margin-top: 15px;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
     }
-    #profileButtons .btn {
-      background: linear-gradient(45deg, #ff416c, #ff4b2b);
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      padding: 8px 16px;
-      cursor: pointer;
-      font-size: 14px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      transition: transform 0.2s ease;
+    /* Combined Welcome & Map Card */
+    .welcome-map-card {
+      width: 1300px;
+      height: 600px;
+      background: #1f1f1f;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      transition: transform 0.3s, box-shadow 0.3s;
     }
-    #profileButtons .btn:hover {
-      transform: scale(1.05);
+    .welcome-map-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
     }
-
-    /* "Welcome, Driver!" + "Pick Your Parking Spot" */
-    .driver-heading {
+    .welcome-map-card .welcome {
       text-align: center;
-      margin-top: 20px;
     }
-    .driver-heading h2 {
-      font-size: 2rem;
-      margin-bottom: 10px;
-      font-weight: 600;
+    .welcome-map-card .welcome h3 {
+      color: #00e5ff;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
     }
-    .driver-heading .btn {
-      background: linear-gradient(45deg, #ff416c, #ff4b2b);
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      padding: 10px 20px;
-      cursor: pointer;
-      font-size: 16px;
-      box-shadow: 0 4px 10px rgba(255, 65, 108, 0.4);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    .welcome-map-card .welcome p {
+      font-size: 1rem;
+      color: #cfcfcf;
+    }
+    .welcome-map-card .map-container {
+      background: #333;
+      border-radius: 8px;
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #777;
+      font-style: italic;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .welcome-map-card .map-container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+    }
+    /* Quick Actions Card */
+    .quick-actions-card {
+      background: #1f1f1f;
+      padding: 1.5rem;
+      border-radius: 12px;
+      width: 600px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      text-align: center;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .quick-actions-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+    }
+    .quick-actions-card h3 {
+      color: #00e5ff;
+      margin-bottom: 1rem;
+    }
+    .quick-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .quick-actions a {
       text-decoration: none;
-      display: inline-block;
-      margin-bottom: 10px;
     }
-    .driver-heading .btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 15px rgba(255, 65, 108, 0.6);
+    .action-btn {
+      background: #00e5ff;
+      color: #000;
+      padding: 0.75rem 1.25rem;
+      border-radius: 4px;
+      font-weight: 600;
+      transition: background 0.3s;
     }
-
-    @media (max-width: 768px) {
-      .search-bar input {
-        width: 80%;
-      }
-      .buttons-container button {
-        width: 70%;
-      }
-      .modal-content {
-        max-width: 90%;
-      }
-      .directions-button {
-        width: 90%;
-      }
-      #profileContent {
-        width: 90%;
-      }
+    .action-btn:hover {
+      background: #00cce0;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
-  <!-- Side panel -->
-  <div id="sidePanel">
-    <h2>Driver Dashboard</h2>
-    <ul class="nav-list">
-      <li onclick="openBookingsModal()">
-        <span class="sidebar-icon">&#128197;</span>
-        My Bookings
-      </li>
-    </ul>
-    <button class="panel-close-btn" onclick="togglePanel()">Close</button>
+  <header>
+    <h1>Driver Dashboard</h1>
+    <nav>
+      <a href="profile_driver.html">
+        <img src="../static/images/profile.jpg" alt="Profile" />
+      </a>
+      <a href="#">
+        <img src="../static/images/logout.jpg" alt="Logout" />
+      </a>
+    </nav>
+  </header>
+  <div class="dashboard">
+    <aside class="sidebar">
+      <a href="driver_dashboard.html" class="active">Home</a>
+      <a href="mybookings.html">My Bookings</a>
+      <a href="history_driver.html">History</a>
+    </aside>
+    <main class="content">
+      <!-- Combined Welcome & Map Card -->
+      <div class="welcome-map-card" style="animation: fadeIn 1s ease;">
+        <div class="welcome">
+          <h3>Welcome, Driver!</h3>
+          <p>Good day, Alex! Check your current location and monitor your journey.</p>
+        </div>
+        <div class="map-container">
+          Map will be displayed here
+        </div>
+      </div>
+      <!-- Quick Actions Card -->
+      <div class="quick-actions-card" style="animation: fadeIn 1.2s ease;">
+        <h3>Quick Actions</h3>
+        <div class="quick-actions">
+          <a href="mybookings.html"><div class="action-btn">My Bookings</div></a>
+          <a href="history_driver.html"><div class="action-btn">History</div></a>
+        </div>
+      </div>
+    </main>
   </div>
-
-  <!-- Toggle button (bigger now) -->
-  <button id="toggleButton" onclick="togglePanel()">Driver Dashboard</button>
-
-  <!-- Profile icon (top-right) -->
-  <button id="profileIconBtn">&#128100;</button>
-
-  <!-- Main blurred dashboard container -->
-  <div class="dashboard-container">
-    
-    <!-- "Welcome, Driver!" + "Pick Your Parking Spot" heading -->
-    <div class="driver-heading">
-      <h2>Welcome, Driver!</h2>
-      <a href="#" class="btn">Pick Your Parking Spot</a>
-    </div>
-
-    <!-- Search bar -->
-    <div class="search-bar">
-      <input type="text" placeholder="Search locality..." />
-    </div>
-
-    <!-- Center content area -->
-    <div class="content-area">
-      <!-- Additional driver content goes here -->
-    </div>
-
-    <!-- Bottom button(s) -->
-    <div class="buttons-container">
-      <button>Logout</button>
-    </div>
-  </div>
-
-  <!-- My Bookings modal -->
-  <div id="bookingsModal" class="modal-overlay">
-    <div class="modal-content">
-      <button class="modal-close-btn" onclick="closeBookingsModal()">×</button>
-      <h2>My Bookings</h2>
-      <div class="field-group">
-        <label for="location">Location</label>
-        <input type="text" id="location" />
-      </div>
-      <div class="field-group">
-        <label for="price">Price</label>
-        <input type="text" id="price" />
-      </div>
-      <div class="field-group">
-        <label for="twoWheeler">Booked 2-Wheeler Spots</label>
-        <input type="number" id="twoWheeler" />
-      </div>
-      <div class="field-group">
-        <label for="fourWheeler">Booked 4-Wheeler Spots</label>
-        <input type="number" id="fourWheeler" />
-      </div>
-      <div class="field-group">
-        <label for="time">Time</label>
-        <input type="text" id="time" />
-      </div>
-      <div class="field-group">
-        <label for="vehicleNumber">Vehicle Number</label>
-        <input type="text" id="vehicleNumber" />
-      </div>
-      <div class="field-group">
-        <label for="bookingId">Booking ID</label>
-        <input type="text" id="bookingId" />
-      </div>
-      <div class="field-group">
-        <label for="bookingDate">Date</label>
-        <input type="date" id="bookingDate" />
-      </div>
-      <button class="directions-button">Directions</button>
-      <div class="modal-button-group">
-        <button class="modal-button">Pay</button>
-        <button class="modal-button">Delete</button>
-      </div>
-      <button class="modal-close-bottom" onclick="closeBookingsModal()">Close</button>
-    </div>
-  </div>
-
-  <!-- PROFILE OVERLAY -->
-  <div id="profileOverlay">
-    <div id="profileContent">
-      <h2>Edit Profile</h2>
-      <label for="profilePhoto">Profile Photo</label>
-      <input type="file" id="profilePhoto" />
-
-      <label for="profileName">Name</label>
-      <input type="text" id="profileName" placeholder="Your Name" />
-
-      <label for="profileEmail">Email</label>
-      <input type="email" id="profileEmail" placeholder="Your Email" />
-
-      <div id="profileButtons">
-        <button class="btn" id="saveProfileBtn">Save</button>
-        <button class="btn" id="closeProfileBtn">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // Toggle side panel
-    function togglePanel() {
-      const sidePanel = document.getElementById('sidePanel');
-      sidePanel.classList.toggle('open');
-    }
-
-    // My Bookings modal open/close
-    function openBookingsModal() {
-      document.getElementById('bookingsModal').classList.add('open');
-    }
-    function closeBookingsModal() {
-      document.getElementById('bookingsModal').classList.remove('open');
-    }
-
-    // Profile overlay open/close
-    const profileIconBtn = document.getElementById('profileIconBtn');
-    const profileOverlay = document.getElementById('profileOverlay');
-    const closeProfileBtn = document.getElementById('closeProfileBtn');
-    const saveProfileBtn = document.getElementById('saveProfileBtn');
-
-    profileIconBtn.addEventListener('click', function() {
-      profileOverlay.classList.add('open');
-    });
-    closeProfileBtn.addEventListener('click', function() {
-      profileOverlay.classList.remove('open');
-    });
-    saveProfileBtn.addEventListener('click', function() {
-      alert('Profile changes saved!');
-      profileOverlay.classList.remove('open');
-    });
-  </script>
 </body>
 </html>

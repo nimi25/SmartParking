@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Parking - Parking Space</title>
+  <style>
+    /* Base Styles (same as other pages) */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    body {
+      background: #121212 url("../static/images/background.jpg") no-repeat center center;
+      background-size: cover;
+      color: #e0e0e0;
+    }
+    /* Header */
+    header {
+      background: #1f1f1f;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #333;
+    }
+    header h1 {
+      font-size: 1.75rem;
+      letter-spacing: 1px;
+    }
+    nav a {
+      color: #e0e0e0;
+      margin-left: 1.5rem;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    nav a:hover {
+      color: #00e5ff;
+    }
+    /* Nav Icons */
+    nav a {
+      margin-left: 1.5rem;
+      text-decoration: none;
+      transition: opacity 0.3s;
+    }
+    nav a img {
+      width: 40px;
+      height: 40px;
+      vertical-align: middle;
+    }
+    nav a:hover {
+      opacity: 0.8;
+    }
+    /* Dashboard Layout */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: calc(100vh - 70px);
+    }
+    /* Sidebar */
+    .sidebar {
+      background: #1f1f1f;
+      padding: 2rem 1rem;
+      border-right: 2px solid #333;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .sidebar a {
+      display: block;
+      padding: 0.75rem 1rem;
+      color: #e0e0e0;
+      text-decoration: none;
+      border-left: 4px solid transparent;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .sidebar a:hover {
+      background: #333;
+      border-left: 4px solid #00e5ff;
+    }
+    .sidebar a.active {
+      background: #333;
+      border-left: 4px solid #00e5ff;
+    }
+    /* Main Content */
+    .content {
+      padding: 2rem;
+    }
+    .card {
+      background: #1f1f1f;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+    }
+    .card h3 {
+      margin-bottom: 0.75rem;
+      color: #00e5ff;
+    }
+    .card p {
+      line-height: 1.5;
+      color: #cfcfcf;
+    }
+    /* Parking Spot List */
+    .parking-spot-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .parking-spot-item {
+      background: #2a2a2a;
+      border-radius: 8px;
+      padding: 1rem;
+      width: 300px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .parking-spot-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    .parking-spot-item h4 {
+      color: #00e5ff;
+      margin-bottom: 0.5rem;
+    }
+    .parking-spot-item p {
+      margin-bottom: 0.4rem;
+      color: #ccc;
+    }
+    .map-container-spot {
+      width: 100%;
+      height: 150px;
+      background: #333;
+      margin: 0.5rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #777;
+      font-style: italic;
+    }
+    .spot-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .spot-actions button {
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+    .edit-btn {
+      background: #ffa500;
+      color: #000;
+    }
+    .cancel-btn {
+      background: #ff4444;
+      color: #fff;
+    }
+    .approve-btn {
+      background: #00e5ff;
+      color: #000;
+    }
+    .approve-btn:hover {
+      background: #00cce0;
+    }
+    /* Collapsible Add Spot Form */
+    details {
+      width: 100%;
+      margin-top: 1rem;
+    }
+    details summary {
+      background: #00e5ff;
+      color: #000;
+      padding: 0.75rem 1.25rem;
+      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+      list-style: none;
+    }
+    details summary:hover {
+      background: #00cce0;
+    }
+    details[open] summary {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    .add-spot-form {
+      padding: 1rem;
+      background: #1f1f1f;
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+    }
+    .add-spot-form label {
+      font-weight: 500;
+      color: #cfcfcf;
+      margin-top: 0.5rem;
+    }
+    .add-spot-form input,
+    .add-spot-form select,
+    .add-spot-form textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      border: none;
+      border-radius: 4px;
+      background: #333;
+      color: #e0e0e0;
+    }
+    .add-spot-form button {
+      margin-top: 1rem;
+      padding: 0.75rem 1.25rem;
+      border: none;
+      border-radius: 4px;
+      background: #00e5ff;
+      color: #000;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .add-spot-form button:hover {
+      background: #00cce0;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Owner Dashboard</h1>
+    <nav>
+      <a href="profile_owner.html">
+        <img src="../static/images/profile.jpg" alt="Profile" />
+      </a>
+      <a href="#">
+        <img src="../static/images/logout.jpg" alt="Logout" />
+      </a>
+    </nav>
+  </header>
+  
+  <div class="dashboard">
+    <aside class="sidebar">
+      <a href="owner_dashboard.html">Home</a>
+      <a href="bookings.html">Bookings</a>
+      <a href="parkingspace.html" class="active">Parking Space</a>
+      <a href="payment.html">Payment</a>
+      <a href="metrics.html">Metrics</a>
+      <a href="histroy_owner.html">History</a>
+    </aside>
+    <main class="content">
+      <!-- Existing Parking Spots Card (unchanged) -->
+      <div class="card">
+        <h3>List of Parking Spots</h3>
+        <p>Here you can view and manage your parking spots:</p>
+        <div class="parking-spot-list">
+          <!-- Example Spot #1 -->
+          <div class="parking-spot-item">
+            <h4>Main Street Parking</h4>
+            <p>Price: ₹200</p>
+            <p>Status: Available</p>
+            <p>Available Hours: 08:00 AM to 10:00 PM</p>
+            <p>2-Wheeler Spaces: 10</p>
+            <p>4-Wheeler Spaces: 5</p>
+            <p>Description: Covered parking near downtown.</p>
+            <div class="map-container-spot">
+              Map placeholder
+            </div>
+            <div class="spot-actions">
+              <button class="approve-btn">Approve</button>
+              <button class="cancel-btn">Cancel</button>
+            </div>
+          </div>
+          <!-- Example Spot #2 -->
+          <div class="parking-spot-item">
+            <h4>City Center Lot</h4>
+            <p>Price: ₹300</p>
+            <p>Status: Not Available</p>
+            <p>Available Hours: 07:00 AM to 09:00 PM</p>
+            <p>2-Wheeler Spaces: 8</p>
+            <p>4-Wheeler Spaces: 4</p>
+            <p>Description: Open-air lot at the center of the city.</p>
+            <div class="map-container-spot">
+              Map placeholder
+            </div>
+            <div class="spot-actions">
+              <button class="approve-btn">Approve</button>
+              <button class="cancel-btn">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collapsible "Add a New Parking Spot" Form -->
+      <details style="width: 100%; animation: fadeIn 1.2s ease;">
+        <summary>Add a New Parking Spot</summary>
+        <div class="add-spot-form">
+          <!-- Fields in desired order -->
+          <!-- 1) Location -->
+          <label for="spot-location">Location</label>
+          <input type="text" id="spot-location" name="spot-location" placeholder="Enter address or description" />
+
+          <!-- 2) Vehicle Type -->
+          <label for="vehicle-type">Vehicle Type</label>
+          <select id="vehicle-type" name="vehicle-type">
+            <option value="2-wheeler">2-Wheeler</option>
+            <option value="4-wheeler">4-Wheeler</option>
+          </select>
+
+          <!-- 3) Available Date -->
+          <label for="available-date">Available Date</label>
+          <input type="date" id="available-date" name="available-date" />
+
+          <!-- 4) Available Hours -->
+          <label for="available-hours">Available Hours</label>
+          <input type="text" id="available-hours" name="available-hours" placeholder="e.g. 08:00 AM - 10:00 PM" />
+
+          <!-- 5) Price (Hourly Rate) -->
+          <label for="price">Price (Hourly Rate)</label>
+          <input type="number" id="price" name="price" placeholder="100" min="0" />
+
+          <!-- 6) Capacity -->
+          <label for="capacity">Capacity</label>
+          <input type="number" id="capacity" name="capacity" placeholder="Number of vehicles" />
+
+          <!-- 7) Disabled/Handicap Access (Yes/No dropdown) -->
+          <label for="handicap-access">Disabled/Handicap Access</label>
+          <select id="handicap-access" name="handicap-access">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+
+          <!-- 8) Parking Space Covered (dropdown) -->
+          <label for="cover-type">Parking Space Covered</label>
+          <select id="cover-type" name="cover-type">
+            <option value="covered">Covered</option>
+            <option value="uncovered">Uncovered</option>
+          </select>
+
+          <!-- 9) Additional Details -->
+          <label for="description">Additional Details (optional)</label>
+          <textarea id="description" name="description" rows="3" placeholder="Any extra info..."></textarea>
+
+          <!-- Map placeholder for marking the spot location -->
+          <div class="map-container" style="margin-top: 1rem;">
+            Map will be displayed here
+          </div>
+
+          <button type="submit">Add Parking Spot</button>
+        </div>
+      </details>
+    </main>
+  </div>
+</body>
+</html>

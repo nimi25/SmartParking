@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Parking - My Bookings</title>
+  <style>
+    /* Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    body {
+      background: #121212 url("../static/images/background.jpg") no-repeat center center;
+      background-size: cover;
+      color: #e0e0e0;
+    }
+    header {
+      background: #1f1f1f;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #333;
+    }
+    header h1 {
+      font-size: 1.75rem;
+      letter-spacing: 1px;
+    }
+    nav a {
+      margin-left: 1.5rem;
+      text-decoration: none;
+      transition: opacity 0.3s;
+    }
+    nav a img {
+      width: 40px;
+      height: 40px;
+      vertical-align: middle;
+    }
+    nav a:hover {
+      opacity: 0.8;
+    }
+    /* Dashboard Layout */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: calc(100vh - 70px);
+    }
+    .sidebar {
+      background: #1f1f1f;
+      padding: 2rem 1rem;
+      border-right: 2px solid #333;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .sidebar a {
+      display: block;
+      padding: 0.75rem 1rem;
+      color: #e0e0e0;
+      text-decoration: none;
+      border-left: 4px solid transparent;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .sidebar a:hover {
+      background: #333;
+      border-left: 4px solid #00e5ff;
+    }
+    .sidebar a.active {
+      background: #333;
+      border-left: 4px solid #00e5ff;
+    }
+    .content {
+      padding: 2rem;
+    }
+    /* Booking Card */
+    .booking-card {
+      background: #1f1f1f;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .booking-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+    }
+    .booking-card h3 {
+      margin-bottom: 0.75rem;
+      color: #00e5ff;
+    }
+    .booking-details p {
+      margin-bottom: 0.4rem;
+      font-size: 0.95rem;
+      color: #ccc;
+    }
+    /* Status Styling */
+    .booking-status.pending {
+      color: #ffa500; /* Orange for pending */
+      font-weight: 600;
+    }
+    .booking-status.approved {
+      color: #00ff00; /* Green for approved */
+      font-weight: 600;
+    }
+    /* Action Buttons */
+    .booking-actions {
+      margin-top: 1rem;
+      display: flex;
+      gap: 1rem;
+    }
+    .booking-actions button {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+    .approve-btn {
+      background: #00e5ff;
+      color: #000;
+    }
+    .approve-btn:hover {
+      background: #00cce0;
+    }
+    .cancel-btn {
+      background: #ff4444;
+      color: #fff;
+    }
+    .cancel-btn:hover {
+      background: #ff2222;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>My Bookings</h1>
+    <nav>
+      <a href="profile.html">
+        <img src="../static/images/profile.jpg" alt="Profile" />
+      </a>
+      <a href="#">
+        <img src="../static/images/logout.jpg" alt="Logout" />
+      </a>
+    </nav>
+  </header>
+  <div class="dashboard">
+    <aside class="sidebar">
+      <a href="driver_dashboard.html">Home</a>
+      <a href="mybookings.html" class="active">My Bookings</a>
+      <a href="history_driver.html">History</a>
+    </aside>
+    <main class="content">
+      <!-- Booking Card #1: Pending -->
+      <div class="booking-card" style="animation: fadeIn 1s ease;">
+        <h3>Booking Details</h3>
+        <div class="booking-details">
+          <p><strong>Location:</strong> Main Street Parking</p>
+          <p><strong>Price:</strong> ₹200</p>
+          <p><strong>Booked 2-Wheeler Spots:</strong> 1</p>
+          <p><strong>Booked 4-Wheeler Spots:</strong> 0</p>
+          <p><strong>Date:</strong> 2025-03-04</p>
+          <p><strong>Time:</strong> 08:00 AM</p>
+          <p><strong>Vehicle Number:</strong> KA05MF5170</p>
+          <p><strong>Status:</strong> <span class="booking-status pending">Pending</span></p>
+        </div>
+        <div class="booking-actions">
+          <button class="approve-btn">Approve</button>
+          <button class="cancel-btn">Cancel</button>
+        </div>
+      </div>
+      <!-- Booking Card #2: Approved -->
+      <div class="booking-card" style="animation: fadeIn 1.2s ease;">
+        <h3>Booking Details</h3>
+        <div class="booking-details">
+          <p><strong>Location:</strong> City Center Lot</p>
+          <p><strong>Price:</strong> ₹300</p>
+          <p><strong>Booked 2-Wheeler Spots:</strong> 0</p>
+          <p><strong>Booked 4-Wheeler Spots:</strong> 1</p>
+          <p><strong>Date:</strong> 2025-03-05</p>
+          <p><strong>Time:</strong> 09:30 AM</p>
+          <p><strong>Vehicle Number:</strong> KA01PF0808</p>
+          <p><strong>Status:</strong> <span class="booking-status approved">Approved</span></p>
+        </div>
+        <div class="booking-actions">
+          <button class="cancel-btn">Cancel</button>
+          <!-- Optionally, if needed, you can also add an "Approve" button here, but typically an approved booking doesn't need it -->
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

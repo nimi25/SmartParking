@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Parking - Payment</title>
+  <style>
+    /* Same dark/futuristic styling as your other pages */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    body {
+      background: #121212
+        url("../static/images/background.jpg")
+        no-repeat center center;
+      background-size: cover;
+      color: #e0e0e0;
+    }
+    header {
+      background: #1f1f1f;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #333;
+    }
+    header h1 {
+      font-size: 1.75rem;
+      letter-spacing: 1px;
+    }
+    nav a {
+      color: #e0e0e0;
+      margin-left: 1.5rem;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    nav a:hover {
+      color: #00e5ff;
+    }
+    .dashboard {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: calc(100vh - 70px);
+    }
+    .sidebar {
+      background: #1f1f1f;
+      padding: 2rem 1rem;
+      border-right: 2px solid #333;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .sidebar a {
+      display: block;
+      padding: 0.75rem 1rem;
+      color: #e0e0e0;
+      text-decoration: none;
+      border-left: 4px solid transparent;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .sidebar a:hover {
+      background: #333;
+      border-left: 4px solid #00e5ff;
+    }
+    /* Nav Icons */
+    nav a {
+      margin-left: 1.5rem;
+      text-decoration: none;
+      transition: opacity 0.3s;
+    }
+    nav a img {
+      width: 40px;
+      height: 40px;
+      vertical-align: middle;
+    }
+    nav a:hover {
+      opacity: 0.8;
+    }
+    /* Highlight Payment as active */
+    .sidebar a.active {
+      background: #333;
+      border-left: 4px solid #00e5ff;
+    }
+    .content {
+      padding: 2rem;
+    }
+    .card {
+      background: #1f1f1f;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+    }
+    .card h3 {
+      margin-bottom: 0.75rem;
+      color: #00e5ff;
+    }
+    .card p {
+      line-height: 1.5;
+      color: #cfcfcf;
+    }
+    .payment-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .payment-form label {
+      font-weight: 500;
+      color: #cfcfcf;
+    }
+    .payment-form input[type="text"],
+    .payment-form input[type="file"] {
+      padding: 0.5rem;
+      border-radius: 4px;
+      border: none;
+      background: #333;
+      color: #e0e0e0;
+    }
+    .payment-form button {
+      width: fit-content;
+      padding: 0.75rem 1.25rem;
+      border: none;
+      border-radius: 4px;
+      background: #00e5ff;
+      color: #000;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+    .payment-form button:hover {
+      background: #00cce0;
+    }
+    /* Dummy data list styling */
+    .dummy-list {
+      margin-top: 1rem;
+      list-style: disc;
+      padding-left: 1.5rem;
+    }
+    .dummy-list li {
+      margin-bottom: 0.5rem;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Owner Dashboard</h1>
+    <nav>
+      <a href="profile_owner.html">
+        <img src="../static/images/profile.jpg" alt="Profile" />
+      </a>
+      <a href="#">
+        <img src="../static/images/logout.jpg" alt="Logout" />
+      </a>
+    </nav>
+  </header>
+  
+  <div class="dashboard">
+    <aside class="sidebar">
+      <!-- Make sure these links match your file names -->
+      <a href="owner_dashboard.html">Home</a>
+      <a href="bookings.html">Bookings</a>
+      <a href="parkingspace.html">Parking Space</a>
+      <a href="payment.html" class="active">Payment</a>
+      <a href="metrics.html">Metrics</a>
+      <a href="histroy_owner.html">History</a>
+    </aside>
+    <main class="content">
+      <!-- Payment Setup on top -->
+      <div class="card">
+        <h3>Payment Setup</h3>
+        <p>Enter your UPI ID, phone number, and upload your QR code below.</p>
+        <form class="payment-form">
+          <label for="upi-id">UPI ID:</label>
+          <input type="text" id="upi-id" name="upi-id" placeholder="example@upi" />
+
+          <label for="phone-number">Phone Number:</label>
+          <input type="text" id="phone-number" name="phone-number" placeholder="123-456-7890" />
+
+          <label for="qr-code">Upload QR Code:</label>
+          <input type="file" id="qr-code" name="qr-code" accept="image/*" />
+
+          <button type="submit">Save Payment Info</button>
+        </form>
+      </div>
+
+      <!-- Payment Overview with dummy data -->
+      <div class="card">
+        <h3>Payment Overview</h3>
+        <p>Display payment details, balances, or transactions here.</p>
+        <ul class="dummy-list">
+          <li>Last Payment: ₹500 on 03/04/2025</li>
+          <li>Total Paid This Month: ₹2500</li>
+          <li>Pending Invoices: 1 (₹300)</li>
+          <li>Refunds Issued: None</li>
+        </ul>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

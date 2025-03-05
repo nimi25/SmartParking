@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Smart Parking - Owner Dashboard</title>
+  <title>Smart Parking - Bookings</title>
   <style>
     /* Base Styles */
     * {
@@ -29,7 +29,6 @@
       font-size: 1.75rem;
       letter-spacing: 1px;
     }
-    /* Nav Icons */
     nav a {
       margin-left: 1.5rem;
       text-decoration: none;
@@ -75,92 +74,81 @@
     }
     .content {
       padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2rem;
     }
-    /* Combined Welcome & Map Card */
-    .welcome-map-card {
-      width: 1300px;       /* Keep width as before */
-      height: 600px;       /* Increase height to 600px */
+    .card {
       background: #1f1f1f;
       padding: 1.5rem;
       border-radius: 12px;
+      margin-bottom: 1.5rem;
       box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+    }
+    .card h3 {
+      margin-bottom: 1rem;
+      color: #00e5ff;
+    }
+    .booking-list {
+      margin-top: 1rem;
       display: flex;
       flex-direction: column;
       gap: 1rem;
-      transition: transform 0.3s, box-shadow 0.3s;
     }
-    .welcome-map-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
-    }
-    .welcome-map-card .welcome {
-      text-align: center;
-    }
-    .welcome-map-card .welcome h3 {
-      color: #00e5ff;
-      margin-bottom: 0.5rem;
-    }
-    .welcome-map-card .welcome p {
-      font-size: 1rem;
-      color: #cfcfcf;
-    }
-    .map-container {
-      background: #333;
+    .booking-item {
+      background: #2a2a2a;
+      padding: 1rem;
       border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #777;
-      font-style: italic;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-      transition: transform 0.3s, box-shadow 0.3s;
-      flex-grow: 1;  /* Let the map container fill remaining vertical space */
-    }
-    .map-container:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
-    }
-    /* Quick Actions Card */
-    .quick-actions-card {
-      background: #1f1f1f;
-      padding: 1.5rem;
-      border-radius: 12px;
-      width: 600px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       transition: transform 0.3s, box-shadow 0.3s;
     }
-    .quick-actions-card:hover {
+    .booking-item:hover {
       transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
     }
-    .quick-actions-card h3 {
-      color: #00e5ff;
-      margin-bottom: 1rem;
+    .booking-item p {
+      margin-bottom: 0.3rem;
+      color: #ccc;
+      font-size: 0.95rem;
     }
-    .quick-actions {
+    /* Status Colors */
+    .booking-status.pending {
+      color: orange;
+      font-weight: 600;
+    }
+    .booking-status.approved {
+      color: green;
+      font-weight: 600;
+    }
+    /* Action Buttons */
+    .booking-actions {
+      margin-top: 0.75rem;
       display: flex;
-      justify-content: center;
-      gap: 1.5rem;
-      flex-wrap: wrap;
+      gap: 0.75rem;
     }
-    .quick-actions a {
-      text-decoration: none;
-    }
-    .action-btn {
-      background: #00e5ff;
-      color: #000;
-      padding: 0.75rem 1.25rem;
+    .booking-actions button {
+      padding: 0.5rem 1rem;
+      border: none;
       border-radius: 4px;
+      cursor: pointer;
       font-weight: 600;
       transition: background 0.3s;
     }
-    .action-btn:hover {
+    .approve-btn {
+      background: #00e5ff;
+      color: #000;
+    }
+    .approve-btn:hover {
       background: #00cce0;
+    }
+    .cancel-btn {
+      background: #ff4444;
+      color: #fff;
+    }
+    .cancel-btn:hover {
+      background: #ff2222;
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
@@ -170,7 +158,7 @@
 </head>
 <body>
   <header>
-    <h1>Owner Dashboard</h1>
+    <h1>Bookings</h1>
     <nav>
       <a href="profile_owner.html">
         <img src="../static/images/profile.jpg" alt="Profile" />
@@ -182,31 +170,40 @@
   </header>
   <div class="dashboard">
     <aside class="sidebar">
-      <a href="owner_dashboard.html" class="active">Home</a>
-      <a href="bookings.html">Bookings</a>
+      <a href="owner_dashboard.html">Home</a>
+      <a href="bookings.html" class="active">Bookings</a>
       <a href="parkingspace.html">Parking Space</a>
       <a href="payment.html">Payment</a>
       <a href="metrics.html">Metrics</a>
       <a href="histroy_owner.html">History</a>
     </aside>
     <main class="content">
-      <!-- Combined Welcome & Map Card -->
-      <div class="welcome-map-card" style="animation: fadeIn 1s ease;">
-        <div class="welcome">
-          <h3>Welcome, Owner!</h3>
-          <p>Good day, John! Check your performance and operations at a glance.</p>
-        </div>
-        <div class="map-container">
-          Map will be displayed here
-        </div>
-      </div>
-      <!-- Quick Actions Card -->
-      <div class="quick-actions-card" style="animation: fadeIn 1.2s ease;">
-        <h3>Quick Actions</h3>
-        <div class="quick-actions">
-          <a href="bookings.html"><div class="action-btn">Approve Booking</div></a>
-          <a href="parkingspace.html"><div class="action-btn">Add New Spot</div></a>
-          <a href="metrics.html"><div class="action-btn">Metrics</div></a>
+      <div class="card" style="animation: fadeIn 1s ease;">
+        <h3>All Bookings</h3>
+        <div class="booking-list">
+          <!-- Booking Item with Pending Status -->
+          <div class="booking-item">
+            <p><strong>Booking ID:</strong> SP0303225170</p>
+            <p><strong>Vehicle Number:</strong> KA05MF5170</p>
+            <p><strong>Driver:</strong> John Doe</p>
+            <p><strong>Spot:</strong> Main Street Parking</p>
+            <p><strong>Status:</strong> <span class="booking-status pending">Pending</span></p>
+            <div class="booking-actions">
+              <button class="approve-btn">Approve</button>
+              <button class="cancel-btn">Cancel</button>
+            </div>
+          </div>
+          <!-- Booking Item with Approved Status -->
+          <div class="booking-item">
+            <p><strong>Booking ID:</strong> SP0305507861</p>
+            <p><strong>Vehicle Number:</strong> KA01PF0808</p>
+            <p><strong>Driver:</strong> Jain Smith</p>
+            <p><strong>Spot:</strong> City Center Lot</p>
+            <p><strong>Status:</strong> <span class="booking-status approved">Approved</span></p>
+            <div class="booking-actions">
+              <button class="cancel-btn">Cancel</button>
+            </div>
+          </div>
         </div>
       </div>
     </main>

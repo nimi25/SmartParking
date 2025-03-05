@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Smart Parking - Owner Dashboard</title>
+  <title>Smart Parking - Admin Dashboard</title>
   <style>
     /* Base Styles */
     * {
@@ -36,8 +36,8 @@
       transition: opacity 0.3s;
     }
     nav a img {
-      width: 40px;
-      height: 40px;
+      width: 32px; /* bigger icons to stand out */
+      height: 32px;
       vertical-align: middle;
     }
     nav a:hover {
@@ -77,78 +77,56 @@
       padding: 2rem;
       display: flex;
       flex-direction: column;
-      align-items: center;
       gap: 2rem;
     }
-    /* Combined Welcome & Map Card */
-    .welcome-map-card {
-      width: 1300px;       /* Keep width as before */
-      height: 600px;       /* Increase height to 600px */
+    /* Admin Welcome Card */
+    .admin-welcome-card {
       background: #1f1f1f;
       padding: 1.5rem;
       border-radius: 12px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
       transition: transform 0.3s, box-shadow 0.3s;
     }
-    .welcome-map-card:hover {
+    .admin-welcome-card:hover {
       transform: translateY(-5px);
       box-shadow: 0 8px 16px rgba(0,0,0,0.6);
     }
-    .welcome-map-card .welcome {
+    .admin-welcome-card .welcome {
       text-align: center;
+      margin-bottom: 1rem;
     }
-    .welcome-map-card .welcome h3 {
+    .admin-welcome-card .welcome h3 {
       color: #00e5ff;
       margin-bottom: 0.5rem;
     }
-    .welcome-map-card .welcome p {
+    .admin-welcome-card .welcome p {
       font-size: 1rem;
       color: #cfcfcf;
     }
-    .map-container {
-      background: #333;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #777;
-      font-style: italic;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-      transition: transform 0.3s, box-shadow 0.3s;
-      flex-grow: 1;  /* Let the map container fill remaining vertical space */
-    }
-    .map-container:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
-    }
-    /* Quick Actions Card */
-    .quick-actions-card {
+    /* Example Admin Quick Actions */
+    .admin-actions-card {
       background: #1f1f1f;
       padding: 1.5rem;
-      border-radius: 12px;
-      width: 600px;
+      border-radius: 8px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.4);
       text-align: center;
       transition: transform 0.3s, box-shadow 0.3s;
     }
-    .quick-actions-card:hover {
+    .admin-actions-card:hover {
       transform: translateY(-5px);
       box-shadow: 0 8px 16px rgba(0,0,0,0.6);
     }
-    .quick-actions-card h3 {
+    .admin-actions-card h3 {
       color: #00e5ff;
       margin-bottom: 1rem;
     }
-    .quick-actions {
+    .admin-actions {
       display: flex;
       justify-content: center;
       gap: 1.5rem;
       flex-wrap: wrap;
     }
-    .quick-actions a {
+    .admin-actions a {
       text-decoration: none;
     }
     .action-btn {
@@ -170,43 +148,44 @@
 </head>
 <body>
   <header>
-    <h1>Owner Dashboard</h1>
+    <h1>Admin Dashboard</h1>
     <nav>
-      <a href="profile_owner.html">
-        <img src="../static/images/profile.jpg" alt="Profile" />
+      <!-- Profile icon -->
+      <a href="profile.html">
+        <img src="../static/images/profile_icon.png" alt="Profile" />
       </a>
+      <!-- Logout icon -->
       <a href="#">
-        <img src="../static/images/logout.jpg" alt="Logout" />
+        <img src="../static/images/logout_icon.png" alt="Logout" />
       </a>
     </nav>
   </header>
   <div class="dashboard">
+    <!-- Sidebar -->
     <aside class="sidebar">
-      <a href="owner_dashboard.html" class="active">Home</a>
-      <a href="bookings.html">Bookings</a>
-      <a href="parkingspace.html">Parking Space</a>
-      <a href="payment.html">Payment</a>
-      <a href="metrics.html">Metrics</a>
-      <a href="histroy_owner.html">History</a>
+      <a href="admin_dashboard.html" class="active">Home</a>
+      <a href="#">User Management</a>
+      <a href="#">Parking Management</a>
+      <a href="#">Reports</a>
+      <a href="#">Analytics</a>
+      <a href="#">System Settings</a>
     </aside>
+    <!-- Main Content -->
     <main class="content">
-      <!-- Combined Welcome & Map Card -->
-      <div class="welcome-map-card" style="animation: fadeIn 1s ease;">
+      <!-- Admin Welcome Card -->
+      <div class="admin-welcome-card" style="animation: fadeIn 1s ease;">
         <div class="welcome">
-          <h3>Welcome, Owner!</h3>
-          <p>Good day, John! Check your performance and operations at a glance.</p>
-        </div>
-        <div class="map-container">
-          Map will be displayed here
+          <h3>Welcome, Admin!</h3>
+          <p>Manage users, monitor activity, and oversee the entire system from here.</p>
         </div>
       </div>
-      <!-- Quick Actions Card -->
-      <div class="quick-actions-card" style="animation: fadeIn 1.2s ease;">
+      <!-- Admin Actions Card (example) -->
+      <div class="admin-actions-card" style="animation: fadeIn 1.2s ease;">
         <h3>Quick Actions</h3>
-        <div class="quick-actions">
-          <a href="bookings.html"><div class="action-btn">Approve Booking</div></a>
-          <a href="parkingspace.html"><div class="action-btn">Add New Spot</div></a>
-          <a href="metrics.html"><div class="action-btn">Metrics</div></a>
+        <div class="admin-actions">
+          <a href="#"><div class="action-btn">Add New User</div></a>
+          <a href="#"><div class="action-btn">View Reports</div></a>
+          <a href="#"><div class="action-btn">Manage Parking</div></a>
         </div>
       </div>
     </main>

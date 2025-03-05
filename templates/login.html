@@ -2,322 +2,243 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Login - Smart Parking</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Optional: Google Fonts -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
-    rel="stylesheet"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Parking - Login</title>
   <style>
     /* Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
     body {
-      font-family: 'Poppins', sans-serif;
-      background:
-        linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
-        url("../static/images/bengaluru_map.jpg") no-repeat center center fixed;
+      background: #121212 url("../static/images/background.jpg") no-repeat center center;
       background-size: cover;
+      color: #e0e0e0;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      height: 100vh;
-      margin: 0;
+      justify-content: center;
+      min-height: 100vh;
     }
-
-    .animated-welcome {
-      margin-bottom: 30px;
-      text-align: center;
-    }
-    .animated-welcome h1 {
+    /* Welcome Text Outside the Box */
+    .welcome-text {
       font-size: 3rem;
-      font-weight: 600;
-      color: #fff;
-      margin: 0;
-      opacity: 0;
-      animation: fadeInDown 1.5s ease forwards;
-    }
-    @keyframes fadeInDown {
-      0% {
-        opacity: 0;
-        transform: translateY(-30px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* Login Container with Glassmorphism */
-    .login-container {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
-      padding: 50px;
-      width: 380px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-      text-align: center;
-      animation: fadeIn 1s ease-in-out;
-    }
-    .login-container h2 {
-      font-size: 2.2rem;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 1px;
-      color: #fff;
-      margin-bottom: 20px;
+      margin-bottom: 1rem;
+      color: #00e5ff;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
     }
-    form label {
+    /* Login Container */
+    .login-container {
+      background: #1f1f1f;
+      padding: 2rem;
+      border-radius: 8px;
+      width: 350px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      animation: fadeIn 1s ease;
+      text-align: center;
+    }
+    .login-header {
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      color: #e0e0e0;
+    }
+    .login-form label {
       display: block;
-      text-align: left;
-      margin: 15px 0 5px;
-      color: #fff;
-      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #cfcfcf;
+      text-align: center;
     }
-    input[type="email"],
-    input[type="password"] {
-      width: calc(100% - 30px);
-      padding: 12px;
-      margin: 5px 0 20px;
-      border-radius: 10px;
-      border: none;
-      outline: none;
-      font-size: 1rem;
-      box-shadow: inset 3px 3px 6px rgba(255, 255, 255, 0.2),
-                  inset -3px -3px 6px rgba(0, 0, 0, 0.2);
-      background: rgba(255, 255, 255, 0.2);
-      color: #fff;
-      transition: all 0.3s ease-in-out;
-    }
-    input::placeholder {
-      color: rgba(255, 255, 255, 0.7);
-    }
-    input:focus {
-      background: rgba(255, 255, 255, 0.3);
-      box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.4);
-    }
-    button {
+    .login-form input {
       width: 100%;
-      padding: 15px;
-      margin-top: 20px;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
       border: none;
-      border-radius: 10px;
+      border-radius: 4px;
+      background: #333;
+      color: #e0e0e0;
+      font-size: 1rem;
+    }
+    .login-form button {
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 4px;
+      background: #00e5ff;
+      color: #000;
       font-size: 1rem;
       font-weight: 600;
-      color: white;
       cursor: pointer;
-      background: linear-gradient(45deg, #ff416c, #ff4b2b);
-      transition: all 0.3s ease-in-out;
-      box-shadow: 0 5px 15px rgba(255, 65, 108, 0.3);
+      transition: background 0.3s;
     }
-    button:hover {
-      background: linear-gradient(45deg, #ff4b2b, #ff416c);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(255, 65, 108, 0.5);
+    .login-form button:hover {
+      background: #00cce0;
     }
-    .register-link {
-      margin-top: 20px;
-      font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.8);
+    .register-text {
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      text-align: center;
     }
-    .register-link a {
-      color: #fff;
-      font-weight: 600;
+    .register-text a {
+      color: #00e5ff;
       text-decoration: none;
-      transition: color 0.3s ease-in-out;
+      font-weight: 600;
+      cursor: pointer;
     }
-    .register-link a:hover {
-      color: #ff416c;
+    .register-text a:hover {
+      text-decoration: underline;
     }
     @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    @media (max-width: 400px) {
-      .login-container {
-        width: 90%;
-        padding: 30px;
-      }
-    }
-
-    /* Popup Styles for Role Selection */
-    .popup {
-      display: none;
+    /* Modal Overlay with Background Blur */
+    .modal-overlay {
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      /* Slightly less color opacity, moderate blur for background */
-      background: rgba(0, 0, 0, 0.4);
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
       backdrop-filter: blur(5px);
       -webkit-backdrop-filter: blur(5px);
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
     }
-    @keyframes popupFadeInUp {
-      0% {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    .popup:target {
+    .modal-overlay.active {
       display: flex;
     }
-    .popup-content {
-      padding: 40px;
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
+    /* Modal Content */
+    .modal-content {
+      background: #1f1f1f;
+      padding: 2rem;
+      border-radius: 8px;
       width: 90%;
-      max-width: 600px;
-      text-align: center;
+      max-width: 700px;
       position: relative;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-      animation: popupFadeInUp 0.4s ease forwards;
+      text-align: center;
     }
-    .popup-content h2 {
-      margin: 20px 0;
+    .modal-content h2 {
+      margin-bottom: 1.5rem;
       font-size: 2rem;
-      color: #fff;
+      color: #00e5ff;
     }
-    .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 15px;
-      font-size: 2rem;
-      color: #fff;
-      text-decoration: none;
-    }
-
-    /* Role Cards Container */
+    /* Role Boxes Container */
     .role-container {
       display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: nowrap;
-      gap: 2rem;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
-
-    /* Slightly increased card width so "Parking Space Owner" stays on one line */
-    .role-card {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      width: 220px; /* increased from 180px */
-      min-height: 160px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: #fff;
-      text-decoration: none;
-      padding: 15px;
-      position: relative;
-      overflow: hidden;
+    .role-box {
+      background: #333;
+      width: 200px;
+      padding: 1rem;
+      border-radius: 8px;
       cursor: pointer;
+      transition: background 0.3s, transform 0.3s;
+      text-align: center;
     }
-    .role-card img {
+    .role-box:hover {
+      background: #00e5ff;
+      transform: translateY(-3px);
+    }
+    .role-box img {
       width: 60px;
       height: 60px;
-      border-radius: 50%;
-      margin-bottom: 15px;
+      margin-bottom: 0.5rem;
     }
-    .role-card p {
-      text-align: center;
-      margin: 0;
-      /* ensures single-line text, if desired:
-         white-space: nowrap; */
+    .role-box p {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #e0e0e0;
     }
-
-    /* Simple CSS ripple effect on .role-card */
-    .role-card:active::after {
-      content: "";
+    /* Close Button */
+    .close-btn {
       position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 100px;
-      height: 100px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      transform: translate(-50%, -50%) scale(0);
-      animation: ripple 0.6s linear;
-    }
-    @keyframes ripple {
-      to {
-        transform: translate(-50%, -50%) scale(2.5);
-        opacity: 0;
-      }
+      top: 0.5rem;
+      right: 0.75rem;
+      font-size: 1.5rem;
+      color: #e0e0e0;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <div class="animated-welcome">
-    <h1>Welcome to Smart Parking</h1>
-  </div>
-
+  <!-- Welcome Text -->
+  <div class="welcome-text">Welcome to Smart Parking</div>
+  
+  <!-- Login Container -->
   <div class="login-container">
-    <h2>Login</h2>
-    <form method="POST" action="#">
-      <label for="email">Email:</label>
-      <input
-        type="email"
-        name="email"
-        id="email"
-        placeholder="Enter your email"
-        required
-      />
-      <label for="password">Password:</label>
-      <input
-        type="password"
-        name="password"
-        id="password"
-        placeholder="Enter your password"
-        required
-      />
+    <div class="login-header">Login</div>
+    <form class="login-form">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="Email" required />
+      
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Password" required />
+      
       <button type="submit">Login</button>
     </form>
-    <div class="register-link">
-      <p>Don't have an account? <a href="#rolePopup">Register here</a></p>
+    <div class="register-text">
+      Don't have an account? <a id="registerLink">Register here</a>
     </div>
   </div>
-
-  <!-- Role Selection Popup -->
-  <div id="rolePopup" class="popup">
-    <div class="popup-content">
-      <a href="#" class="close-btn">&times;</a>
-      <h2>Select Your Role</h2>
+  
+  <!-- Modal Popup for Role Selection -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content">
+      <span class="close-btn" id="closeBtn">&times;</span>
+      <h2>Select your role</h2>
       <div class="role-container">
-        <a href="#" class="role-card">
+        <!-- Role: Driver -->
+        <div class="role-box" onclick="location.href='register_driver.html'">
           <img src="../static/images/driver_icon.jpg" alt="Driver" />
           <p>Driver</p>
-        </a>
-        <a href="#" class="role-card">
-          <img src="../static/images/owner_icon.jpg" alt="Parking Space Owner" />
+        </div>
+        <!-- Role: Parking Space Owner -->
+        <div class="role-box" onclick="location.href='register_owner.html'">
+          <img src="../static/images/owner_icon.jpg" alt="Owner" />
           <p>Parking Space Owner</p>
-        </a>
-        <a href="#" class="role-card">
-          <img src="../static/images/admin_icon.jpg" alt="Administrator" />
+        </div>
+        <!-- Role: Administrator -->
+        <div class="role-box" onclick="location.href='register_admin.html'">
+          <img src="../static/images/admin_icon.jpg" alt="Admin" />
           <p>Administrator</p>
-        </a>
+        </div>
       </div>
     </div>
   </div>
+  
+  <script>
+    // Get modal elements
+    const registerLink = document.getElementById('registerLink');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const closeBtn = document.getElementById('closeBtn');
+    
+    // Show modal on register link click
+    registerLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      modalOverlay.classList.add('active');
+    });
+    
+    // Hide modal on close button click
+    closeBtn.addEventListener('click', function() {
+      modalOverlay.classList.remove('active');
+    });
+    
+    // Hide modal if clicking outside modal content
+    window.addEventListener('click', function(e) {
+      if (e.target === modalOverlay) {
+        modalOverlay.classList.remove('active');
+      }
+    });
+  </script>
 </body>
 </html>
