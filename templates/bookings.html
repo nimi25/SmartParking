@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Parking - Bookings</title>
+  <style>
+    /* Base Styles */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { background: #121212 url("../static/images/background.jpg") no-repeat center center; background-size: cover; color: #e0e0e0; }
+    header { background: #1f1f1f; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; }
+    header h1 { font-size: 1.75rem; letter-spacing: 1px; }
+    nav a { margin-left: 1.5rem; text-decoration: none; transition: opacity 0.3s; }
+    nav a img { width: 40px; height: 40px; vertical-align: middle; }
+    nav a:hover { opacity: 0.8; }
+    .dashboard { display: grid; grid-template-columns: 250px 1fr; min-height: calc(100vh - 70px); }
+    .sidebar { background: #1f1f1f; padding: 2rem 1rem; border-right: 2px solid #333; display: flex; flex-direction: column; gap: 1rem; }
+    .sidebar a { display: block; padding: 0.75rem 1rem; color: #e0e0e0; text-decoration: none; border-left: 4px solid transparent; transition: background 0.3s, border-color 0.3s; }
+    .sidebar a:hover { background: #333; border-left: 4px solid #00e5ff; }
+    .sidebar a.active { background: #333; border-left: 4px solid #00e5ff; }
+    .content { padding: 2rem; }
+    .card { background: #1f1f1f; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: transform 0.3s, box-shadow 0.3s; animation: fadeIn 1s ease; }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.6); }
+    .card h3 { margin-bottom: 1rem; color: #00e5ff; }
+    .booking-list { margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+    .booking-item { background: #2a2a2a; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: transform 0.3s, opacity 0.3s; }
+    .booking-item:hover { transform: scale(1.02); opacity: 0.9; }
+    .booking-item p { margin-bottom: 0.3rem; color: #ccc; font-size: 0.95rem; }
+    .booking-status.pending { color: orange; font-weight: 600; }
+    .booking-status.approved { color: green; font-weight: 600; }
+    .booking-actions { margin-top: 0.75rem; display: flex; gap: 0.75rem; }
+    .booking-actions button { padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: background 0.3s; }
+    .approve-btn { background: #00e5ff; color: #000; }
+    .approve-btn:hover { background: #00cce0; }
+    .cancel-btn { background: #ff4444; color: #fff; }
+    .cancel-btn:hover { background: #ff2222; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Bookings</h1>
+    <nav>
+      <a href="{{ url_for('profile.owner_profile') }}">
+        <img src="../static/images/profile.jpg" alt="Profile" />
+      </a>
+      <a href="{{ url_for('auth.logout') }}">
+        <img src="../static/images/logout.jpg" alt="Logout" />
+      </a>
+    </nav>
+  </header>
+  <div class="dashboard">
+    <aside class="sidebar">
+      <a href="{{ url_for('owner.owner_dashboard') }}">Home</a>
+      <a href="{{ url_for('owner.bookings') }}" class="active">Bookings</a>
+      <a href="{{ url_for('owner.parkingspace') }}">Parking Space</a>
+      <a href="{{ url_for('owner.payment') }}">Payment</a>
+      <a href="{{ url_for('owner.metrics') }}">Metrics</a>
+      <a href="{{ url_for('owner.history') }}">History</a>
+    </aside>
+    <main class="content">
+      <div class="card" style="animation: fadeIn 1s ease;">
+        <h3>All Bookings</h3>
+        <div class="booking-list">
+          {% if bookings and bookings|length > 0 %}
+            {% for booking in bookings %}
+              <div class="booking-item">
+                <p><strong>Driver:</strong> {{ booking.driver_name }}</p>
+                <p><strong>Email:</strong> {{ booking.email }}</p>
+                <p><strong>Parking Spot:</strong> {{ booking.spot_location }}</p>
+                <p><strong>Booked At:</strong>
+                  {% if booking.created_at %}
+                    {{ booking.created_at.strftime('%I:%M %p') }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </p>
+                <p><strong>Date:</strong>
+                  {% if booking.created_at %}
+                    {{ booking.created_at.strftime('%d-%m-%Y') }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </p>
+                <p><strong>From:</strong>
+                  {% if booking.start_time %}
+                    {{ booking.start_time.strftime('%I:%M %p') }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </p>
+                <p><strong>Till:</strong>
+                  {% if booking.end_time %}
+                    {{ booking.end_time.strftime('%I:%M %p') }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </p>
+                <p><strong>Vehicle Type:</strong>
+                  {% if booking.vehicle_type == 'two_wheeler' %}
+                    2 Wheeler
+                  {% elif booking.vehicle_type == 'four_wheeler' %}
+                    4 Wheeler
+                  {% else %}
+                    {{ booking.vehicle_type }}
+                  {% endif %}
+                </p>
+                <p><strong>Active:</strong> {{ 'Yes' if booking.active else 'No' }}</p>
+                <p><strong>Status:</strong> <span class="booking-status {{ booking.status|lower }}">{{ booking.status }}</span></p>
+                <div class="booking-actions">
+                  <button class="approve-btn">Approve</button>
+                  <button class="cancel-btn">Cancel</button>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p>No booking history available.</p>
+          {% endif %}
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

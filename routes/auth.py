@@ -10,14 +10,13 @@ def register():
         username = request.form['username']
         email = request.form['email']
         password = request.form.get("password")
-        role = request.form['role']  # 'driver' or 'owner'
+        role = request.form['role']  # 'driver', 'owner', or 'admin'
 
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             flash("Email already registered. Please log in.", "danger")
             return redirect(url_for('auth.login'))
 
-        # Create a new user and hash the password
         new_user = User(username=username, email=email, role=role)
         new_user.set_password(password)  # Ensure your User model has set_password()
 
@@ -40,7 +39,16 @@ def login():
         if user and user.check_password(password):  # Ensure your User model has check_password()
             login_user(user)
             session['role'] = user.role
-            return redirect(url_for('dashboard.dashboard'))  # Assuming your dashboard blueprint is set up correctly
+            # Redirect based on user role
+            if user.role == 'owner':
+                return redirect(url_for('owner.owner_dashboard'))
+            elif user.role == 'driver':
+                return redirect(url_for('dashboard.driver_dashboard'))
+            elif user.role == 'admin':
+                return redirect(url_for('admin.admin_dashboard'))
+            else:
+                flash("User role not recognized.", "danger")
+                return redirect(url_for('auth.login'))
         else:
             flash("Invalid email or password. Please try again.", "danger")
 

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Parking - My Bookings</title>
+  <style>
+    /* Designer’s Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    body {
+      background: #121212 url("../static/images/background.jpg") no-repeat center center;
+      background-size: cover;
+      color: #e0e0e0;
+    }
+    header {
+      background: #1f1f1f;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #333;
+    }
+    header h1 {
+      font-size: 1.75rem;
+      letter-spacing: 1px;
+    }
+    nav a {
+      margin-left: 1.5rem;
+      text-decoration: none;
+      transition: opacity 0.3s;
+    }
+    nav a img {
+      width: 40px;
+      height: 40px;
+      vertical-align: middle;
+    }
+    nav a:hover {
+      opacity: 0.8;
+    }
+    .dashboard {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: calc(100vh - 70px);
+    }
+    .sidebar {
+      background: #1f1f1f;
+      padding: 2rem 1rem;
+      border-right: 2px solid #333;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .sidebar a {
+      display: block;
+      padding: 0.75rem 1rem;
+      color: #e0e0e0;
+      text-decoration: none;
+      border-left: 4px solid transparent;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .sidebar a:hover {
+      background: #333;
+      border-left: 4px solid #00e5ff;
+    }
+    .sidebar a.active {
+      background: #333;
+      border-left: 4px solid #00e5ff;
+    }
+    .content {
+      padding: 2rem;
+    }
+    /* Booking Card Styles */
+    .booking-card {
+      background: #1f1f1f;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      transition: transform 0.3s, box-shadow 0.3s;
+      animation: fadeIn 1s ease;
+    }
+    .booking-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+    }
+    .booking-card h3 {
+      margin-bottom: 0.75rem;
+      color: #00e5ff;
+    }
+    .booking-details p {
+      margin-bottom: 0.4rem;
+      font-size: 0.95rem;
+      color: #ccc;
+    }
+    .booking-status.pending {
+      color: #ffa500;
+      font-weight: 600;
+    }
+    .booking-status.approved {
+      color: #00ff00;
+      font-weight: 600;
+    }
+    .booking-actions {
+      margin-top: 1rem;
+      display: flex;
+      gap: 1rem;
+    }
+    .booking-actions button {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+    .approve-btn {
+      background: #00e5ff;
+      color: #000;
+    }
+    .approve-btn:hover {
+      background: #00cce0;
+    }
+    .cancel-btn {
+      background: #ff4444;
+      color: #fff;
+    }
+    .cancel-btn:hover {
+      background: #ff2222;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>My Bookings</h1>
+    <nav>
+      <a href="{{ url_for('profile.driver_profile') }}">
+        <img src="../static/images/profile.jpg" alt="Profile" />
+      </a>
+      <a href="{{ url_for('auth.logout') }}">
+        <img src="../static/images/logout.jpg" alt="Logout" />
+      </a>
+    </nav>
+  </header>
+  <div class="dashboard">
+    <aside class="sidebar">
+      <a href="{{ url_for('dashboard.driver_dashboard') }}">Home</a>
+      <a href="{{ url_for('dashboard.my_bookings') }}" class="active">My Bookings</a>
+      <a href="{{ url_for('dashboard.history_driver') }}">History</a>
+    </aside>
+    <main class="content">
+      {% if booked_spots %}
+        {% for booking in booked_spots %}
+          <div class="booking-card">
+            <h3>Booking Details</h3>
+            <div class="booking-details">
+              <p><strong>Location:</strong> {{ booking.spot.location }}</p>
+              <p><strong>Price:</strong> ₹{{ booking.spot.price }}</p>
+              <p><strong>Booked 2-Wheeler Spots:</strong> {{ booking.two_wheeler }}</p>
+              <p><strong>Booked 4-Wheeler Spots:</strong> {{ booking.four_wheeler }}</p>
+              <p><strong>Date:</strong> {{ booking.start_time.strftime('%Y-%m-%d') }}</p>
+              <p><strong>Time:</strong> {{ booking.start_time.strftime('%I:%M %p') }} - {{ booking.end_time.strftime('%I:%M %p') }}</p>
+              <p><strong>Vehicle Number:</strong> {{ booking.vehicle_number }}</p>
+              <p><strong>Status:</strong> <span class="booking-status {{ booking.status|lower }}">{{ booking.status }}</span></p>
+            </div>
+            <div class="booking-actions">
+              <button class="approve-btn view-directions-btn"
+                      data-spot-id="{{ booking.spot.id }}"
+                      data-lat="{{ booking.spot.lat }}"
+                      data-lng="{{ booking.spot.lng }}">Directions</button>
+              <form method="GET" action="{{ url_for('payment.process_payment') }}" style="display: inline;">
+                <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                <input type="hidden" name="amount" value="{{ booking.spot.price }}">
+                <button type="submit" class="approve-btn" style="background-color: #ff9800; color: white;">Pay</button>
+              </form>
+              <form method="POST" action="{{ url_for('parking.cancel_booking', booking_id=booking.id) }}"
+                    onsubmit="return confirm('Are you sure you want to delete this booking?');" style="display: inline;">
+                <button type="submit" class="cancel-btn">Delete</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>No bookings found.</p>
+      {% endif %}
+    </main>
+  </div>
+  <script>
+    // Directions button functionality
+    var directionsBtns = document.querySelectorAll(".view-directions-btn");
+    directionsBtns.forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        var destLat = parseFloat(btn.getAttribute("data-lat"));
+        var destLng = parseFloat(btn.getAttribute("data-lng"));
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(pos) {
+            var originLat = pos.coords.latitude;
+            var originLng = pos.coords.longitude;
+            var gmapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}`;
+            window.open(gmapsUrl, '_blank');
+          }, function(err) {
+            alert("Could not get current location for directions.");
+          });
+        } else {
+          alert("Geolocation is not supported by this browser.");
+        }
+      });
+    });
+  </script>
+</body>
+</html>

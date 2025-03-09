@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Smart Parking - Payment</title>
+  <title>Smart Parking - History</title>
   <style>
-    /* Same dark/futuristic styling as your other pages */
+    /* Base Styles */
     * {
       margin: 0;
       padding: 0;
@@ -30,13 +30,17 @@
       letter-spacing: 1px;
     }
     nav a {
-      color: #e0e0e0;
       margin-left: 1.5rem;
       text-decoration: none;
-      transition: color 0.3s;
+      transition: opacity 0.3s;
+    }
+    nav a img {
+      width: 40px;
+      height: 40px;
+      vertical-align: middle;
     }
     nav a:hover {
-      color: #00e5ff;
+      opacity: 0.8;
     }
     .dashboard {
       display: grid;
@@ -90,46 +94,26 @@
       line-height: 1.5;
       color: #cfcfcf;
     }
-    .payment-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+    table {
+      width: 100%;
+      border-collapse: collapse;
       margin-top: 1rem;
     }
-    .payment-form label {
-      font-weight: 500;
-      color: #cfcfcf;
+    table th,
+    table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #333;
     }
-    .payment-form input[type="text"],
-    .payment-form input[type="file"] {
-      padding: 0.5rem;
-      border-radius: 4px;
-      border: none;
-      background: #333;
-      color: #e0e0e0;
+    table th {
+      color: #00e5ff;
     }
-    .payment-form button {
-      width: fit-content;
-      padding: 0.75rem 1.25rem;
-      border: none;
-      border-radius: 4px;
-      background: #00e5ff;
-      color: #000;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.3s;
+    table tr:hover {
+      background: #2a2a2a;
     }
-    .payment-form button:hover {
-      background: #00cce0;
-    }
-    .dummy-list {
-      margin-top: 1rem;
-      list-style: disc;
-      padding-left: 1.5rem;
-    }
-    .dummy-list li {
-      margin-bottom: 0.5rem;
-      color: #ccc;
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
@@ -151,37 +135,76 @@
       <a href="{{ url_for('owner.owner_dashboard') }}">Home</a>
       <a href="{{ url_for('owner.bookings') }}">Bookings</a>
       <a href="{{ url_for('owner.parkingspace') }}">Parking Space</a>
-      <a href="{{ url_for('owner.payment') }}" class="active">Payment</a>
+      <a href="{{ url_for('owner.payment') }}">Payment</a>
       <a href="{{ url_for('owner.metrics') }}">Metrics</a>
-      <a href="{{ url_for('owner.history') }}">History</a>
+      <a href="{{ url_for('owner.history') }}" class="active">History</a>
     </aside>
+
     <main class="content">
+      <!-- Card 1: Past Bookings -->
       <div class="card">
-        <h3>Payment Setup</h3>
-        <p>Enter your UPI ID, phone number, and upload your QR code below.</p>
-        <form class="payment-form" method="POST" action="{{ url_for('owner.payment') }}" enctype="multipart/form-data">
-          <label for="upi-id">UPI ID:</label>
-          <input type="text" id="upi-id" name="upi_id" placeholder="example@upi" value="{{ payment_info.upi_id if payment_info else '' }}" />
-
-          <label for="phone-number">Phone Number:</label>
-          <input type="text" id="phone-number" name="phone_number" placeholder="123-456-7890" value="{{ payment_info.phone_number if payment_info else '' }}" />
-
-          <label for="qr-code">Upload QR Code:</label>
-          <input type="file" id="qr-code" name="qr_code" accept="image/*" />
-
-          <button type="submit">Save Payment Info</button>
-        </form>
+        <h3>Past Bookings</h3>
+        <p>Summary of past bookings (Completed):</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Booking ID</th>
+              <th>Vehicle No.</th>
+              <th>Date</th>
+              <th>Fees (₹)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if booking_history and booking_history|length > 0 %}
+              {% for booking in booking_history %}
+              <tr>
+                <td>{{ booking.id }}</td>
+                <td>{{ booking.vehicle_number }}</td>
+                <td>{{ booking.start_time.strftime('%Y-%m-%d') }}</td>
+                <td>{{ booking.spot.price }}</td>
+                <td>{{ booking.status }}</td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="5">No booking history found.</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
       </div>
 
+      <!-- Card 2: Payment History -->
       <div class="card">
-        <h3>Payment Overview</h3>
-        <p>Display payment details, balances, or transactions here.</p>
-        <ul class="dummy-list">
-          <li>Last Payment: ₹{{ last_payment or 0 }} on {{ last_payment_date or 'N/A' }}</li>
-          <li>Total Paid This Month: ₹{{ total_paid or 0 }}</li>
-          <li>Pending Invoices: {{ pending_invoices or 0 }} (₹{{ pending_amount or 0 }})</li>
-          <li>Refunds Issued: {{ refunds or 0 }}</li>
-        </ul>
+        <h3>Payment History</h3>
+        <p>Review past payment transactions:</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Transaction ID</th>
+              <th>Date</th>
+              <th>Amount (₹)</th>
+              <th>Method</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if payment_history and payment_history|length > 0 %}
+              {% for payment in payment_history %}
+              <tr>
+                <td>{{ payment.id }}</td>
+                <td>{{ payment.date.strftime('%Y-%m-%d') }}</td>
+                <td>{{ payment.amount }}</td>
+                <td>{{ payment.method }}</td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="4">No payment history found.</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
       </div>
     </main>
   </div>

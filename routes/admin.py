@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from models import db, ParkingSpot, User
 from datetime import datetime
+from sqlalchemy import func  # <-- for SUM, COUNT, etc.
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -12,10 +13,124 @@ def admin_required(func):
     def wrapper(*args, **kwargs):
         if session.get('role') != 'admin':
             flash("Unauthorized access!", "danger")
-            return redirect(url_for('dashboard.dashboard'))
+            return redirect(url_for('dashboard.driver_dashboard'))
         return func(*args, **kwargs)
     return wrapper
 
+# Admin dashboard route
+@admin_bp.route('/', methods=['GET'])
+@login_required
+@admin_required
+def admin_dashboard():
+    return render_template('admin_dashboard.html')
+
+# User Management page
+@admin_bp.route('/user_management', methods=['GET'])
+@login_required
+@admin_required
+def user_management():
+    users = User.query.all()
+    return render_template('admin_user_management.html', users=users)
+
+# Parking Management page
+@admin_bp.route('/parking_management', methods=['GET'])
+@login_required
+@admin_required
+def parking_management():
+    spots = ParkingSpot.query.all()
+    return render_template('admin_parking_management.html', spots=spots)
+
+# Reports page
+@admin_bp.route('/reports', methods=['GET'])
+@login_required
+@admin_required
+def reports():
+    """
+    Pass real data to the 'admin_reports.html' template so it won't show N/A.
+    Adjust queries if your ParkingSpot model or columns differ
+    (e.g., if you don't actually have an 'availability' boolean).
+    """
+    total_users = User.query.count()
+    total_spots = ParkingSpot.query.count()
+
+    # If your model has a boolean 'availability' column:
+    available_spots = ParkingSpot.query.filter_by(availability=True).count()
+    booked_spots = ParkingSpot.query.filter_by(availability=False).count()
+
+    # If you have a Booking model, you can count actual bookings here.
+    # For now, let's just treat "booked spots" as "total_bookings":
+    total_bookings = booked_spots
+
+    # Example: Summation of price for all spots that are 'booked' (availability=False).
+    revenue = db.session.query(func.sum(ParkingSpot.price)) \
+                        .filter(ParkingSpot.availability == False) \
+                        .scalar() or 0
+
+    return render_template(
+        'admin_reports.html',
+        total_users=total_users,
+        total_spots=total_spots,
+        available_spots=available_spots,
+        booked_spots=booked_spots,
+        total_bookings=total_bookings,
+        revenue=revenue
+    )
+
+# Analytics page
+@admin_bp.route('/analytics', methods=['GET'])
+@login_required
+@admin_required
+def analytics():
+    """
+    Pass real data to 'admin_analytics.html'.
+    Adjust queries to match your model columns or logic.
+    """
+    # Sum of all two_wheeler_spaces, for example:
+    total_two_wheeler = db.session.query(func.sum(ParkingSpot.two_wheeler_spaces)).scalar() or 0
+    # Sum of all four_wheeler_spaces:
+    total_four_wheeler = db.session.query(func.sum(ParkingSpot.four_wheeler_spaces)).scalar() or 0
+
+    return render_template(
+        'admin_analytics.html',
+        total_two_wheeler=total_two_wheeler,
+        total_four_wheeler=total_four_wheeler
+    )
+
+# System Settings page
+@admin_bp.route('/system_settings', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def system_settings():
+    """
+    If you want to handle POST form submissions for system settings,
+    you can do so here. Right now, we just render the template.
+    """
+    if request.method == 'POST':
+        # Example: read form inputs (site_name, maintenance_mode, etc.)
+        site_name = request.form.get('site_name')
+        maintenance_mode = request.form.get('maintenance_mode')
+        # Save to DB or config as needed
+        flash("System settings updated.", "success")
+        return redirect(url_for('admin.system_settings'))
+    return render_template('admin_system_settings.html')
+
+# Add New User route
+@admin_bp.route('/add_user', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def add_user():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        # Additional form processing can be done here
+        new_user = User(username=username, email=email)
+        db.session.add(new_user)
+        db.session.commit()
+        flash("New user added successfully.", "success")
+        return redirect(url_for('admin.user_management'))
+    return render_template('admin_add_user.html')
+
+# Edit Parking Spot route
 @admin_bp.route('/edit_spot/<int:spot_id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -53,9 +168,10 @@ def edit_spot(spot_id):
             return redirect(url_for('admin.edit_spot', spot_id=spot_id))
         db.session.commit()
         flash("Parking spot updated successfully.", "success")
-        return redirect(url_for('dashboard.dashboard'))
+        return redirect(url_for('admin.admin_dashboard'))
     return render_template('admin_edit_spot.html', spot=spot)
 
+# Delete Parking Spot route
 @admin_bp.route('/delete_spot/<int:spot_id>', methods=['POST'])
 @login_required
 @admin_required
@@ -68,8 +184,9 @@ def delete_spot(spot_id):
     except Exception as e:
         db.session.rollback()
         flash("Error deleting spot: " + str(e), "danger")
-    return redirect(url_for('dashboard.dashboard'))
+    return redirect(url_for('admin.admin_dashboard'))
 
+# Delete User route
 @admin_bp.route('/delete_user/<int:user_id>', methods=['POST'])
 @login_required
 @admin_required
@@ -82,4 +199,4 @@ def delete_user(user_id):
     except Exception as e:
         db.session.rollback()
         flash("Error deleting user: " + str(e), "danger")
-    return redirect(url_for('dashboard.dashboard'))
+    return redirect(url_for('admin.admin_dashboard'))

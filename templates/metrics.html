@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Smart Parking - Payment</title>
+  <title>Smart Parking - Metrics</title>
   <style>
-    /* Same dark/futuristic styling as your other pages */
+    /* Base Styles */
     * {
       margin: 0;
       padding: 0;
@@ -30,13 +30,17 @@
       letter-spacing: 1px;
     }
     nav a {
-      color: #e0e0e0;
       margin-left: 1.5rem;
       text-decoration: none;
-      transition: color 0.3s;
+      transition: opacity 0.3s;
+    }
+    nav a img {
+      width: 40px;
+      height: 40px;
+      vertical-align: middle;
     }
     nav a:hover {
-      color: #00e5ff;
+      opacity: 0.8;
     }
     .dashboard {
       display: grid;
@@ -51,6 +55,7 @@
       flex-direction: column;
       gap: 1rem;
     }
+    /* Sidebar links – update endpoints as needed */
     .sidebar a {
       display: block;
       padding: 0.75rem 1rem;
@@ -90,44 +95,42 @@
       line-height: 1.5;
       color: #cfcfcf;
     }
-    .payment-form {
+    .metrics-stats {
       display: flex;
-      flex-direction: column;
-      gap: 1rem;
+      gap: 2rem;
       margin-top: 1rem;
+      flex-wrap: wrap;
     }
-    .payment-form label {
-      font-weight: 500;
-      color: #cfcfcf;
+    .metric-box {
+      background: #2a2a2a;
+      border-radius: 8px;
+      padding: 1rem;
+      width: 180px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      text-align: center;
+      transition: transform 0.3s, box-shadow 0.3s;
     }
-    .payment-form input[type="text"],
-    .payment-form input[type="file"] {
-      padding: 0.5rem;
-      border-radius: 4px;
-      border: none;
-      background: #333;
-      color: #e0e0e0;
+    .metric-box:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
     }
-    .payment-form button {
-      width: fit-content;
-      padding: 0.75rem 1.25rem;
-      border: none;
-      border-radius: 4px;
-      background: #00e5ff;
-      color: #000;
-      cursor: pointer;
+    .metric-box h4 {
+      color: #00e5ff;
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+    .metric-box span {
+      font-size: 1.3rem;
       font-weight: 600;
-      transition: background 0.3s;
+      display: block;
+      margin-top: 0.5rem;
     }
-    .payment-form button:hover {
-      background: #00cce0;
-    }
-    .dummy-list {
+    .analytics-list {
       margin-top: 1rem;
       list-style: disc;
       padding-left: 1.5rem;
     }
-    .dummy-list li {
+    .analytics-list li {
       margin-bottom: 0.5rem;
       color: #ccc;
     }
@@ -145,42 +148,42 @@
       </a>
     </nav>
   </header>
-
   <div class="dashboard">
     <aside class="sidebar">
       <a href="{{ url_for('owner.owner_dashboard') }}">Home</a>
       <a href="{{ url_for('owner.bookings') }}">Bookings</a>
       <a href="{{ url_for('owner.parkingspace') }}">Parking Space</a>
-      <a href="{{ url_for('owner.payment') }}" class="active">Payment</a>
-      <a href="{{ url_for('owner.metrics') }}">Metrics</a>
+      <a href="{{ url_for('owner.payment') }}">Payment</a>
+      <a href="{{ url_for('owner.metrics') }}" class="active">Metrics</a>
       <a href="{{ url_for('owner.history') }}">History</a>
     </aside>
     <main class="content">
       <div class="card">
-        <h3>Payment Setup</h3>
-        <p>Enter your UPI ID, phone number, and upload your QR code below.</p>
-        <form class="payment-form" method="POST" action="{{ url_for('owner.payment') }}" enctype="multipart/form-data">
-          <label for="upi-id">UPI ID:</label>
-          <input type="text" id="upi-id" name="upi_id" placeholder="example@upi" value="{{ payment_info.upi_id if payment_info else '' }}" />
-
-          <label for="phone-number">Phone Number:</label>
-          <input type="text" id="phone-number" name="phone_number" placeholder="123-456-7890" value="{{ payment_info.phone_number if payment_info else '' }}" />
-
-          <label for="qr-code">Upload QR Code:</label>
-          <input type="file" id="qr-code" name="qr_code" accept="image/*" />
-
-          <button type="submit">Save Payment Info</button>
-        </form>
+        <h3>Performance Metrics</h3>
+        <p>Overview of your parking operations.</p>
+        <div class="metrics-stats">
+          <div class="metric-box">
+            <h4>Total Bookings</h4>
+            <span>{{ total_bookings or 0 }}</span>
+          </div>
+          <div class="metric-box">
+            <h4>Total Revenue (₹)</h4>
+            <span>{{ total_revenue or 0 }}</span>
+          </div>
+          <div class="metric-box">
+            <h4>Available Spots</h4>
+            <span>{{ active_spots or 0 }}</span>
+          </div>
+        </div>
       </div>
-
       <div class="card">
-        <h3>Payment Overview</h3>
-        <p>Display payment details, balances, or transactions here.</p>
-        <ul class="dummy-list">
-          <li>Last Payment: ₹{{ last_payment or 0 }} on {{ last_payment_date or 'N/A' }}</li>
-          <li>Total Paid This Month: ₹{{ total_paid or 0 }}</li>
-          <li>Pending Invoices: {{ pending_invoices or 0 }} (₹{{ pending_amount or 0 }})</li>
-          <li>Refunds Issued: {{ refunds or 0 }}</li>
+        <h3>Analytics</h3>
+        <p>Trends and performance analysis:</p>
+        <ul class="analytics-list">
+          <li>Average daily bookings: {{ avg_daily_bookings or 0 }}</li>
+          <li>Peak usage time: {{ peak_usage_time or 'N/A' }}</li>
+          <li>Monthly revenue growth: {{ monthly_growth or 'N/A' }}%</li>
+          <li>Highest demand on weekends</li>
         </ul>
       </div>
     </main>

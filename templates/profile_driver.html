@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Smart Parking - Payment</title>
+  <title>Smart Parking - Driver Profile</title>
   <style>
-    /* Same dark/futuristic styling as your other pages */
+    /* Designer’s Base Styles */
     * {
       margin: 0;
       padding: 0;
@@ -30,13 +30,17 @@
       letter-spacing: 1px;
     }
     nav a {
-      color: #e0e0e0;
       margin-left: 1.5rem;
       text-decoration: none;
-      transition: color 0.3s;
+      transition: opacity 0.3s;
+    }
+    nav a img {
+      width: 40px;
+      height: 40px;
+      vertical-align: middle;
     }
     nav a:hover {
-      color: #00e5ff;
+      opacity: 0.8;
     }
     .dashboard {
       display: grid;
@@ -63,10 +67,6 @@
       background: #333;
       border-left: 4px solid #00e5ff;
     }
-    .sidebar a.active {
-      background: #333;
-      border-left: 4px solid #00e5ff;
-    }
     .content {
       padding: 2rem;
     }
@@ -90,25 +90,26 @@
       line-height: 1.5;
       color: #cfcfcf;
     }
-    .payment-form {
+    .profile-form {
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      max-width: 400px;
       margin-top: 1rem;
     }
-    .payment-form label {
+    .profile-form label {
+      margin-bottom: 0.25rem;
       font-weight: 500;
       color: #cfcfcf;
     }
-    .payment-form input[type="text"],
-    .payment-form input[type="file"] {
+    .profile-form input {
       padding: 0.5rem;
-      border-radius: 4px;
       border: none;
+      border-radius: 4px;
       background: #333;
       color: #e0e0e0;
     }
-    .payment-form button {
+    .profile-form button {
       width: fit-content;
       padding: 0.75rem 1.25rem;
       border: none;
@@ -119,69 +120,44 @@
       font-weight: 600;
       transition: background 0.3s;
     }
-    .payment-form button:hover {
+    .profile-form button:hover {
       background: #00cce0;
-    }
-    .dummy-list {
-      margin-top: 1rem;
-      list-style: disc;
-      padding-left: 1.5rem;
-    }
-    .dummy-list li {
-      margin-bottom: 0.5rem;
-      color: #ccc;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Owner Dashboard</h1>
+    <h1>Profile</h1>
     <nav>
-      <a href="{{ url_for('profile.owner_profile') }}">
-        <img src="{{ url_for('static', filename='images/profile.jpg') }}" alt="Profile" />
+      <a href="{{ url_for('profile.driver_profile') }}">
+        <img src="../static/images/profile.jpg" alt="Profile" />
       </a>
       <a href="{{ url_for('auth.logout') }}">
-        <img src="{{ url_for('static', filename='images/logout.jpg') }}" alt="Logout" />
+        <img src="../static/images/logout.jpg" alt="Logout" />
       </a>
     </nav>
   </header>
-
   <div class="dashboard">
     <aside class="sidebar">
-      <a href="{{ url_for('owner.owner_dashboard') }}">Home</a>
-      <a href="{{ url_for('owner.bookings') }}">Bookings</a>
-      <a href="{{ url_for('owner.parkingspace') }}">Parking Space</a>
-      <a href="{{ url_for('owner.payment') }}" class="active">Payment</a>
-      <a href="{{ url_for('owner.metrics') }}">Metrics</a>
-      <a href="{{ url_for('owner.history') }}">History</a>
+      <a href="{{ url_for('dashboard.driver_dashboard') }}">Home</a>
+      <a href="{{ url_for('dashboard.my_bookings') }}">Bookings</a>
+      <a href="{{ url_for('dashboard.history_driver') }}">History</a>
     </aside>
     <main class="content">
       <div class="card">
-        <h3>Payment Setup</h3>
-        <p>Enter your UPI ID, phone number, and upload your QR code below.</p>
-        <form class="payment-form" method="POST" action="{{ url_for('owner.payment') }}" enctype="multipart/form-data">
-          <label for="upi-id">UPI ID:</label>
-          <input type="text" id="upi-id" name="upi_id" placeholder="example@upi" value="{{ payment_info.upi_id if payment_info else '' }}" />
-
-          <label for="phone-number">Phone Number:</label>
-          <input type="text" id="phone-number" name="phone_number" placeholder="123-456-7890" value="{{ payment_info.phone_number if payment_info else '' }}" />
-
-          <label for="qr-code">Upload QR Code:</label>
-          <input type="file" id="qr-code" name="qr_code" accept="image/*" />
-
-          <button type="submit">Save Payment Info</button>
+        <h3>Profile Settings</h3>
+        <p>Update your personal information here.</p>
+        <form class="profile-form" method="POST" action="{{ url_for('profile.update_driver') }}" enctype="multipart/form-data">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" placeholder="Enter new username" value="{{ current_user.username }}">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="Enter new email" value="{{ current_user.email }}">
+          <label for="password">Change Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter new password">
+          <label for="profile-pic">Upload Profile Picture</label>
+          <input type="file" id="profile-pic" name="profile_pic" accept="image/*">
+          <button type="submit">Save Changes</button>
         </form>
-      </div>
-
-      <div class="card">
-        <h3>Payment Overview</h3>
-        <p>Display payment details, balances, or transactions here.</p>
-        <ul class="dummy-list">
-          <li>Last Payment: ₹{{ last_payment or 0 }} on {{ last_payment_date or 'N/A' }}</li>
-          <li>Total Paid This Month: ₹{{ total_paid or 0 }}</li>
-          <li>Pending Invoices: {{ pending_invoices or 0 }} (₹{{ pending_amount or 0 }})</li>
-          <li>Refunds Issued: {{ refunds or 0 }}</li>
-        </ul>
       </div>
     </main>
   </div>

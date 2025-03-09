@@ -1,482 +1,373 @@
-{% extends "base.html" %}
-{% block title %}Driver Dashboard{% endblock %}
-
-{% block content %}
-<!-- External Libraries -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-      integrity="sha512-Fo3rlrZj/kTc7I4YWgW0E8S7zx1+Y8Y3vT94r3Z6YV1gHOb/A6z/9zsR5/sLbcX8FwHsw2cG6z1w0Oj5mwOW5w=="
-      crossorigin="anonymous" referrerpolicy="no-referrer" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
-<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
-
-<style>
-  /* Base Page & Body */
-  body {
-    font-family: 'Poppins', sans-serif;
-    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
-                url("{{ url_for('static', filename='images/bengaluru-map.jpg') }}") no-repeat center center fixed;
-    background-size: cover;
-    margin: 0;
-    padding: 0;
-    color: #fff;
-    overflow: hidden;
-  }
-  /* Dashboard Container */
-  .dashboard-container {
-    position: relative;
-    height: 100vh;
-  }
-  /* Map */
-  #map {
-    width: 100%;
-    height: 100%;
-    border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    position: relative;
-    z-index: 1;
-  }
-  /* Search Bar */
-  .map-search {
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1400;
-    width: 280px;
-  }
-  .map-search input {
-    width: 100%;
-    padding: 8px;
-    border-radius: 5px;
-    border: none;
-    background: rgba(0,0,0,0.5);
-    color: #fff;
-    text-align: center;
-  }
-  .map-search input:focus {
-    background: rgba(0,0,0,0.7);
-    outline: none;
-  }
-  /* Suggestions - bumped z-index */
-  .suggestions {
-    position: absolute;
-    top: 50px;
-    left: 0;
-    right: 0;
-    background: rgba(0,0,0,0.9);
-    border-radius: 5px;
-    max-height: 200px;
-    overflow-y: auto;
-    display: none;
-    z-index: 100001 !important;
-  }
-  .suggestion-item {
-    padding: 8px 10px;
-    cursor: pointer;
-    color: #fff;
-    border-bottom: 1px solid rgba(255,255,255,0.2);
-  }
-  .suggestion-item:hover {
-    background: rgba(255,255,255,0.2);
-  }
-  /* Cards Column */
-  .cards-column {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 0;
-    overflow-y: auto;
-    background: rgba(0, 0, 0, 0.8);
-    transition: width 0.5s ease;
-    z-index: 1000;
-  }
-  .cards-column.open {
-    width: 30%;
-    padding: 20px;
-  }
-  /* Filter Panel */
-  .filter-toggle {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-bottom: 10px;
-    display: inline-block;
-  }
-  .filter-bar {
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 20px;
-    padding: 10px 20px;
-    margin-bottom: 20px;
-    display: none;
-    gap: 10px;
-    align-items: center;
-  }
-  .filter-group {
-    display: flex;
-    flex-direction: column;
-    margin-right: 10px;
-  }
-  .filter-group label {
-    font-weight: bold;
-    margin-bottom: 5px;
-  }
-  .filter-group select {
-    padding: 5px;
-    border: 1px solid rgba(255,255,255,0.3);
-    border-radius: 4px;
-    background: rgba(0,0,0,0.8);
-    color: #fff;
-  }
-  .filter-apply {
-    background-color: #28a745;
-    color: #fff;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  /* Card Styles */
-  .card {
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 20px;
-    padding: 15px;
-    margin-bottom: 15px;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.5s ease;
-  }
-  .card.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  .card.selected {
-    border: 2px solid #ff416c;
-  }
-  .card h3 { margin: 0 0 10px; }
-  .card p.space-info { margin: 4px 0; }
-  .book-btn {
-    background-color: #28a745;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    padding: 8px 12px;
-    width: 100%;
-    margin-top: 10px;
-    cursor: pointer;
-  }
-  /* Show All Spots Button */
-  #showAllSpotsBtn {
-    display: block;
-    width: 100%;
-    background: #007bff;
-    border: none;
-    border-radius: 6px;
-    padding: 10px;
-    color: #fff;
-    cursor: pointer;
-    margin-top: 10px;
-  }
-  /* Modal Styles */
-  .modal {
-    display: none;
-    position: fixed;
-    z-index: 1500;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-  }
-  .modal-content {
-    background: rgba(0,0,0,0.7);
-    margin: 10% auto;
-    padding: 20px;
-    border: 1px solid rgba(255,255,255,0.2);
-    width: 400px;
-    border-radius: 8px;
-    color: #fff;
-    position: relative;
-    backdrop-filter: blur(15px);
-    max-height: 80vh;
-    overflow-y: auto;
-  }
-  .close {
-    color: #fff;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  .modal-content .form-group {
-    text-align: left;
-    margin-bottom: 15px;
-  }
-  .modal-content .form-group label {
-    margin-bottom: 5px;
-    font-weight: bold;
-  }
-  .modal-content input[type="number"],
-  .modal-content input[type="time"] {
-    width: 100%;
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid rgba(255,255,255,0.3);
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-  }
-  /* Leaflet Routing Machine Styles */
-  .leaflet-routing-container {
-    background: rgba(0, 0, 0, 0.8) !important;
-    color: #fff !important;
-    border: none !important;
-    position: absolute !important;
-    top: 60px !important;
-    right: 20px !important;
-    width: 300px;
-    z-index: 5000 !important;
-    border-radius: 8px;
-    padding: 10px;
-    padding-bottom: 50px;
-  }
-  .leaflet-routing-container a,
-  .leaflet-routing-container .leaflet-routing-instructions {
-    color: #fff !important;
-  }
-  .leaflet-routing-arrow {
-    filter: invert(1) !important;
-  }
-  .leaflet-routing-container:hover {
-    background: rgba(255,255,255,0.9) !important;
-    color: #000 !important;
-  }
-  .leaflet-routing-container:hover a,
-  .leaflet-routing-container:hover .leaflet-routing-instructions {
-    color: #000 !important;
-  }
-  .leaflet-routing-container:hover .leaflet-routing-arrow {
-    filter: invert(0) !important;
-  }
-  /* Bottom Controls */
-  .bottom-controls {
-    text-align: center;
-    padding: 10px;
-    background: #111;
-  }
-  .bottom-controls button {
-    background: #ff416c;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 20px;
-    font-size: 0.9rem;
-    color: #fff;
-    cursor: pointer;
-    margin: 5px;
-  }
-  .bottom-controls button:hover {
-    background: #ff4b2b;
-  }
-</style>
-
-<!-- Dashboard Container -->
-<div class="dashboard-container">
-  <div id="map"></div>
-  <!-- Search Panel -->
-  <div class="map-search">
-    <input type="text" id="mapSearchInput" placeholder="Search locality...">
-    <div id="suggestions" class="suggestions"></div>
-  </div>
-  <!-- Cards Column (hidden by default) -->
-  <div class="cards-column" id="cardsColumn">
-    <!-- Filter Toggle & Panel -->
-    <div class="filter-toggle" onclick="toggleFilterRibbon()">Filter <i class="fas fa-filter"></i></div>
-    <div id="filterRibbon" class="filter-bar">
-      <div class="filter-group">
-        <label for="filterPrice">Price Range</label>
-        <select id="filterPrice" name="filterPrice">
-          <option value="all">All</option>
-          <option value="low">Low (₹0-100)</option>
-          <option value="mid">Mid (₹101-300)</option>
-          <option value="high">High (₹301+)</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label for="filterTime">Time Slot</label>
-        <select id="filterTime" name="filterTime">
-          <option value="all">All</option>
-          <option value="6-10">6:00 - 10:00 AM</option>
-          <option value="10-14">10:00 AM - 2:00 PM</option>
-          <option value="14-18">2:00 PM - 6:00 PM</option>
-          <option value="18-22">6:00 PM - 10:00 PM</option>
-        </select>
-      </div>
-      <button class="filter-apply" onclick="applyFilters()">Apply</button>
-    </div>
-    <!-- Cards Container -->
-    <div id="cardsContainer">
-      {% for spot in available_spots %}
-        <div class="card" data-spot-id="{{ spot.id }}" data-lat="{{ spot.lat }}" data-lng="{{ spot.lng }}">
-          <h3>{{ spot.location }}</h3>
-          <p><strong>Price:</strong> ₹{{ spot.price }}</p>
-          <p class="space-info"><strong>2-Wheeler Spaces:</strong> {{ spot.two_wheeler_spaces or 0 }}</p>
-          <p class="space-info"><strong>4-Wheeler Spaces:</strong> {{ spot.four_wheeler_spaces or 0 }}</p>
-          <p><strong>Available Hours:</strong>
-            {% if spot.available_from and spot.available_to %}
-              {{ spot.available_from.strftime('%I:%M %p') }} - {{ spot.available_to.strftime('%I:%M %p') }}
-            {% else %} N/A {% endif %}
-          </p>
-          <button class="book-btn"
-                  data-spot-id="{{ spot.id }}"
-                  data-available-from="{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}"
-                  data-available-to="{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}">
-            Book
-          </button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Parking - Driver Dashboard</title>
+  <!-- Designer Base Styles + Extra Styles for Map/Search/Modal -->
+  <style>
+    /* Designer’s Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    body {
+      background: #121212 url("../static/images/background.jpg") no-repeat center center;
+      background-size: cover;
+      color: #e0e0e0;
+    }
+    header {
+      background: #1f1f1f;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #333;
+    }
+    header h1 {
+      font-size: 1.75rem;
+      letter-spacing: 1px;
+    }
+    nav a {
+      margin-left: 1.5rem;
+      text-decoration: none;
+      transition: opacity 0.3s;
+    }
+    nav a img {
+      width: 40px;
+      height: 40px;
+      vertical-align: middle;
+    }
+    nav a:hover {
+      opacity: 0.8;
+    }
+    .dashboard {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: calc(100vh - 70px);
+    }
+    <!-- Sidebar using url_for endpoints -->
+    .sidebar {
+      background: #1f1f1f;
+      padding: 2rem 1rem;
+      border-right: 2px solid #333;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .sidebar a {
+      display: block;
+      padding: 0.75rem 1rem;
+      color: #e0e0e0;
+      text-decoration: none;
+      border-left: 4px solid transparent;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .sidebar a:hover,
+    .sidebar a.active {
+      background: #333;
+      border-left: 4px solid #00e5ff;
+    }
+    .content {
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+    /* Welcome & Map Card */
+    .welcome-map-card {
+      width: 1300px;
+      height: 600px;
+      background: #1f1f1f;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      transition: transform 0.3s, box-shadow 0.3s;
+      position: relative;
+      animation: fadeIn 1s ease;
+    }
+    .welcome-map-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+    }
+    .welcome {
+      text-align: center;
+    }
+    .welcome h3 {
+      color: #00e5ff;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+    }
+    .welcome p {
+      font-size: 1rem;
+      color: #cfcfcf;
+    }
+    /* Map Container */
+    .map-container {
+      position: relative;
+      background: #333;
+      border-radius: 8px;
+      flex-grow: 1;
+      overflow: hidden;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+    /* Map Search Overlay */
+    .map-search {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      z-index: 1000;
+    }
+    .map-search input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 4px;
+      border: none;
+    }
+    .suggestions {
+      position: absolute;
+      top: 45px;
+      width: 100%;
+      background: #fff;
+      color: #000;
+      border-radius: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+    }
+    .suggestion-item {
+      padding: 8px;
+      cursor: pointer;
+    }
+    .suggestion-item:hover {
+      background: #eee;
+    }
+    /* Quick Actions Card */
+    .quick-actions-card {
+      background: #1f1f1f;
+      padding: 1.5rem;
+      border-radius: 12px;
+      width: 600px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      text-align: center;
+      transition: transform 0.3s, box-shadow 0.3s;
+      animation: fadeIn 1.2s ease;
+    }
+    .quick-actions-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+    }
+    .quick-actions-card h3 {
+      color: #00e5ff;
+      margin-bottom: 1rem;
+    }
+    .quick-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .quick-actions a {
+      text-decoration: none;
+    }
+    .action-btn {
+      background: #00e5ff;
+      color: #000;
+      padding: 0.75rem 1.25rem;
+      border-radius: 4px;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+    .action-btn:hover {
+      background: #00cce0;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Booking Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #1f1f1f;
+      padding: 20px;
+      border-radius: 8px;
+      width: 400px;
+      position: relative;
+    }
+    .modal-content .close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #fff;
+    }
+    .modal-content .form-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+    .modal-content .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: #fff;
+    }
+    .modal-content input[type="number"],
+    .modal-content input[type="time"] {
+      width: 100%;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    .modal-content button {
+      padding: 10px 15px;
+      background: #00e5ff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+  <!-- External Libraries -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        integrity="sha512-Fo3rlrZj/kTc7I4YWgW0E8S7zx1+Y8Y3vT94r3Z6YV1gHOb/A6z/9zsR5/sLbcX8FwHsw2cG6z1w0Oj5mwOW5w=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+  <header>
+    <h1>Driver Dashboard</h1>
+    <nav>
+      <a href="{{ url_for('profile.driver_profile') }}">
+        <img src="../static/images/profile.jpg" alt="Profile" />
+      </a>
+      <a href="{{ url_for('auth.logout') }}">
+        <img src="../static/images/logout.jpg" alt="Logout" />
+      </a>
+    </nav>
+  </header>
+  <div class="dashboard">
+    <aside class="sidebar">
+      <a href="{{ url_for('dashboard.driver_dashboard') }}" class="active">Home</a>
+      <a href="{{ url_for('dashboard.my_bookings') }}">My Bookings</a>
+      <a href="{{ url_for('dashboard.history_driver') }}">History</a>
+    </aside>
+    <main class="content">
+      <!-- Combined Welcome & Map Card -->
+      <div class="welcome-map-card">
+        <div class="welcome">
+          <h3>Welcome, Driver!</h3>
+          <p>Good day, {{ current_user.name or "Driver" }}! Check your current location and monitor your journey.</p>
         </div>
-      {% else %}
-        <p>No available parking spots.</p>
-      {% endfor %}
-    </div>
-    <button id="showAllSpotsBtn">Show All Spots in Bengaluru</button>
-  </div>
-</div>
-
-<!-- Bottom Controls (My Bookings, Center Location, Logout) -->
-<div class="bottom-controls">
-  <button id="viewBookingsBtn">My Bookings</button>
-  <button id="centerMapBtn">Center Location</button>
-  <button id="logoutBtn" onclick="window.location.href='{{ url_for('auth.logout') }}'">Logout</button>
-</div>
-
-<!-- Booking Modal -->
-<div id="bookingModal" class="modal">
-  <div class="modal-content">
-    <span id="bookingModalClose" class="close">&times;</span>
-    <h3>Book Your Spot</h3>
-    <form id="bookingForm" method="POST" action="">
-      <div class="form-group">
-        <label for="two_wheeler">2-Wheeler Spots:</label>
-        <input type="number" id="two_wheeler" name="two_wheeler" min="0" value="1" required>
-      </div>
-      <div class="form-group">
-        <label for="four_wheeler">4-Wheeler Spots:</label>
-        <input type="number" id="four_wheeler" name="four_wheeler" min="0" value="0" required>
-      </div>
-      <div class="form-group">
-        <label for="booking_start">Booking Start (HH:MM):</label>
-        <input type="time" id="booking_start" name="booking_start" required>
-      </div>
-      <div class="form-group">
-        <label for="booking_end">Booking End (HH:MM):</label>
-        <input type="time" id="booking_end" name="booking_end" required>
-      </div>
-      <button type="submit" class="btn">Confirm Booking</button>
-    </form>
-  </div>
-</div>
-
-<!-- My Bookings Modal -->
-<div id="bookingsModal" class="modal">
-  <div class="modal-content">
-    <span id="bookingsModalClose" class="close">&times;</span>
-    <h3>My Bookings</h3>
-    <div id="bookingsList">
-      {% for booking in booked_spots %}
-        <div class="booking-card" style="margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">
-          <h4>{{ booking.spot.location }}</h4>
-          <p><strong>Price:</strong> ₹{{ booking.spot.price }}</p>
-          <p><strong>Booked 2-Wheeler Spots:</strong> {{ booking.two_wheeler }}</p>
-          <p><strong>Booked 4-Wheeler Spots:</strong> {{ booking.four_wheeler }}</p>
-          <p><strong>Time:</strong> {{ booking.start_time.strftime('%I:%M %p') }} - {{ booking.end_time.strftime('%I:%M %p') }}</p>
-          <div class="booking-actions" style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="view-directions-btn btn"
-                    data-spot-id="{{ booking.spot.id }}"
-                    data-lat="{{ booking.spot.lat }}"
-                    data-lng="{{ booking.spot.lng }}">
-              Directions
-            </button>
-            <form method="GET" action="{{ url_for('payment.process_payment') }}" style="display: inline;">
-              <input type="hidden" name="booking_id" value="{{ booking.id }}">
-              <input type="hidden" name="amount" value="{{ booking.spot.price }}">
-              <button type="submit" class="btn" style="background-color: #ff9800; color: white;">Pay</button>
-            </form>
-            <form method="POST" action="{{ url_for('parking.cancel_booking', booking_id=booking.id) }}"
-                  onsubmit="return confirm('Are you sure you want to delete this booking?');" style="display: inline;">
-              <button type="submit" class="btn">Delete</button>
-            </form>
+        <div class="map-container">
+          <div id="map"></div>
+          <!-- Map Search Overlay -->
+          <div class="map-search">
+            <input type="text" id="mapSearchInput" placeholder="Search locality...">
+            <div id="suggestions" class="suggestions"></div>
           </div>
         </div>
-      {% else %}
-        <p>No bookings found.</p>
-      {% endfor %}
-    </div>
-    <button onclick="closeBookings()" style="margin-top: 10px; width: 100%; background: #555; border: none; border-radius: 4px; padding: 10px; cursor: pointer;">Close</button>
+      </div>
+      <!-- Quick Actions Card -->
+      <div class="quick-actions-card">
+        <h3>Quick Actions</h3>
+        <div class="quick-actions">
+          <a href="{{ url_for('dashboard.my_bookings') }}"><div class="action-btn">My Bookings</div></a>
+          <a href="{{ url_for('dashboard.history_driver') }}"><div class="action-btn">History</div></a>
+        </div>
+      </div>
+    </main>
   </div>
-</div>
+  <!-- Booking Modal -->
+  <div id="bookingModal" class="modal">
+    <div class="modal-content">
+      <span id="bookingModalClose" class="close">&times;</span>
+      <h3>Book Your Spot</h3>
+      <form id="bookingForm" method="POST" action="">
+        <div class="form-group">
+          <label for="two_wheeler">2-Wheeler Spots:</label>
+          <input type="number" id="two_wheeler" name="two_wheeler" min="0" value="1" required>
+        </div>
+        <div class="form-group">
+          <label for="four_wheeler">4-Wheeler Spots:</label>
+          <input type="number" id="four_wheeler" name="four_wheeler" min="0" value="0" required>
+        </div>
+        <div class="form-group">
+          <label for="booking_start">Booking Start (HH:MM):</label>
+          <input type="time" id="booking_start" name="booking_start" required>
+        </div>
+        <div class="form-group">
+          <label for="booking_end">Booking End (HH:MM):</label>
+          <input type="time" id="booking_end" name="booking_end" required>
+        </div>
+        <button type="submit">Confirm Booking</button>
+      </form>
+    </div>
+  </div>
+  <script>
+    // Initialize the Leaflet map
+    var map = L.map('map').setView([12.9716, 77.5946], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
-<script>
-  /********** MAP INIT **********/
-  var map = L.map('map').setView([12.9716, 77.5946], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
-
-  // In directions mode, clicking the map now only has its default behavior
-  map.on('click', function(e) {
-    e.originalEvent.preventDefault();
-    e.originalEvent.stopPropagation();
-  });
-
-  /********** CURRENT LOCATION (Red Marker) **********/
-  var currentLocationMarker = null;
-  function updateCurrentLocation() {
-    if (!navigator.geolocation) {
-      alert("Geolocation not supported.");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(function(pos) {
-      var lat = pos.coords.latitude;
-      var lng = pos.coords.longitude;
-      var redIcon = L.icon({
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-      });
-      if (currentLocationMarker) {
-        currentLocationMarker.setLatLng([lat, lng]);
-      } else {
-        currentLocationMarker = L.marker([lat, lng], {icon: redIcon}).addTo(map)
-          .bindPopup("You are here");
+    // Update current location marker
+    var currentLocationMarker;
+    function updateCurrentLocation() {
+      if (!navigator.geolocation) {
+        alert("Geolocation not supported.");
+        return;
       }
-    }, function(err) {
-      console.error(err);
-      alert("Could not get current location.");
-    }, { enableHighAccuracy: true });
-  }
-
-  // Center Button: update current location and center map
-  document.getElementById('centerMapBtn').addEventListener('click', function() {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        var lat = pos.coords.latitude;
+        var lng = pos.coords.longitude;
+        var redIcon = L.icon({
+          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        });
+        if (currentLocationMarker) {
+          currentLocationMarker.setLatLng([lat, lng]);
+        } else {
+          currentLocationMarker = L.marker([lat, lng], {icon: redIcon}).addTo(map)
+            .bindPopup("You are here");
+        }
+      }, function(err) {
+        console.error(err);
+        alert("Could not get current location.");
+      }, { enableHighAccuracy: true });
+    }
     updateCurrentLocation();
-    navigator.geolocation.getCurrentPosition(function(pos) {
-      map.setView([pos.coords.latitude, pos.coords.longitude], 14);
-    });
-  });
 
-  /********** MARKERS & SPOTS DATA **********/
-  var markers = {};
-  var spotsData = [
-    {% for spot in available_spots %}
+    // Available spots data passed from backend
+    var spotsData = [
+      {% for spot in available_spots %}
       {
         id: "{{ spot.id }}",
         lat: {{ spot.lat }},
@@ -486,247 +377,73 @@
         to: "{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}",
         location: "{{ spot.location }}"
       },
-    {% endfor %}
-  ];
-  spotsData.forEach(function(s) {
-    var marker = L.marker([s.lat, s.lng]).addTo(map)
-                  .bindPopup("<b>" + s.location + "</b><br>₹" + s.price);
-    markers[s.id] = marker;
-  });
+      {% endfor %}
+    ];
 
-  /********** SEARCH WITH DEBOUNCE **********/
-  var mapSearchInput = document.getElementById("mapSearchInput");
-  var suggestionsEl = document.getElementById("suggestions");
-  var searchTimeout = null;
-  mapSearchInput.addEventListener("input", function() {
-    clearTimeout(searchTimeout);
-    var query = this.value.trim();
-    if(query.length < 3) {
-      suggestionsEl.style.display = "none";
-      return;
-    }
-    searchTimeout = setTimeout(function() {
-      var url = "https://nominatim.openstreetmap.org/search?format=json&countrycodes=in&q=" + encodeURIComponent(query);
-      fetch(url)
-        .then(r => r.json())
-        .then(data => {
-          suggestionsEl.innerHTML = "";
-          if(data && data.length > 0) {
-            data.forEach(function(item) {
-              var div = document.createElement("div");
-              div.className = "suggestion-item";
-              div.textContent = item.display_name;
-              div.addEventListener("click", function() {
-                var lat = parseFloat(item.lat);
-                var lng = parseFloat(item.lon);
-                filterSpots(query, lat, lng);
-                suggestionsEl.style.display = "none";
-                mapSearchInput.value = item.display_name;
+    // Add markers for each available spot with a Book button in popup
+    var markers = {};
+    spotsData.forEach(function(s) {
+      var marker = L.marker([s.lat, s.lng]).addTo(map)
+        .bindPopup("<b>" + s.location + "</b><br>₹" + s.price + "<br><button onclick='openBookingModal(\"" + s.id + "\", \"" + s.from + "\", \"" + s.to + "\")'>Book</button>");
+      markers[s.id] = marker;
+    });
+
+    // Search functionality with debounce
+    var mapSearchInput = document.getElementById("mapSearchInput");
+    var suggestionsEl = document.getElementById("suggestions");
+    var searchTimeout = null;
+    mapSearchInput.addEventListener("input", function() {
+      clearTimeout(searchTimeout);
+      var query = this.value.trim();
+      if(query.length < 3) {
+        suggestionsEl.style.display = "none";
+        return;
+      }
+      searchTimeout = setTimeout(function() {
+        var url = "https://nominatim.openstreetmap.org/search?format=json&countrycodes=in&q=" + encodeURIComponent(query);
+        fetch(url)
+          .then(r => r.json())
+          .then(data => {
+            suggestionsEl.innerHTML = "";
+            if(data && data.length > 0) {
+              data.forEach(function(item) {
+                var div = document.createElement("div");
+                div.className = "suggestion-item";
+                div.textContent = item.display_name;
+                div.addEventListener("click", function() {
+                  var lat = parseFloat(item.lat);
+                  var lng = parseFloat(item.lon);
+                  map.setView([lat, lng], 14);
+                  suggestionsEl.style.display = "none";
+                  mapSearchInput.value = item.display_name;
+                });
+                suggestionsEl.appendChild(div);
               });
-              suggestionsEl.appendChild(div);
-            });
-            suggestionsEl.style.display = "block";
-          } else {
-            suggestionsEl.innerHTML = "<div class='suggestion-item'>No results found</div>";
-            suggestionsEl.style.display = "block";
-          }
-        });
-    }, 300);
-  });
+              suggestionsEl.style.display = "block";
+            } else {
+              suggestionsEl.innerHTML = "<div class='suggestion-item'>No results found</div>";
+              suggestionsEl.style.display = "block";
+            }
+          });
+      }, 300);
+    });
 
-  /********** FILTER SPOTS (Markers & Cards) **********/
-  function filterSpots(query, centerLat, centerLng) {
-    var filtered = spotsData.filter(function(s) {
-      return s.location.toLowerCase().includes(query.toLowerCase());
-    });
-    Object.keys(markers).forEach(function(id) {
-      if(map.hasLayer(markers[id])) {
-        map.removeLayer(markers[id]);
-      }
-    });
-    document.querySelectorAll(".cards-column .card").forEach(function(card) {
-      card.classList.remove("visible");
-      card.style.display = "none";
-    });
-    filtered.forEach(function(s) {
-      if(markers[s.id]) {
-        markers[s.id].addTo(map);
-      }
-      var cardEl = document.querySelector('.card[data-spot-id="' + s.id + '"]');
-      if(cardEl) {
-        cardEl.style.display = "block";
-        setTimeout(function(){
-          cardEl.classList.add("visible");
-        }, 100);
-      }
-    });
-    map.setView([centerLat, centerLng], 14);
-    var cardsCol = document.getElementById("cardsColumn");
-    if(!cardsCol.classList.contains("open")) {
-      cardsCol.classList.add("open");
-    }
-  }
-
-  /********** FILTER PANEL FUNCTIONS **********/
-  function toggleFilterRibbon() {
-    var ribbon = document.getElementById("filterRibbon");
-    if(ribbon.style.display === "none" || ribbon.style.display === "") {
-      ribbon.style.display = "flex";
-    } else {
-      ribbon.style.display = "none";
-    }
-  }
-  function applyFilters() {
-    var priceFilter = document.getElementById("filterPrice").value;
-    var timeFilter = document.getElementById("filterTime").value;
-    var filtered = spotsData.filter(function(s) {
-      var priceMatch = false;
-      if(priceFilter === "all") {
-        priceMatch = true;
-      } else if(priceFilter === "low" && s.price <= 100) {
-        priceMatch = true;
-      } else if(priceFilter === "mid" && s.price >= 101 && s.price <= 300) {
-        priceMatch = true;
-      } else if(priceFilter === "high" && s.price >= 301) {
-        priceMatch = true;
-      }
-      var timeMatch = true;
-      if(timeFilter !== "all" && s.from && s.to) {
-        var range = timeFilter.split("-");
-        var filterStart = parseInt(range[0]);
-        var filterEnd = parseInt(range[1]);
-        var fromHour = parseInt(s.from.split(":")[0]);
-        var toHour = parseInt(s.to.split(":")[0]);
-        timeMatch = (fromHour <= filterStart && toHour >= filterEnd);
-      }
-      return priceMatch && timeMatch;
-    });
-    Object.keys(markers).forEach(function(id) {
-      if(map.hasLayer(markers[id])) {
-        map.removeLayer(markers[id]);
-      }
-    });
-    document.querySelectorAll(".cards-column .card").forEach(function(card) {
-      card.classList.remove("visible");
-      card.style.display = "none";
-    });
-    filtered.forEach(function(s) {
-      if(markers[s.id]) {
-        markers[s.id].addTo(map);
-      }
-      var cardEl = document.querySelector('.card[data-spot-id="' + s.id + '"]');
-      if(cardEl) {
-        cardEl.style.display = "block";
-        setTimeout(function(){
-          cardEl.classList.add("visible");
-        }, 100);
-      }
-    });
-  }
-
-  /********** SHOW ALL SPOTS BUTTON **********/
-  document.getElementById("showAllSpotsBtn").addEventListener("click", function() {
-    mapSearchInput.value = "";
-    suggestionsEl.style.display = "none";
-    Object.keys(markers).forEach(function(id) {
-      if(!map.hasLayer(markers[id])) {
-        markers[id].addTo(map);
-      }
-    });
-    document.querySelectorAll(".cards-column .card").forEach(function(card) {
-      card.style.display = "block";
-      setTimeout(function(){
-        card.classList.add("visible");
-      }, 100);
-    });
-    map.setView([12.9716, 77.5946], 12);
-    document.getElementById("cardsColumn").classList.remove("open");
-  });
-
-  /********** (Directions with Draggable Origin removed) **********/
-  /* Instead, we now update the directions button under My Bookings */
-
-  var directionsBtns = document.querySelectorAll(".view-directions-btn");
-  directionsBtns.forEach(function(btn) {
-    btn.addEventListener("click", function() {
-      var destLat = parseFloat(btn.dataset.lat);
-      var destLng = parseFloat(btn.dataset.lng);
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(pos) {
-          var originLat = pos.coords.latitude;
-          var originLng = pos.coords.longitude;
-          var gmapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}`;
-          window.open(gmapsUrl, '_blank');
-        }, function(err) {
-          alert("Could not get current location for directions.");
-        });
-      } else {
-        alert("Geolocation is not supported by this browser.");
-      }
-      document.getElementById("bookingsModal").style.display = "none";
-    });
-  });
-
-  /********** CARD CLICK: PAN & (Original) ROUTE **********/
-  var cards = document.querySelectorAll(".cards-column .card");
-  cards.forEach(function(card) {
-    card.addEventListener("click", function() {
-      cards.forEach(c => c.classList.remove("selected"));
-      card.classList.add("selected");
-      var spotId = card.dataset.spotId;
-      var lat = parseFloat(card.dataset.lat);
-      var lng = parseFloat(card.dataset.lng);
-      if(markers[spotId]) {
-        markers[spotId].openPopup();
-        map.panTo([lat, lng]);
-      }
-      // Retaining original routeToSpot functionality for card clicks
-      routeToSpot(lat, lng);
-    });
-  });
-
-  /********** BOOKING MODAL **********/
-  var bookingModal = document.getElementById("bookingModal");
-  var bookingModalClose = document.getElementById("bookingModalClose");
-  var bookingForm = document.getElementById("bookingForm");
-  var bookBtns = document.querySelectorAll(".book-btn");
-  bookBtns.forEach(function(b) {
-    b.addEventListener("click", function(e) {
-      e.stopPropagation();
-      var spotId = this.dataset.spotId;
-      var fromTime = this.dataset.availableFrom;
-      var toTime = this.dataset.availableTo;
+    // Booking Modal functions
+    function openBookingModal(spotId, fromTime, toTime) {
+      var bookingForm = document.getElementById("bookingForm");
       bookingForm.action = "/parking/book/" + spotId;
       if(fromTime) document.getElementById("booking_start").value = fromTime;
       if(toTime) document.getElementById("booking_end").value = toTime;
-      bookingModal.style.display = "flex";
-    });
-  });
-  bookingModalClose.onclick = function() {
-    bookingModal.style.display = "none";
-  };
-  window.onclick = function(event) {
-    if(event.target === bookingModal) {
-      bookingModal.style.display = "none";
+      document.getElementById("bookingModal").style.display = "flex";
     }
-  };
-
-  /********** MY BOOKINGS MODAL **********/
-  var viewBookingsBtn = document.getElementById("viewBookingsBtn");
-  var bookingsModal = document.getElementById("bookingsModal");
-  var bookingsModalClose = document.getElementById("bookingsModalClose");
-  viewBookingsBtn.addEventListener("click", function() {
-    bookingsModal.style.display = "flex";
-  });
-  bookingsModalClose.onclick = function() {
-    bookingsModal.style.display = "none";
-  };
-  window.addEventListener("click", function(e) {
-    if(e.target === bookingsModal) {
-      bookingsModal.style.display = "none";
-    }
-  });
-
-  // Note: the original stopDirectionsBtn functionality and related draggable marker code have been removed.
-</script>
-{% endblock %}
+    document.getElementById("bookingModalClose").onclick = function() {
+      document.getElementById("bookingModal").style.display = "none";
+    };
+    window.onclick = function(event) {
+      if(event.target === document.getElementById("bookingModal")) {
+        document.getElementById("bookingModal").style.display = "none";
+      }
+    };
+  </script>
+</body>
+</html>
