@@ -5,7 +5,8 @@ import urllib.parse
 load_dotenv()
 
 password = urllib.parse.quote_plus("student")  # Ensure proper encoding
-db_url = f"postgresql://postgres:student@127.0.0.1:5432/smart_parking_db"
+db_url = f"postgresql://postgres:{password}@127.0.0.1:5432/smart_parking_db"
+
 
 
 class Config:

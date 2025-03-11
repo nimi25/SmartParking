@@ -49,6 +49,7 @@ def add_parking_spot():
             flash("Invalid time format. Use HH:MM.", "danger")
             return redirect(url_for('parking.add_parking_spot'))
 
+
         new_spot = ParkingSpot(
             location=location,
             price=price,
@@ -193,17 +194,23 @@ def book_spot(spot_id):
     elif two_wheeler > 0 and four_wheeler > 0:
         booked_vehicle_type = "both"
 
-    vehicle_number = request.form.get("vehicle_number")
+
+    vehicle_number = request.form.get('vehicle_number')
+    booking_id = request.form.get('booking_id')
+
+
     new_booking = Booking(
         user_id=current_user.id,
         spot_id=spot_id,
         two_wheeler=two_wheeler,
         four_wheeler=four_wheeler,
         booked_vehicle_type=booked_vehicle_type,
-        start_time=booking_start_time,
-        end_time=booking_end_time,
+        start_time=booking_start,
+        end_time=booking_end,
         active=True,
-        vehicle_number=vehicle_number
+        vehicle_number=vehicle_number,
+        booking_id=booking_id
+
     )
     new_booking.status = "Pending"
     db.session.add(new_booking)
@@ -229,6 +236,7 @@ def cancel_booking(booking_id):
     db.session.commit()
     flash("Booking cancelled.", "success")
     return redirect(url_for('dashboard.dashboard'))
+
 
 @parking_bp.route('/direction/<int:spot_id>', methods=['GET'])
 @login_required

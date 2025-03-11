@@ -86,6 +86,7 @@ class ParkingSpot(db.Model):
         self.available_from = available_from
         self.available_to = available_to
 
+
 # ------------------- BOOKING MODEL -------------------
 class Booking(db.Model):
     __tablename__ = 'booking'
@@ -103,10 +104,17 @@ class Booking(db.Model):
     vehicle_number = db.Column(db.String(20))  # NEW: store the driver's vehicle number
     status = db.Column(db.String(20), default='Pending')  # NEW: status of booking
 
+    # New fields with defaults to avoid nulls in existing rows
+    vehicle_number = db.Column(db.String(20), nullable=False, server_default='NA')
+    booking_id = db.Column(db.String(50), unique=True, nullable=False, server_default='NA')
+
     spot = db.relationship('ParkingSpot', backref='booking')
     user = db.relationship('User', backref='booking')
 
-    def __init__(self, user_id, spot_id, two_wheeler, four_wheeler, start_time, active, end_time, booked_vehicle_type=None, vehicle_number=None):
+
+    def __init__(self, user_id, spot_id, two_wheeler, four_wheeler, start_time, active, end_time,
+                 booked_vehicle_type=None, vehicle_number=None, booking_id=None):
+
         self.user_id = user_id
         self.spot_id = spot_id
         self.two_wheeler = two_wheeler
@@ -116,3 +124,5 @@ class Booking(db.Model):
         self.active = active
         self.booked_vehicle_type = booked_vehicle_type
         self.vehicle_number = vehicle_number
+        self.booking_id = booking_id
+

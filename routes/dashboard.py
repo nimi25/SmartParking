@@ -36,7 +36,9 @@ def dashboard():
                 "start_time": booking_obj.start_time,
                 "end_time": booking_obj.end_time,
                 "vehicle_type": booking_obj.booked_vehicle_type or "N/A",
-                "active": booking_obj.active
+                "active": booking_obj.active,
+                "vehicle_number": booking_obj.vehicle_number,  # New field
+                "booking_id": booking_obj.booking_id           # New field
             }
             all_bookings.append(booking_dict)
 
@@ -53,7 +55,7 @@ def dashboard():
             active_spots=active_spots
         )
 
-    # ADMIN DASHBOARD
+
     elif role == 'admin':
         users = User.query.all()
         total_users = User.query.count()
@@ -63,6 +65,7 @@ def dashboard():
         total_bookings = Booking.query.count()
         revenue = db.session.query(func.sum(ParkingSpot.price)).filter(ParkingSpot.status == 'booked').scalar() or 0
         spots = ParkingSpot.query.all()
+
         total_two_wheeler = db.session.query(func.sum(ParkingSpot.two_wheeler_spaces)) \
                                 .filter(ParkingSpot.availability == True).scalar() or 0
         total_four_wheeler = db.session.query(func.sum(ParkingSpot.four_wheeler_spaces)) \
