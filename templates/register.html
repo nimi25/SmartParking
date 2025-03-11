@@ -1,20 +1,128 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Register - Smart Parking</title>
+  <!-- Google Font: Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+  <style>
+    /* Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    body {
+      background: #121212 url("{{ url_for('static', filename='images/background.jpg') }}") no-repeat center center;
+      background-size: cover;
+      color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    /* Welcome Text */
+    .welcome-text {
+      font-size: 3rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+      color: #00e5ff;
+      text-shadow: 1px 4px 8px rgba(0, 0, 0, 0.6);
+      animation: fadeIn 1s ease;
+      text-align: center;
+    }
+    /* Register Container */
+    .register-container {
+      background: #1f1f1f;
+      padding: 2rem;
+      border-radius: 8px;
+      width: 350px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      animation: fadeIn 1s ease;
+      text-align: center;
+    }
+    .register-header {
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      color: #e0e0e0;
+    }
+    /* Register Form */
+    .register-form label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #cfcfcf;
+      text-align: center;
+    }
+    .register-form input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: none;
+      border-radius: 4px;
+      background: #333;
+      color: #e0e0e0;
+      font-size: 1rem;
+    }
+    /* Make the role read-only */
+    .register-form input[readonly] {
+      background: #333;
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    .register-form button {
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 4px;
+      background: #00e5ff;
+      color: #000;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .register-form button:hover {
+      background: #00cce0;
+    }
+    /* Flash Messages */
+    .flash-messages p {
+      margin: 0.5rem 0;
+    }
+    /* Login Text */
+    .login-text {
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+    .login-text a {
+      color: #00e5ff;
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .login-text a:hover {
+      text-decoration: underline;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Welcome Text -->
+  <div class="welcome-text">Welcome to Smart Parking</div>
 
-{% block title %}
-  Register - Smart Parking
-{% endblock %}
+  <!-- Register Container -->
+  <div class="register-container">
+    <div class="register-header">Register</div>
 
-{% block content %}
-  {% set selected_role = request.args.get('role', 'driver') %}
-  <!-- Animated Welcome Heading (same as login) -->
-  <div class="animated-welcome">
-    <h1>Welcome to Smart Parking</h1>
-  </div>
-
-  <!-- Registration Card (same style as login) -->
-  <div class="auth-container" style="width: 380px; animation: fadeIn 1s ease-in-out;">
-    <h2>Register</h2>
-
+    <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=True) %}
       {% if messages %}
         <div class="flash-messages">
@@ -25,27 +133,30 @@
       {% endif %}
     {% endwith %}
 
-    <form method="POST" action="{{ url_for('auth.register') }}">
-      <label for="username" style="color: #fff;">Username:</label>
-      <input type="text" name="username" id="username" required>
+    <!-- Grab 'role' from query parameter and set default if not provided -->
+    {% set chosen_role = request.args.get('role', 'driver') %}
 
-      <label for="email" style="color: #fff;">Email:</label>
-      <input type="email" name="email" id="email" required>
+    <!-- Register Form -->
+    <form class="register-form" method="POST" action="{{ url_for('auth.register') }}">
+      <!-- Show role on top, read-only -->
+      <label for="role">Role</label>
+      <input type="text" name="role" id="role" value="{{ chosen_role }}" readonly />
 
-      <label for="password" style="color: #fff;">Password:</label>
-      <input type="password" name="password" id="password" required>
+      <label for="username">Username</label>
+      <input type="text" name="username" id="username" placeholder="Username" required />
 
-      <!-- Display the selected role instead of a dropdown -->
-      <label for="role" style="color: #fff;">Role:</label>
-      <p style="color: #fff; font-weight:600; margin-bottom: 20px;">{{ selected_role|capitalize }}</p>
-      <!-- Added id="role" to match the label -->
-      <input type="hidden" id="role" name="role" value="{{ selected_role }}">
+      <label for="email">Email</label>
+      <input type="email" name="email" id="email" placeholder="Email" required />
+
+      <label for="password">Password</label>
+      <input type="password" name="password" id="password" placeholder="Password" required />
 
       <button type="submit">Register</button>
     </form>
 
-    <div class="register-link" style="margin-top: 20px;">
-      <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></p>
+    <div class="login-text">
+      Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a>
     </div>
   </div>
-{% endblock %}
+</body>
+</html>

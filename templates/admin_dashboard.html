@@ -2,324 +2,191 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard - Smart Parking</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Parking - Admin Dashboard</title>
   <style>
     /* Base Styles */
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
-          url("{{ url_for('static', filename='images/bengaluru-map.jpg') }}") no-repeat center center fixed;
-      background-size: cover;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+    * {
       margin: 0;
-    }
-    .animated-welcome {
-      margin-bottom: 30px;
-      text-align: center;
-    }
-    .animated-welcome h1 {
-      font-size: 3rem;
-      font-weight: 600;
-      color: #fff;
-      margin: 0;
-      opacity: 0;
-      animation: fadeInDown 1.5s ease forwards;
-    }
-    @keyframes fadeInDown {
-      0% {
-        opacity: 0;
-        transform: translateY(-30px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    /* Dashboard Container (Glassmorphism) */
-    .dashboard-container {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
-      padding: 50px;
-      width: 400px;
-      text-align: center;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-      animation: fadeIn 1s ease-in-out;
-    }
-    .dashboard-container h2 {
-      font-size: 2.2rem;
-      font-weight: 600;
-      color: #fff;
-      margin-bottom: 10px;
-    }
-    .dashboard-container p {
-      color: #fff;
-      margin-bottom: 30px;
-    }
-    /* Option Buttons (Styled like Login Button) */
-    .option-box {
-      display: block;
-      width: 100%;
-      padding: 15px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: 600;
-      color: white;
-      background: linear-gradient(45deg, #ff416c, #ff4b2b);
-      cursor: pointer;
-      transition: all 0.3s ease-in-out;
-      box-shadow: 0 5px 15px rgba(255, 65, 108, 0.3);
-      text-decoration: none;
-    }
-    .option-box:hover {
-      background: linear-gradient(45deg, #ff4b2b, #ff416c);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(255, 65, 108, 0.5);
-    }
-    /* Modal Styles */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 2000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-content {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 20px;
-      padding: 30px;
-      width: 500px;
-      max-height: 80vh;
-      text-align: center;
-      color: #fff;
-      position: relative;
-      animation: fadeIn 0.5s ease-in-out;
-      overflow-y: auto;
-    }
-    .modal-content h3 {
-      font-size: 2rem;
-      margin-bottom: 20px;
-    }
-    .modal-content p {
-      margin-bottom: 15px;
-    }
-    .modal-content ul {
-      list-style: none;
       padding: 0;
-      margin: 0;
-      text-align: left;
-      color: #fff;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
     }
-    .modal-content ul li {
-      font-size: 1rem;
-      margin: 8px 0;
+    body {
+      background: #121212 url("../static/images/background.jpg") no-repeat center center;
+      background-size: cover;
+      color: #e0e0e0;
     }
-    .modal-content a.action-link {
-      color: #ff416c;
-      text-decoration: none;
-      margin-right: 10px;
-      font-weight: 600;
-    }
-    .modal-content a.action-link:hover {
-      text-decoration: underline;
-    }
-    .close {
-      position: absolute;
-      top: 10px;
-      right: 15px;
-      font-size: 2rem;
-      color: #fff;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    /* Manage Users Modal Specific Styles */
-    .user-columns {
+    header {
+      background: #1f1f1f;
+      padding: 1rem 2rem;
       display: flex;
       justify-content: space-between;
-      gap: 10px;
+      align-items: center;
+      border-bottom: 2px solid #333;
     }
-    .user-column {
-      flex: 1;
+    header h1 {
+      font-size: 1.75rem;
+      letter-spacing: 1px;
     }
-    .user-column h4 {
-      text-align: center;
-      margin-bottom: 10px;
+    /* Nav Icons */
+    nav a {
+      margin-left: 1.5rem;
+      text-decoration: none;
+      transition: opacity 0.3s;
     }
-    .user-column ul {
-      list-style: none;
-      padding: 0;
+    nav a img {
+      width: 32px;
+      height: 32px;
+      vertical-align: middle;
     }
-    .user-column ul li {
-      margin-bottom: 8px;
-      font-size: 0.9rem;
+    nav a:hover {
+      opacity: 0.8;
     }
-    /* Parking Space Modal Specific Styles */
-    .parking-list {
+    /* Dashboard Layout */
+    .dashboard {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 15px;
-      max-height: 300px;
-      overflow-y: auto;
-      text-align: left;
+      grid-template-columns: 250px 1fr;
+      min-height: calc(100vh - 70px);
     }
-    .parking-item {
-      border: 1px solid rgba(255,255,255,0.2);
+    .sidebar {
+      background: #1f1f1f;
+      padding: 2rem 1rem;
+      border-right: 2px solid #333;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .sidebar a {
+      display: block;
+      padding: 0.75rem 1rem;
+      color: #e0e0e0;
+      text-decoration: none;
+      border-left: 4px solid transparent;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .sidebar a:hover {
+      background: #333;
+      border-left: 4px solid #00e5ff;
+    }
+    .sidebar a.active {
+      background: #333;
+      border-left: 4px solid #00e5ff;
+    }
+    .content {
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    /* Admin Welcome Card */
+    .admin-welcome-card {
+      background: #1f1f1f;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .admin-welcome-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+    }
+    .admin-welcome-card .welcome {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .admin-welcome-card .welcome h3 {
+      color: #00e5ff;
+      margin-bottom: 0.5rem;
+    }
+    .admin-welcome-card .welcome p {
+      font-size: 1rem;
+      color: #cfcfcf;
+    }
+    /* Admin Actions Card */
+    .admin-actions-card {
+      background: #1f1f1f;
+      padding: 1.5rem;
       border-radius: 8px;
-      padding: 10px;
-      font-size: 0.9rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      text-align: center;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .admin-actions-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+    }
+    .admin-actions-card h3 {
+      color: #00e5ff;
+      margin-bottom: 1rem;
+    }
+    .admin-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .admin-actions a {
+      text-decoration: none;
+    }
+    .action-btn {
+      background: #00e5ff;
+      color: #000;
+      padding: 0.75rem 1.25rem;
+      border-radius: 4px;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+    .action-btn:hover {
+      background: #00cce0;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
-  <div class="animated-welcome">
+  <header>
     <h1>Admin Dashboard</h1>
-  </div>
-
-  <div class="dashboard-container">
-    <h2>Admin Dashboard</h2>
-    <p>Welcome, Admin!</p>
-    <a href="javascript:void(0)" class="option-box" onclick="openModal('usersModal')">Manage Users</a>
-    <a href="javascript:void(0)" class="option-box" onclick="openModal('reportsModal')">Reports &amp; Analytics</a>
-    <a href="javascript:void(0)" class="option-box" onclick="openModal('parkingModal')">Parking Space Management</a>
-    <a href="{{ url_for('auth.logout') }}" class="option-box">Logout</a>
-  </div>
-
-  <!-- Modal for Manage Users -->
-  <div id="usersModal" class="modal">
-    <div class="modal-content">
-      <a href="javascript:void(0)" class="close" onclick="closeModal('usersModal')">&times;</a>
-      <h3>Manage Users</h3>
-      {% set drivers = users | selectattr("role", "equalto", "driver") | list %}
-      {% set owners = users | selectattr("role", "equalto", "owner") | list %}
-      {% set admins = users | selectattr("role", "equalto", "admin") | list %}
-      <div class="user-columns">
-        <div class="user-column">
-          <h4>Drivers</h4>
-          <ul>
-            {% for user in drivers %}
-              <li>
-                {{ user.username }} - {{ user.email }}
-                <a href="{{ url_for('admin.delete_user', user_id=user.id) }}" class="action-link">Delete</a>
-              </li>
-            {% endfor %}
-          </ul>
-        </div>
-        <div class="user-column">
-          <h4>Owners</h4>
-          <ul>
-            {% for user in owners %}
-              <li>
-                {{ user.username }} - {{ user.email }}
-                <a href="{{ url_for('admin.delete_user', user_id=user.id) }}" class="action-link">Delete</a>
-              </li>
-            {% endfor %}
-          </ul>
-        </div>
-        <div class="user-column">
-          <h4>Admins</h4>
-          <ul>
-            {% for user in admins %}
-              <li>
-                {{ user.username }} - {{ user.email }}
-                <a href="{{ url_for('admin.delete_user', user_id=user.id) }}" class="action-link">Delete</a>
-              </li>
-            {% endfor %}
-          </ul>
+    <nav>
+      <a href="{{ url_for('profile.admin_profile') }}">
+        <img src="{{ url_for('static', filename='images/profile_icon.png') }}" alt="Profile" />
+      </a>
+      <a href="{{ url_for('auth.logout') }}">
+        <img src="{{ url_for('static', filename='images/logout_icon.png') }}" alt="Logout" />
+      </a>
+    </nav>
+  </header>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <a href="{{ url_for('admin.admin_dashboard') }}" class="active">Home</a>
+      <a href="{{ url_for('admin.user_management') }}">User Management</a>
+      <a href="{{ url_for('admin.parking_management') }}">Parking Management</a>
+      <a href="{{ url_for('admin.reports') }}">Reports</a>
+      <a href="{{ url_for('admin.analytics') }}">Analytics</a>
+      <a href="{{ url_for('admin.system_settings') }}">System Settings</a>
+    </aside>
+    <!-- Main Content -->
+    <main class="content">
+      <!-- Admin Welcome Card -->
+      <div class="admin-welcome-card" style="animation: fadeIn 1s ease;">
+        <div class="welcome">
+          <h3>Welcome, Admin!</h3>
+          <p>Manage users, monitor activity, and oversee the entire system from here.</p>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- Modal for Reports & Analytics -->
-  <div id="reportsModal" class="modal">
-    <div class="modal-content">
-      <a href="javascript:void(0)" class="close" onclick="closeModal('reportsModal')">&times;</a>
-      <h3>Reports &amp; Analytics</h3>
-      <p>System Stats:</p>
-      <ul>
-        <li>Total Users: {{ total_users }}</li>
-        <li>Total Parking Spots: {{ total_spots }}</li>
-        <li>Available Spots: {{ available_spots }}</li>
-        <li>Booked Spots: {{ booked_spots }}</li>
-        <li>Total Bookings: {{ total_bookings }}</li>
-        <li>Total Revenue: ₹{{ revenue }}</li>
-        <li>Total 2-Wheeler Spots: {{ total_two_wheeler }}</li>
-        <li>Total 4-Wheeler Spots: {{ total_four_wheeler }}</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- Modal for Parking Space Management -->
-  <div id="parkingModal" class="modal">
-    <div class="modal-content">
-      <a href="javascript:void(0)" class="close" onclick="closeModal('parkingModal')">&times;</a>
-      <h3>Parking Space Management</h3>
-      <p>All Parking Spaces:</p>
-      <div class="parking-list">
-        {% for spot in spots %}
-          <div class="parking-item">
-            <strong>{{ spot.location }}</strong><br>
-            Status: {{ spot.status|capitalize }}<br>
-            Owner ID: {{ spot.owner_id }}<br>
-            Price: ₹{{ spot.price }}<br>
-            <a href="{{ url_for('admin.edit_spot', spot_id=spot.id) }}" class="action-link">Edit</a>
-            <a href="{{ url_for('admin.delete_spot', spot_id=spot.id) }}" class="action-link">Delete</a>
-          </div>
-        {% endfor %}
+      <!-- Admin Actions Card -->
+      <div class="admin-actions-card" style="animation: fadeIn 1.2s ease;">
+        <h3>Quick Actions</h3>
+        <div class="admin-actions">
+          <a href="{{ url_for('admin.add_user') }}"><div class="action-btn">Add New User</div></a>
+          <a href="{{ url_for('admin.reports') }}"><div class="action-btn">View Reports</div></a>
+          <a href="{{ url_for('admin.parking_management') }}"><div class="action-btn">Manage Parking</div></a>
+        </div>
       </div>
-      <br>
-      <p>Booked Parking Spaces:</p>
-      <div class="parking-list">
-        {% for spot in spots %}
-          {% if spot.status|lower == 'booked' %}
-            <div class="parking-item">
-              <strong>{{ spot.location }}</strong><br>
-              Booked by: {{ spot.booked_by or 'N/A' }}<br>
-              Price: ₹{{ spot.price }}<br>
-              <a href="{{ url_for('admin.edit_spot', spot_id=spot.id) }}" class="action-link">Edit</a>
-              <a href="{{ url_for('admin.delete_spot', spot_id=spot.id) }}" class="action-link">Delete</a>
-            </div>
-          {% endif %}
-        {% endfor %}
-      </div>
-    </div>
+    </main>
   </div>
-
-  <script>
-    function openModal(id) {
-      document.getElementById(id).style.display = "flex";
-    }
-    function closeModal(id) {
-      document.getElementById(id).style.display = "none";
-    }
-  </script>
 </body>
 </html>

@@ -8,6 +8,7 @@ password = urllib.parse.quote_plus("student")  # Ensure proper encoding
 db_url = f"postgresql://postgres:{password}@127.0.0.1:5432/smart_parking_db"
 
 
+
 class Config:
     SQLALCHEMY_DATABASE_URI = db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False

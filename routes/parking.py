@@ -21,7 +21,6 @@ def add_parking_spot():
             flash("Price must be a number.", "danger")
             return redirect(url_for('parking.add_parking_spot'))
 
-        # Read latitude and longitude from hidden fields
         try:
             lat = float(request.form['lat'])
             lng = float(request.form['lng'])
@@ -50,7 +49,7 @@ def add_parking_spot():
             flash("Invalid time format. Use HH:MM.", "danger")
             return redirect(url_for('parking.add_parking_spot'))
 
-        # Always set availability to True so the spot is visible to drivers
+
         new_spot = ParkingSpot(
             location=location,
             price=price,
@@ -67,7 +66,7 @@ def add_parking_spot():
         db.session.add(new_spot)
         db.session.commit()
         flash("Parking spot added successfully!", "success")
-        return redirect(url_for('dashboard.dashboard'))
+        return redirect(url_for('owner.owner_dashboard'))
     return render_template('add_parking_spot.html')
 
 
@@ -76,11 +75,11 @@ def add_parking_spot():
 def update_parking_spot(spot_id):
     if session.get('role') != 'owner':
         flash("Unauthorized access!", "danger")
-        return redirect(url_for('dashboard.dashboard'))
+        return redirect(url_for('owner.owner_dashboard'))
     spot = ParkingSpot.query.get_or_404(spot_id)
     if spot.owner_id != current_user.id:
         flash("You cannot update a spot you do not own.", "danger")
-        return redirect(url_for('dashboard.dashboard'))
+        return redirect(url_for('owner.owner_dashboard'))
     if request.method == 'POST':
         spot.location = request.form.get('location', spot.location)
         try:
@@ -89,7 +88,6 @@ def update_parking_spot(spot_id):
             flash("Invalid price value.", "danger")
             return redirect(url_for('parking.update_parking_spot', spot_id=spot_id))
 
-        # Update lat and lng from hidden fields
         try:
             spot.lat = float(request.form['lat'])
             spot.lng = float(request.form['lng'])
@@ -116,10 +114,9 @@ def update_parking_spot(spot_id):
             flash("Invalid time format. Please use HH:MM.", "danger")
             return redirect(url_for('parking.update_parking_spot', spot_id=spot_id))
 
-        # Do not change availability; leave it as is.
         db.session.commit()
         flash("Parking spot updated successfully!", "success")
-        return redirect(url_for('dashboard.dashboard'))
+        return redirect(url_for('owner.owner_dashboard'))
     return render_template('update_parking_spot.html', spot=spot)
 
 
@@ -128,17 +125,17 @@ def update_parking_spot(spot_id):
 def delete_parking_spot(spot_id):
     if session.get('role') != 'owner':
         flash("Unauthorized access!", "danger")
-        return redirect(url_for('dashboard.dashboard'))
+        return redirect(url_for('owner.owner_dashboard'))
 
     spot = ParkingSpot.query.get_or_404(spot_id)
     if spot.owner_id != current_user.id:
         flash("You cannot delete a spot you do not own.", "danger")
-        return redirect(url_for('dashboard.dashboard'))
+        return redirect(url_for('owner.owner_dashboard'))
 
     active_bookings = [b for b in spot.booking if b.active]
     if active_bookings:
         flash("Cannot delete this spot as there is an active booking.", "danger")
-        return redirect(url_for('dashboard.dashboard'))
+        return redirect(url_for('owner.owner_dashboard'))
 
     try:
         db.session.delete(spot)
@@ -148,7 +145,7 @@ def delete_parking_spot(spot_id):
         db.session.rollback()
         flash("Error deleting spot: " + str(e), "danger")
 
-    return redirect(url_for('dashboard.dashboard'))
+    return redirect(url_for('owner.owner_dashboard'))
 
 
 @parking_bp.route('/book/<int:spot_id>', methods=['POST'])
@@ -157,9 +154,7 @@ def book_spot(spot_id):
     if session.get('role') != 'driver':
         flash("Only drivers can book spots.", "danger")
         return redirect(url_for('dashboard.dashboard'))
-
     spot = ParkingSpot.query.get_or_404(spot_id)
-
     try:
         two_wheeler = int(request.form.get('two_wheeler', 0))
         four_wheeler = int(request.form.get('four_wheeler', 0))
@@ -188,7 +183,6 @@ def book_spot(spot_id):
         flash("Not enough 4-wheeler spaces available.", "danger")
         return redirect(url_for('dashboard.dashboard'))
 
-    # Subtract the booked spaces from the available count
     spot.two_wheeler_spaces = (spot.two_wheeler_spaces or 0) - two_wheeler
     spot.four_wheeler_spaces = (spot.four_wheeler_spaces or 0) - four_wheeler
 
@@ -200,9 +194,10 @@ def book_spot(spot_id):
     elif two_wheeler > 0 and four_wheeler > 0:
         booked_vehicle_type = "both"
 
-    # Fetch new fields from the form (vehicle_number and booking_id)
+
     vehicle_number = request.form.get('vehicle_number')
     booking_id = request.form.get('booking_id')
+
 
     new_booking = Booking(
         user_id=current_user.id,
@@ -215,7 +210,9 @@ def book_spot(spot_id):
         active=True,
         vehicle_number=vehicle_number,
         booking_id=booking_id
+
     )
+    new_booking.status = "Pending"
     db.session.add(new_booking)
     db.session.commit()
     flash("Spot booked successfully!", "success")
@@ -231,10 +228,9 @@ def cancel_booking(booking_id):
         return redirect(url_for('dashboard.dashboard'))
 
     spot = ParkingSpot.query.get(booking.spot_id)
-    # Add the booked spaces back to the parking spot
     spot.two_wheeler_spaces = (spot.two_wheeler_spaces or 0) + booking.two_wheeler
     spot.four_wheeler_spaces = (spot.four_wheeler_spaces or 0) + booking.four_wheeler
-    spot.availability = True  # Mark as available since the booking is cancelled
+    spot.availability = True
 
     db.session.delete(booking)
     db.session.commit()
@@ -245,10 +241,6 @@ def cancel_booking(booking_id):
 @parking_bp.route('/direction/<int:spot_id>', methods=['GET'])
 @login_required
 def get_directions(spot_id):
-    """
-    Expects query parameters 'lat' and 'lng' representing the driver's current location.
-    Returns JSON containing the route details from OSRM.
-    """
     spot = ParkingSpot.query.get_or_404(spot_id)
     driver_lat = request.args.get('lat', type=float)
     driver_lng = request.args.get('lng', type=float)
@@ -266,3 +258,5 @@ def get_directions(spot_id):
 
     data = response.json()
     return jsonify(data)
+
+

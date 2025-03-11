@@ -32,12 +32,16 @@ from routes.dashboard import dashboard_bp
 from routes.parking import parking_bp
 from routes.payment import payment_bp
 from routes.admin import admin_bp
+from routes.profile import profile_bp  # Blueprint for profile management
+from routes.owner import owner_bp      # NEW: Blueprint for owner pages
 
 app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
 app.register_blueprint(parking_bp, url_prefix="/parking")
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(payment_bp, url_prefix="/payment")
+app.register_blueprint(profile_bp, url_prefix="/profile")
+app.register_blueprint(owner_bp, url_prefix="/owner")
 
 # Root route: Redirect to the login page
 @app.route('/')
