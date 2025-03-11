@@ -33,7 +33,7 @@ from routes.parking import parking_bp
 from routes.payment import payment_bp
 from routes.admin import admin_bp
 from routes.profile import profile_bp  # Blueprint for profile management
-from routes.owner import owner_bp      # NEW: Blueprint for owner pages
+from routes.owner import owner_bp      # Blueprint for owner pages
 
 app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(dashboard_bp, url_prefix="/dashboard")

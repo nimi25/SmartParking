@@ -254,6 +254,89 @@
         flex-direction: column;
       }
     }
+/*
+   1. Make #paymentPopup a full-screen overlay with a dimmed background
+   2. Center .popup-content in the middle
+   3. Style the close button, headings, etc.
+*/
+
+#paymentPopup {
+  display: none; /* hidden by default */
+  position: fixed;
+  inset: 0; /* top:0; right:0; bottom:0; left:0; => full screen */
+  background: rgba(0, 0, 0, 0.8); /* dark overlay */
+  z-index: 9999; /* above everything else */
+  justify-content: center;
+  align-items: center;
+}
+
+/* Show the modal when you add a .show or .active class in JS */
+#paymentPopup.show {
+  display: flex;
+}
+
+#paymentPopup .popup-content {
+  background: #1f1f1f;
+  color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+  position: relative;
+  text-align: center;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+/* Subtle fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Close button in top-right corner */
+#paymentPopup .close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #ff4444;
+  border: none;
+  color: #fff;
+  padding: 0.4rem 0.6rem;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* Confirm Payment button matches your site’s orange theme */
+#paymentPopup .pay-btn {
+  background: #ff9800;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#paymentPopup .pay-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* Example: style the heading if you want that bright teal color */
+#paymentPopup h3 {
+  color: #00e5ff;
+  margin-bottom: 1rem;
+}
+
   </style>
   <!-- Leaflet JS for maps -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -305,6 +388,7 @@
                 <!-- Body: Details & Map side-by-side -->
                 <div class="booking-body">
                   <div class="booking-details">
+                    <p><strong>Owner:</strong> {{ booking.spot.owner.username }}</p>
                     <p><strong>Vehicle Number:</strong> {{ booking.vehicle_number }}</p>
                     <p><strong>Location:</strong> {{ booking.spot.location }}</p>
                     <p><strong>Price:</strong> ₹{{ booking.spot.price }}</p>
@@ -312,7 +396,7 @@
                     <p><strong>Booked 4-Wheeler Spots:</strong> {{ booking.four_wheeler }}</p>
                     <p><strong>Status:</strong>
                       <span class="booking-status {{ booking.status|lower }}">
-                        {{ booking.status if booking.status == 'Approved' else 'Pending' }}
+                        {{ booking.status }}
                       </span>
                     </p>
                   </div>
@@ -323,18 +407,27 @@
 
                 <!-- Actions in one line -->
                 <div class="booking-actions">
+                  <!-- Directions button (unchanged) -->
                   <button class="view-directions-btn"
                           data-spot-id="{{ booking.spot.id }}"
                           data-lat="{{ booking.spot.lat }}"
                           data-lng="{{ booking.spot.lng }}">
                     Directions
                   </button>
-                  <form method="GET" action="{{ url_for('payment.process_payment') }}" style="display: inline;">
-                    <input type="hidden" name="booking_id" value="{{ booking.id }}">
-                    <input type="hidden" name="amount" value="{{ booking.spot.price }}">
-                    <button type="submit" class="pay-btn">Pay</button>
-                  </form>
-                  <form method="POST" action="{{ url_for('parking.cancel_booking', booking_id=booking.id) }}"
+
+                  <!-- Pay button with NO form. Just data attributes for the popup. -->
+                  <button type="button" class="pay-btn"
+                    data-booking-id="{{ booking.id }}"
+                    data-amount="{{ booking.spot.price }}"
+                    data-owner="{{ booking.spot.owner.username }}"
+                    data-phone="{{ booking.spot.owner.phone_number if booking.spot.owner.phone_number else 'N/A' }}"
+                    data-upi="{{ booking.spot.owner.upi_id if booking.spot.owner.upi_id else 'N/A' }}">
+                    Pay
+                  </button>
+
+                  <!-- Delete button remains in a form (POST request) -->
+                  <form method="POST"
+                        action="{{ url_for('parking.cancel_booking', booking_id=booking.id) }}"
                         onsubmit="return confirm('Are you sure you want to delete this booking?');"
                         style="display: inline;">
                     <button type="submit" class="cancel-btn">Delete</button>
@@ -350,6 +443,19 @@
     </main>
   </div>
 
+  <div id="paymentPopup">
+  <div class="popup-content">
+    <button id="closePopup" class="close-btn">X</button>
+    <h3>Payment Details</h3>
+    <p><strong>Owner:</strong> <span id="popupOwner"></span></p>
+    <p><strong>Phone:</strong> <span id="popupPhone"></span></p>
+    <p><strong>UPI ID:</strong> <span id="popupUpi"></span></p>
+    <img src="../static/uploads/scanner.jpg" alt="Scanner" style="width: 200px; margin-top: 1rem;">
+    <button id="confirmPayment" class="pay-btn" style="margin-top: 1rem;">Confirm Payment</button>
+  </div>
+</div>
+
+
   <script>
     // Sidebar toggle functionality
     const sidebar = document.querySelector('.sidebar');
@@ -357,7 +463,55 @@
       sidebar.classList.toggle('collapsed');
     }
 
-    // Initialize maps for each booking card
+    // Payment popup functionality
+    document.addEventListener("DOMContentLoaded", function() {
+      const payButtons = document.querySelectorAll(".pay-btn");
+      const paymentPopup = document.getElementById("paymentPopup");
+      const closePopupBtn = document.getElementById("closePopup");
+      const confirmPaymentBtn = document.getElementById("confirmPayment");
+
+      payButtons.forEach(button => {
+        // If it's the "Pay" button (not the "Delete" or "Directions" button),
+        // it should have data-booking-id, data-owner, etc.
+        if (button.classList.contains("pay-btn") && button.hasAttribute("data-booking-id")) {
+          button.addEventListener("click", function(e) {
+            // Prevent any default action (though type="button" shouldn't submit anyway)
+            e.preventDefault();
+
+            // Grab booking info from data attributes
+            const bookingId = this.getAttribute("data-booking-id");
+            const owner = this.getAttribute("data-owner");
+            const phone = this.getAttribute("data-phone");
+            const upi = this.getAttribute("data-upi");
+
+            // Populate popup fields
+            document.getElementById("popupOwner").textContent = owner;
+            document.getElementById("popupPhone").textContent = phone;
+            document.getElementById("popupUpi").textContent = upi;
+
+            // Store booking ID on Confirm button
+            confirmPaymentBtn.setAttribute("data-booking-id", bookingId);
+
+            // Show the popup
+            paymentPopup.style.display = "flex";
+          });
+        }
+      });
+
+      // Close popup
+      closePopupBtn.addEventListener("click", function() {
+        paymentPopup.style.display = "none";
+      });
+
+      // Confirm Payment => redirect
+      confirmPaymentBtn.addEventListener("click", function() {
+        const bookingId = this.getAttribute("data-booking-id");
+        // Final redirect to your actual payment route
+        window.location.href = `/payment/process_payment?booking_id=${bookingId}`;
+      });
+    });
+
+    // Initialize Leaflet maps for each booking card
     {% for booking in booked_spots %}
       var map{{ booking.id }} = L.map('map-{{ booking.id }}').setView([{{ booking.spot.lat }}, {{ booking.spot.lng }}], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -366,7 +520,7 @@
       L.marker([{{ booking.spot.lat }}, {{ booking.spot.lng }}]).addTo(map{{ booking.id }});
     {% endfor %}
 
-    // Directions button functionality: open Google Maps directions using current location
+    // Directions button => open Google Maps directions
     var directionsBtns = document.querySelectorAll(".view-directions-btn");
     directionsBtns.forEach(function(btn) {
       btn.addEventListener("click", function() {

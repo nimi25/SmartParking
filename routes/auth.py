@@ -10,7 +10,11 @@ def register():
         username = request.form['username']
         email = request.form['email']
         password = request.form.get("password")
-        role = request.form['role']  # 'driver', 'owner', or 'admin'
+        role = request.form['role'].strip().lower()  # Normalize role to lowercase
+
+        if role not in ['owner', 'driver', 'admin']:
+            flash("Invalid role selected. Please try again.", "danger")
+            return redirect(url_for('auth.register'))
 
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
@@ -18,7 +22,7 @@ def register():
             return redirect(url_for('auth.login'))
 
         new_user = User(username=username, email=email, role=role)
-        new_user.set_password(password)  # Ensure your User model has set_password()
+        new_user.set_password(password)  # Ensure User model has set_password()
 
         db.session.add(new_user)
         db.session.commit()
@@ -36,23 +40,25 @@ def login():
         password = request.form['password']
         user = User.query.filter_by(email=email).first()
 
-        if user and user.check_password(password):  # Ensure your User model has check_password()
+        if user and user.check_password(password):
             login_user(user)
-            session['role'] = user.role
+            session['role'] = user.role.strip().lower()  # Normalize role
+
             # Redirect based on user role
-            if user.role == 'owner':
+            if session['role'] == 'owner':
                 return redirect(url_for('owner.owner_dashboard'))
-            elif user.role == 'driver':
+            elif session['role'] == 'driver':
                 return redirect(url_for('dashboard.driver_dashboard'))
-            elif user.role == 'admin':
+            elif session['role'] == 'admin':
                 return redirect(url_for('admin.admin_dashboard'))
             else:
-                flash("User role not recognized.", "danger")
+                flash("User role not recognized. Please contact support.", "danger")
                 return redirect(url_for('auth.login'))
         else:
             flash("Invalid email or password. Please try again.", "danger")
 
     return render_template('login.html')
+
 
 
 @auth_bp.route('/logout')

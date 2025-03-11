@@ -487,7 +487,7 @@
     <div class="hamburger" onclick="toggleSidebar()">☰</div>
     <h1>Owner Dashboard</h1>
     <nav>
-      <a href="{{ url_for('owner.owner_profile') }}">
+      <a href="{{ url_for('profile.owner_profile') }}">
         <img src="../static/images/profile.png" alt="Profile" />
       </a>
       <a href="{{ url_for('auth.logout') }}">
@@ -499,7 +499,7 @@
   <div class="dashboard">
     <!-- Collapsible Sidebar -->
     <aside class="sidebar" id="sidebar">
-      <a href="{{ url_for('owner.owner_dashboard') }}" class="active">Home</a>
+      <a href="{{ url_for('dashboard.dashboard') }}" class="active">Home</a>
       <a href="{{ url_for('owner.bookings') }}">Bookings</a>
       <a href="{{ url_for('owner.parkingspace') }}">Parking Space</a>
       <a href="{{ url_for('owner.payment') }}">Payment</a>

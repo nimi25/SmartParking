@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,7 +39,7 @@
     header {
       position: fixed;
       top: 0; left: 0; right: 0;
-      height: 60px; /* Change this value to adjust header height */
+      height: 60px; /* Adjust header height */
       background: #1f1f1f;
       padding: 1rem 2rem;
       display: flex;
@@ -185,7 +184,7 @@
     .map-search {
       position: absolute;
       top: 10px;
-      left: 30%; /* Adjusted to avoid overlapping the directions panel later */
+      left: 30%; /* Adjust to avoid overlapping the directions panel */
       transform: translateX(-50%);
       width: 300px;
       z-index: 1000;
@@ -218,6 +217,23 @@
     }
     .suggestion-item:hover {
       background: rgba(255,255,255,0.2);
+    }
+
+    /* NEW: arrow button to open spots panel manually */
+    .show-spots-arrow {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #00e5ff;
+      color: #000;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      z-index: 1001;
+    }
+    .show-spots-arrow:hover {
+      background: #00cce0;
     }
 
     /**************************************************************
@@ -399,7 +415,6 @@
     /**************************************************************
      * FLASK MESSAGE
      **************************************************************/
-
     .flash-message {
       position: fixed;
       top: 70px; /* below header */
@@ -415,7 +430,6 @@
     .flash-message.show {
       opacity: 1;
     }
-
 
     /**************************************************************
      * BOOKING ID INFO BUTTON & TOOLTIP
@@ -448,7 +462,6 @@
       width: 250px;
       z-index: 10000;
       animation: fadeIn 1s ease;
-
     }
     .booking-id-tooltip.open {
       display: block;
@@ -479,13 +492,29 @@
       background: rgba(0,0,0,0.2) !important;
       color: #fff !important;
     }
-    /* When hovering over an individual instruction (list item) in the routing container */
     .leaflet-routing-container .leaflet-routing-instructions li:hover,
     .leaflet-routing-container .leaflet-routing-instructions li:hover * {
       background-color: #f5f5f5 !important;
       color: #000 !important;
       filter: none !important;
     }
+    .sidebar-toggle {
+      position: fixed;
+      top: 50%;
+      right: 10px;
+      background: #00e5ff;
+      color: #000;
+      padding: 8px 12px;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 10000;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s;
+    }
+    .sidebar-toggle.hidden {
+      display: none;
+    }
+
   </style>
 </head>
 <body>
@@ -503,342 +532,19 @@
     </nav>
   </header>
 
+ <div id="sidebarToggle" class="sidebar-toggle" onclick="openSpotsPanelAll()">►</div>
+
+
+
   {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     <div id="flashMessage" class="flash-message">
       {% for category, message in messages %}
         <p class="{{ category }}">{{ message }}</p>
       {% endfor %}
-=======
-{% extends "base.html" %}
-{% block title %}Driver Dashboard{% endblock %}
-
-{% block content %}
-<!-- External Libraries -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-      integrity="sha512-Fo3rlrZj/kTc7I4YWgW0E8S7zx1+Y8Y3vT94r3Z6YV1gHOb/A6z/9zsR5/sLbcX8FwHsw2cG6z1w0Oj5mwOW5w=="
-      crossorigin="anonymous" referrerpolicy="no-referrer" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
-<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
-
-<style>
-  /* Base Page & Body */
-  body {
-    font-family: 'Poppins', sans-serif;
-    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
-                url("{{ url_for('static', filename='images/bengaluru-map.jpg') }}") no-repeat center center fixed;
-    background-size: cover;
-    margin: 0;
-    padding: 0;
-    color: #fff;
-    overflow: hidden;
-  }
-  /* Dashboard Container */
-  .dashboard-container {
-    position: relative;
-    height: 100vh;
-  }
-  /* Map */
-  #map {
-    width: 100%;
-    height: 100%;
-    border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    position: relative;
-    z-index: 1;
-  }
-  /* Search Bar */
-  .map-search {
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1400;
-    width: 280px;
-  }
-  .map-search input {
-    width: 100%;
-    padding: 8px;
-    border-radius: 5px;
-    border: none;
-    background: rgba(0,0,0,0.5);
-    color: #fff;
-    text-align: center;
-  }
-  .map-search input:focus {
-    background: rgba(0,0,0,0.7);
-    outline: none;
-  }
-  /* Suggestions - bumped z-index */
-  .suggestions {
-    position: absolute;
-    top: 50px;
-    left: 0;
-    right: 0;
-    background: rgba(0,0,0,0.9);
-    border-radius: 5px;
-    max-height: 200px;
-    overflow-y: auto;
-    display: none;
-    z-index: 100001 !important;
-  }
-  .suggestion-item {
-    padding: 8px 10px;
-    cursor: pointer;
-    color: #fff;
-    border-bottom: 1px solid rgba(255,255,255,0.2);
-  }
-  .suggestion-item:hover {
-    background: rgba(255,255,255,0.2);
-  }
-  /* Cards Column */
-  .cards-column {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 0;
-    overflow-y: auto;
-    background: rgba(0, 0, 0, 0.8);
-    transition: width 0.5s ease;
-    z-index: 1000;
-  }
-  .cards-column.open {
-    width: 30%;
-    padding: 20px;
-  }
-  /* Filter Panel */
-  .filter-toggle {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-bottom: 10px;
-    display: inline-block;
-  }
-  .filter-bar {
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 20px;
-    padding: 10px 20px;
-    margin-bottom: 20px;
-    display: none;
-    gap: 10px;
-    align-items: center;
-  }
-  .filter-group {
-    display: flex;
-    flex-direction: column;
-    margin-right: 10px;
-  }
-  .filter-group label {
-    font-weight: bold;
-    margin-bottom: 5px;
-  }
-  .filter-group select {
-    padding: 5px;
-    border: 1px solid rgba(255,255,255,0.3);
-    border-radius: 4px;
-    background: rgba(0,0,0,0.8);
-    color: #fff;
-  }
-  .filter-apply {
-    background-color: #28a745;
-    color: #fff;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  /* Card Styles */
-  .card {
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 20px;
-    padding: 15px;
-    margin-bottom: 15px;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.5s ease;
-  }
-  .card.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  .card.selected {
-    border: 2px solid #ff416c;
-  }
-  .card h3 { margin: 0 0 10px; }
-  .card p.space-info { margin: 4px 0; }
-  .book-btn {
-    background-color: #28a745;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    padding: 8px 12px;
-    width: 100%;
-    margin-top: 10px;
-    cursor: pointer;
-  }
-  /* Show All Spots Button */
-  #showAllSpotsBtn {
-    display: block;
-    width: 100%;
-    background: #007bff;
-    border: none;
-    border-radius: 6px;
-    padding: 10px;
-    color: #fff;
-    cursor: pointer;
-    margin-top: 10px;
-  }
-  /* Modal Styles */
-  .modal {
-    display: none;
-    position: fixed;
-    z-index: 1500;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-  }
-  .modal-content {
-    background: rgba(0,0,0,0.7);
-    margin: 10% auto;
-    padding: 20px;
-    border: 1px solid rgba(255,255,255,0.2);
-    width: 400px;
-    border-radius: 8px;
-    color: #fff;
-    position: relative;
-    backdrop-filter: blur(15px);
-    max-height: 80vh;
-    overflow-y: auto;
-  }
-  .close {
-    color: #fff;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  .modal-content .form-group {
-    text-align: left;
-    margin-bottom: 15px;
-  }
-  .modal-content .form-group label {
-    margin-bottom: 5px;
-    font-weight: bold;
-  }
-  .modal-content input[type="number"],
-  .modal-content input[type="time"],
-  .modal-content input[type="text"] {
-    width: 100%;
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid rgba(255,255,255,0.3);
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-  }
-  /* Leaflet Routing Machine Styles */
-  .leaflet-routing-container {
-    background: rgba(0, 0, 0, 0.8) !important;
-    color: #fff !important;
-    border: none !important;
-    position: absolute !important;
-    top: 60px !important;
-    right: 20px !important;
-    width: 300px;
-    z-index: 5000 !important;
-    border-radius: 8px;
-    padding: 10px;
-    padding-bottom: 50px;
-  }
-  .leaflet-routing-container a,
-  .leaflet-routing-container .leaflet-routing-instructions {
-    color: #fff !important;
-  }
-  .leaflet-routing-arrow {
-    filter: invert(1) !important;
-  }
-  .leaflet-routing-container:hover {
-    background: rgba(255,255,255,0.9) !important;
-    color: #000 !important;
-  }
-  .leaflet-routing-container:hover a,
-  .leaflet-routing-container:hover .leaflet-routing-instructions {
-    color: #000 !important;
-  }
-  .leaflet-routing-container:hover .leaflet-routing-arrow {
-    filter: invert(0) !important;
-  }
-  /* Bottom Controls */
-  .bottom-controls {
-    text-align: center;
-    padding: 10px;
-    background: #111;
-  }
-  .bottom-controls button {
-    background: #ff416c;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 20px;
-    font-size: 0.9rem;
-    color: #fff;
-    cursor: pointer;
-    margin: 5px;
-  }
-  .bottom-controls button:hover {
-    background: #ff4b2b;
-  }
-</style>
-
-<!-- Dashboard Container -->
-<div class="dashboard-container">
-  <div id="map"></div>
-  <!-- Search Panel -->
-  <div class="map-search">
-    <input type="text" id="mapSearchInput" placeholder="Search locality...">
-    <div id="suggestions" class="suggestions"></div>
-  </div>
-  <!-- Cards Column (hidden by default) -->
-  <div class="cards-column" id="cardsColumn">
-    <!-- Filter Toggle & Panel -->
-    <div class="filter-toggle" onclick="toggleFilterRibbon()">Filter <i class="fas fa-filter"></i></div>
-    <div id="filterRibbon" class="filter-bar">
-      <div class="filter-group">
-        <label for="filterPrice">Price Range</label>
-        <select id="filterPrice" name="filterPrice">
-          <option value="all">All</option>
-          <option value="low">Low (₹0-100)</option>
-          <option value="mid">Mid (₹101-300)</option>
-          <option value="high">High (₹301+)</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label for="filterTime">Time Slot</label>
-        <select id="filterTime" name="filterTime">
-          <option value="all">All</option>
-          <option value="6-10">6:00 - 10:00 AM</option>
-          <option value="10-14">10:00 AM - 2:00 PM</option>
-          <option value="14-18">2:00 PM - 6:00 PM</option>
-          <option value="18-22">6:00 PM - 10:00 PM</option>
-        </select>
-      </div>
-      <button class="filter-apply" onclick="applyFilters()">Apply</button>
-
     </div>
   {% endif %}
-{% endwith %}
-
-
+  {% endwith %}
 
   <div class="dashboard">
     <!-- COLLAPSIBLE SIDEBAR -->
@@ -850,6 +556,7 @@
 
     <!-- SCROLLABLE MAIN CONTENT -->
     <main class="content" id="mainContent">
+
       <!-- WELCOME & MAP CARD -->
       <div class="welcome-map-card">
         <div class="welcome">
@@ -866,432 +573,320 @@
         </div>
       </div>
 
-
-  <!-- RIGHT-SIDE PANEL FOR SPOTS -->
-  <div class="spots-panel" id="spotsPanel">
-    <div class="spots-panel-header">
-      <h4>Nearby Spots</h4>
-      <span class="spots-panel-close" id="spotsPanelClose">×</span>
-    </div>
-    <div id="spotsList"></div>
-  </div>
-
-
-  <!-- BOOKING MODAL -->
-  <div id="bookingModal" class="modal">
-    <div class="modal-content">
-      <!-- Booking ID info button -->
-      <div class="booking-id-info" id="bookingIdInfo">i</div>
-      <div class="booking-id-tooltip" id="bookingIdTooltip">
-        Booking ID = BK + [Time/Date + last 2 digits of your vehicle number]
+      <!-- RIGHT-SIDE PANEL FOR SPOTS -->
+      <div class="spots-panel" id="spotsPanel">
+        <div class="spots-panel-header">
+          <h4>Nearby Spots</h4>
+          <span class="spots-panel-close" id="spotsPanelClose">×</span>
+        </div>
+        <div id="spotsList"></div>
       </div>
-      <span id="bookingModalClose" class="close">&times;</span>
-      <h3>Book Your Spot</h3>
-      <form id="bookingForm" method="POST" action="">
-        <div class="form-group">
-          <label for="vehicle_number">Vehicle Number:</label>
-          <input type="text" id="vehicle_number" name="vehicle_number" required placeholder="e.g. KA01AB1234" />
 
-</div>
-
-<!-- Bottom Controls (My Bookings, Center Location, Logout) -->
-<div class="bottom-controls">
-  <button id="viewBookingsBtn">My Bookings</button>
-  <button id="centerMapBtn">Center Location</button>
-  <button id="logoutBtn" onclick="window.location.href='{{ url_for('auth.logout') }}'">Logout</button>
-</div>
-
-<!-- Booking Modal -->
-<div id="bookingModal" class="modal">
-  <div class="modal-content">
-    <span id="bookingModalClose" class="close">&times;</span>
-    <h3>Book Your Spot</h3>
-    <form id="bookingForm" method="POST" action="">
-      <div class="form-group">
-        <label for="two_wheeler">2-Wheeler Spots:</label>
-        <input type="number" id="two_wheeler" name="two_wheeler" min="0" value="1" required>
-      </div>
-      <div class="form-group">
-        <label for="four_wheeler">4-Wheeler Spots:</label>
-        <input type="number" id="four_wheeler" name="four_wheeler" min="0" value="0" required>
-      </div>
-      <!-- New Vehicle Number Field -->
-      <div class="form-group">
-        <label for="vehicle_number">Vehicle Number:</label>
-        <input type="text" id="vehicle_number" name="vehicle_number" placeholder="Enter your vehicle number" required>
-      </div>
-      <div class="form-group">
-        <label for="booking_start">Booking Start (HH:MM):</label>
-        <input type="time" id="booking_start" name="booking_start" required>
-      </div>
-      <div class="form-group">
-        <label for="booking_end">Booking End (HH:MM):</label>
-        <input type="time" id="booking_end" name="booking_end" required>
-      </div>
-      <button type="submit" class="btn">Confirm Booking</button>
-    </form>
-  </div>
-</div>
-
-<!-- My Bookings Modal -->
-<div id="bookingsModal" class="modal">
-  <div class="modal-content">
-    <span id="bookingsModalClose" class="close">&times;</span>
-    <h3>My Bookings</h3>
-    <div id="bookingsList">
-      {% for booking in booked_spots %}
-        <div class="booking-card" style="margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">
-          <h4>{{ booking.spot.location }}</h4>
-          <p><strong>Price:</strong> ₹{{ booking.spot.price }}</p>
-          <p><strong>Booked 2-Wheeler Spots:</strong> {{ booking.two_wheeler }}</p>
-          <p><strong>Booked 4-Wheeler Spots:</strong> {{ booking.four_wheeler }}</p>
-          <p><strong>Time:</strong> {{ booking.start_time.strftime('%I:%M %p') }} - {{ booking.end_time.strftime('%I:%M %p') }}</p>
-          <!-- Display Vehicle Number and Booking ID -->
-          <p><strong>Vehicle Number:</strong> {{ booking.vehicle_number }}</p>
-          <p><strong>Booking ID:</strong> {{ booking.booking_id }}</p>
-          <div class="booking-actions" style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="view-directions-btn btn"
-                    data-spot-id="{{ booking.spot.id }}"
-                    data-lat="{{ booking.spot.lat }}"
-                    data-lng="{{ booking.spot.lng }}">
-              Directions
-            </button>
-            <form method="GET" action="{{ url_for('payment.process_payment') }}" style="display: inline;">
-              <input type="hidden" name="booking_id" value="{{ booking.id }}">
-              <input type="hidden" name="amount" value="{{ booking.spot.price }}">
-              <button type="submit" class="btn" style="background-color: #ff9800; color: white;">Pay</button>
-            </form>
-            <form method="POST" action="{{ url_for('parking.cancel_booking', booking_id=booking.id) }}"
-                  onsubmit="return confirm('Are you sure you want to delete this booking?');" style="display: inline;">
-              <button type="submit" class="btn">Delete</button>
-            </form>
+      <!-- BOOKING MODAL -->
+      <div id="bookingModal" class="modal">
+        <div class="modal-content">
+          <!-- Booking ID info button -->
+          <div class="booking-id-info" id="bookingIdInfo">i</div>
+          <div class="booking-id-tooltip" id="bookingIdTooltip">
+            Booking ID = BK + [Time/Date + last 2 digits of your vehicle number]
           </div>
-
+          <span id="bookingModalClose" class="close">&times;</span>
+          <h3>Book Your Spot</h3>
+          <form id="bookingForm" method="POST" action="">
+            <div class="form-group">
+              <label for="vehicle_number">Vehicle Number:</label>
+              <input type="text" id="vehicle_number" name="vehicle_number" required placeholder="e.g. KA01AB1234" />
+            </div>
+            <div class="form-group">
+              <label for="two_wheeler">2-Wheeler Spots:</label>
+              <input type="number" id="two_wheeler" name="two_wheeler" min="0" value="1" required />
+            </div>
+            <div class="form-group">
+              <label for="four_wheeler">4-Wheeler Spots:</label>
+              <input type="number" id="four_wheeler" name="four_wheeler" min="0" value="0" required />
+            </div>
+            <div class="form-group">
+              <label for="booking_start">Booking Start (HH:MM):</label>
+              <input type="time" id="booking_start" name="booking_start" required />
+            </div>
+            <div class="form-group">
+              <label for="booking_end">Booking End (HH:MM):</label>
+              <input type="time" id="booking_end" name="booking_end" required />
+            </div>
+            <button type="submit">Confirm Booking</button>
+          </form>
         </div>
-        <div class="form-group">
-          <label for="two_wheeler">2-Wheeler Spots:</label>
-          <input type="number" id="two_wheeler" name="two_wheeler" min="0" value="1" required />
-        </div>
-        <div class="form-group">
-          <label for="four_wheeler">4-Wheeler Spots:</label>
-          <input type="number" id="four_wheeler" name="four_wheeler" min="0" value="0" required />
-        </div>
-        <div class="form-group">
-          <label for="booking_start">Booking Start (HH:MM):</label>
-          <input type="time" id="booking_start" name="booking_start" required />
-        </div>
-        <div class="form-group">
-          <label for="booking_end">Booking End (HH:MM):</label>
-          <input type="time" id="booking_end" name="booking_end" required />
-        </div>
-        <button type="submit">Confirm Booking</button>
-      </form>
-    </div>
+      </div>
+    </main>
   </div>
 
   <script>
-    /**************************************************************
-     * SIDEBAR COLLAPSE/EXPAND
-     **************************************************************/
-    const sidebar = document.getElementById('sidebar');
-    const mainContent = document.getElementById('mainContent');
-    function toggleSidebar() {
-      sidebar.classList.toggle('collapsed');
-      mainContent.classList.toggle('shifted');
-    }
-
-    /**************************************************************
-     * LEAFLET MAP + ROUTING CONTROL
-     **************************************************************/
-    var map = L.map('map').setView([12.9716, 77.5946], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    // Leaflet Routing Machine control with close button
-    var routingControl = null;
-    function showDirections(driverLat, driverLng, spotLat, spotLng) {
-      if (routingControl) {
-        map.removeControl(routingControl);
-      }
-      routingControl = L.Routing.control({
-        waypoints: [
-          L.latLng(driverLat, driverLng),
-          L.latLng(spotLat, spotLng)
-        ],
-        routeWhileDragging: false,
-        showAlternatives: false,
-        createMarker: function() { return null; }
-      }).addTo(map);
-      // Add a close button to the routing container
-      setTimeout(function() {
-        var container = routingControl.getContainer();
-        if (container) {
-          var closeBtn = document.createElement('button');
-          closeBtn.innerHTML = '×';
-          closeBtn.style.position = 'absolute';
-          closeBtn.style.top = '5px';
-          closeBtn.style.right = '5px';
-          closeBtn.style.background = 'transparent';
-          closeBtn.style.border = 'none';
-          closeBtn.style.color = '#fff';
-          closeBtn.style.fontSize = '1.5rem';
-          closeBtn.style.cursor = 'pointer';
-          closeBtn.style.zIndex = '10000';
-          closeBtn.addEventListener('click', function() {
-            map.removeControl(routingControl);
-            routingControl = null;
-          });
-          container.appendChild(closeBtn);
-        }
-      }, 500);
-    }
-
-    /**************************************************************
-     * CURRENT LOCATION
-     **************************************************************/
-    var driverLat = null;
-    var driverLng = null;
-    var currentLocationMarker;
-    function updateCurrentLocation() {
-      if (!navigator.geolocation) {
-        alert("Geolocation not supported.");
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(function(pos) {
-        driverLat = pos.coords.latitude;
-        driverLng = pos.coords.longitude;
-        var redIcon = L.icon({
-          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41]
-        });
-        if (currentLocationMarker) {
-          currentLocationMarker.setLatLng([driverLat, driverLng]);
-        } else {
-          currentLocationMarker = L.marker([driverLat, driverLng], {icon: redIcon}).addTo(map)
-            .bindPopup("You are here");
-        }
-      }, function(err) {
-        console.error(err);
-        alert("Could not get current location.");
-      }, { enableHighAccuracy: true });
-    }
-    updateCurrentLocation();
-
-    /**************************************************************
-     * SPOTS DATA (from backend)
-     **************************************************************/
-    var spotsData = [
-      {% for spot in available_spots %}
-      {
-        id: "{{ spot.id }}",
-        lat: {{ spot.lat }},
-        lng: {{ spot.lng }},
-        price: parseFloat("{{ spot.price }}"),
-        from: "{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}",
-        to: "{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}",
-        location: "{{ spot.location }}",
-        two_wheeler: {{ spot.two_wheeler_spaces or 0 }},
-        four_wheeler: {{ spot.four_wheeler_spaces or 0 }},
-        description: "{{ spot.description or 'No description available' }}"
-      }{% if not loop.last %},{% endif %}
-      {% endfor %}
-    ];
-    console.log("Driver Spots Data:", spotsData);
-
-    // Add markers that show only location and price in their popup
-    spotsData.forEach(function(s) {
-      L.marker([s.lat, s.lng]).addTo(map)
-        .bindPopup("<b>" + s.location + "</b><br>Price: ₹" + s.price);
-    });
-
-    /**************************************************************
-     * SPOTS PANEL (Right Side)
-     **************************************************************/
-    var spotsPanel = document.getElementById("spotsPanel");
-    var spotsListEl = document.getElementById("spotsList");
-    var spotsPanelClose = document.getElementById("spotsPanelClose");
-    spotsPanelClose.onclick = function() {
-      spotsPanel.classList.remove("open");
-      // Also shift main content back to full width
-      mainContent.classList.remove("shifted-left");
-    };
-
-    function openSpotsPanel(nearbySpots) {
-      spotsListEl.innerHTML = "";
-      nearbySpots.forEach(function(s) {
-        var div = document.createElement("div");
-        div.className = "spot-list-item";
-        var spotHtml = "";
-        spotHtml += "<p><strong>" + s.location + "</strong></p>";
-        spotHtml += "<p class='detail'>Price: ₹" + s.price + "</p>";
-        spotHtml += "<p class='detail'>Available: " + (s.from || "N/A") + " - " + (s.to || "N/A") + "</p>";
-        spotHtml += "<p class='detail'>2-Wheeler Spots: " + s.two_wheeler + "</p>";
-        spotHtml += "<p class='detail'>4-Wheeler Spots: " + s.four_wheeler + "</p>";
-        spotHtml += "<p class='detail'>Description: " + s.description + "</p>";
-        // Centered buttons below details
-        spotHtml += "<div class='spot-actions'><button onclick='spotDirections(" + s.lat + "," + s.lng + ")'>Directions</button><button onclick='openBookingModal(\"" + s.id + "\", \"" + s.from + "\", \"" + s.to + "\")'>Book</button></div>";
-        div.innerHTML = spotHtml;
-        // Clicking the item centers the map on that spot
-        div.addEventListener("click", function() {
-          map.setView([s.lat, s.lng], 15);
-        });
-        spotsListEl.appendChild(div);
-      });
-      spotsPanel.classList.add("open");
-      // Shift main content left to make room for the panel
-      mainContent.classList.add("shifted-left");
-    }
-    function closeSpotsPanel() {
-      spotsPanel.classList.remove("open");
-      mainContent.classList.remove("shifted-left");
-    }
-
-    /**************************************************************
-     * SPOT DIRECTIONS
-     **************************************************************/
-    function spotDirections(spotLat, spotLng) {
-      if (driverLat == null || driverLng == null) {
-        alert("Could not get your current location.");
-        return;
-      }
-      showDirections(driverLat, driverLng, spotLat, spotLng);
-    }
-
-    /**************************************************************
-     * MAP SEARCH FUNCTIONALITY (Dark)
-     **************************************************************/
-    var mapSearchInput = document.getElementById("mapSearchInput");
-    var suggestionsEl = document.getElementById("suggestions");
-    var searchTimeout = null;
-    mapSearchInput.addEventListener("input", function() {
-      clearTimeout(searchTimeout);
-      var query = this.value.trim();
-      if(query.length < 3) {
-        suggestionsEl.style.display = "none";
-        return;
-      }
-      searchTimeout = setTimeout(function() {
-        var url = "https://nominatim.openstreetmap.org/search?format=json&countrycodes=in&q=" + encodeURIComponent(query);
-        fetch(url)
-          .then(r => r.json())
-          .then(data => {
-            suggestionsEl.innerHTML = "";
-            if(data && data.length > 0) {
-              data.forEach(function(item) {
-                var div = document.createElement("div");
-                div.className = "suggestion-item";
-                div.textContent = item.display_name;
-                div.addEventListener("click", function() {
-                  var lat = parseFloat(item.lat);
-                  var lng = parseFloat(item.lon);
-                  map.setView([lat, lng], 14);
-                  suggestionsEl.style.display = "none";
-                  mapSearchInput.value = item.display_name;
-                  // Filter spots within ~2km radius
-                  var nearby = spotsData.filter(function(s) {
-                    var dist = map.distance([lat, lng], [s.lat, s.lng]);
-                    return dist < 2000;
-                  });
-                  openSpotsPanel(nearby);
-                });
-                suggestionsEl.appendChild(div);
-              });
-              suggestionsEl.style.display = "block";
-            } else {
-              suggestionsEl.innerHTML = "<div class='suggestion-item'>No results found</div>";
-              suggestionsEl.style.display = "block";
-            }
-          });
-      }, 300);
-    });
-
-
-    /**************************************************************
-     * BOOKING MODAL FUNCTIONS
-     **************************************************************/
-    function openBookingModal(spotId, fromTime, toTime) {
-      var bookingForm = document.getElementById("bookingForm");
-
-  });
-
-  /********** BOOKING MODAL **********/
-  var bookingModal = document.getElementById("bookingModal");
-  var bookingModalClose = document.getElementById("bookingModalClose");
-  var bookingForm = document.getElementById("bookingForm");
-  var bookBtns = document.querySelectorAll(".book-btn");
-
-  // Function to generate booking id using current time and last 4 characters of vehicle number
-  function generateBookingId(vehicleNumber) {
-    var now = new Date();
-    var hours = now.getHours().toString().padStart(2, '0');
-    var minutes = now.getMinutes().toString().padStart(2, '0');
-    var seconds = now.getSeconds().toString().padStart(2, '0');
-    var timeStr = hours + minutes + seconds;
-    var lastDigits = vehicleNumber.slice(-4);
-    return "BK" + timeStr + lastDigits;
+  /**************************************************************
+   * SIDEBAR COLLAPSE/EXPAND
+   **************************************************************/
+  const sidebar = document.getElementById('sidebar');
+  const mainContent = document.getElementById('mainContent');
+  function toggleSidebar() {
+    sidebar.classList.toggle('collapsed');
+    mainContent.classList.toggle('shifted');
   }
 
-  // Attach submit listener to generate booking id and append it as hidden input
-  bookingForm.addEventListener('submit', function(e) {
-    var vehicleNumber = document.getElementById('vehicle_number').value;
-    var bookingId = generateBookingId(vehicleNumber);
-    var existing = document.querySelector('input[name="booking_id"]');
-    if(existing) {
-      existing.value = bookingId;
-    } else {
-      var hiddenInput = document.createElement('input');
-      hiddenInput.type = 'hidden';
-      hiddenInput.name = 'booking_id';
-      hiddenInput.value = bookingId;
-      bookingForm.appendChild(hiddenInput);
+  /**************************************************************
+   * LEAFLET MAP + ROUTING CONTROL
+   **************************************************************/
+  var map = L.map('map').setView([12.9716, 77.5946], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  var routingControl = null;
+  function showDirections(driverLat, driverLng, spotLat, spotLng) {
+    if (routingControl) {
+      map.removeControl(routingControl);
     }
+    routingControl = L.Routing.control({
+      waypoints: [
+        L.latLng(driverLat, driverLng),
+        L.latLng(spotLat, spotLng)
+      ],
+      routeWhileDragging: false,
+      showAlternatives: false,
+      createMarker: function() { return null; }
+    }).addTo(map);
+
+    // Add a close button to the routing container
+    setTimeout(function() {
+      var container = routingControl.getContainer();
+      if (container) {
+        var closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '×';
+        closeBtn.style.position = 'absolute';
+        closeBtn.style.top = '5px';
+        closeBtn.style.right = '5px';
+        closeBtn.style.background = 'transparent';
+        closeBtn.style.border = 'none';
+        closeBtn.style.color = '#fff';
+        closeBtn.style.fontSize = '1.5rem';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.style.zIndex = '10000';
+        closeBtn.addEventListener('click', function() {
+          map.removeControl(routingControl);
+          routingControl = null;
+        });
+        container.appendChild(closeBtn);
+      }
+    }, 500);
+  }
+
+  /**************************************************************
+   * CURRENT LOCATION
+   **************************************************************/
+  var driverLat = null;
+  var driverLng = null;
+  var currentLocationMarker;
+  function updateCurrentLocation() {
+    if (!navigator.geolocation) {
+      alert("Geolocation not supported.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      driverLat = pos.coords.latitude;
+      driverLng = pos.coords.longitude;
+      var redIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+      if (currentLocationMarker) {
+        currentLocationMarker.setLatLng([driverLat, driverLng]);
+      } else {
+        currentLocationMarker = L.marker([driverLat, driverLng], {icon: redIcon}).addTo(map)
+          .bindPopup("You are here");
+      }
+    }, function(err) {
+      console.error(err);
+      alert("Could not get current location.");
+    }, { enableHighAccuracy: true });
+  }
+  updateCurrentLocation();
+
+  /**************************************************************
+   * SPOTS DATA (from backend)
+   **************************************************************/
+  var spotsData = [
+    {% for spot in available_spots %}
+    {
+      id: "{{ spot.id }}",
+      lat: {{ spot.lat }},
+      lng: {{ spot.lng }},
+      price: parseFloat("{{ spot.price }}"),
+      from: "{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}",
+      to: "{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}",
+      location: "{{ spot.location }}",
+      two_wheeler: {{ spot.two_wheeler_spaces or 0 }},
+      four_wheeler: {{ spot.four_wheeler_spaces or 0 }},
+      description: "{{ spot.description or 'No description available' }}"
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+  console.log("Driver Spots Data:", spotsData);
+
+  // Add markers for each spot
+  spotsData.forEach(function(s) {
+    L.marker([s.lat, s.lng]).addTo(map)
+      .bindPopup("<b>" + s.location + "</b><br>Price: ₹" + s.price);
   });
 
-  bookBtns.forEach(function(b) {
-    b.addEventListener("click", function(e) {
-      e.stopPropagation();
-      var spotId = this.dataset.spotId;
-      var fromTime = this.dataset.availableFrom;
-      var toTime = this.dataset.availableTo;
+  /**************************************************************
+   * SPOTS PANEL (Right Side)
+   **************************************************************/
+  var spotsPanel = document.getElementById("spotsPanel");
+  var spotsListEl = document.getElementById("spotsList");
+  var spotsPanelClose = document.getElementById("spotsPanelClose");
+  spotsPanelClose.onclick = function() {
+    closeSpotsPanel();
+  };
 
-      bookingForm.action = "/parking/book/" + spotId;
-      if(fromTime) document.getElementById("booking_start").value = fromTime;
-      if(toTime) document.getElementById("booking_end").value = toTime;
-      document.getElementById("bookingModal").style.display = "flex";
-    }
-    document.getElementById("bookingModalClose").onclick = function() {
-      document.getElementById("bookingModal").style.display = "none";
-    };
-    window.onclick = function(event) {
-      if(event.target === document.getElementById("bookingModal")) {
-        document.getElementById("bookingModal").style.display = "none";
-      }
-    };
+  function openSpotsPanel(nearbySpots) {
+    // Hide the arrow
+    const toggleButton = document.getElementById("sidebarToggle");
+    if (toggleButton) toggleButton.classList.add("hidden");
 
+    spotsListEl.innerHTML = "";
+    nearbySpots.forEach(function(s) {
+      var div = document.createElement("div");
+      div.className = "spot-list-item";
+      var spotHtml = "";
+      spotHtml += "<p><strong>" + s.location + "</strong></p>";
+      spotHtml += "<p class='detail'>Price: ₹" + s.price + "</p>";
+      spotHtml += "<p class='detail'>Available: " + (s.from || "N/A") + " - " + (s.to || "N/A") + "</p>";
+      spotHtml += "<p class='detail'>2-Wheeler Spots: " + s.two_wheeler + "</p>";
+      spotHtml += "<p class='detail'>4-Wheeler Spots: " + s.four_wheeler + "</p>";
+      spotHtml += "<p class='detail'>Description: " + s.description + "</p>";
+      spotHtml += "<div class='spot-actions'><button onclick='spotDirections(" + s.lat + "," + s.lng + ")'>Directions</button><button onclick='openBookingModal(\"" + s.id + "\", \"" + s.from + "\", \"" + s.to + "\")'>Book</button></div>";
+      div.innerHTML = spotHtml;
 
-    /**************************************************************
-     * BOOKING ID INFO TOOLTIP (i-button)
-     **************************************************************/
-    var bookingIdInfo = document.getElementById("bookingIdInfo");
-    var bookingIdTooltip = document.getElementById("bookingIdTooltip");
-    bookingIdInfo.onclick = function(e) {
-      e.stopPropagation();
-      bookingIdTooltip.classList.toggle("open");
-    };
-    // Hide tooltip if clicking outside
-    window.addEventListener("click", function(e) {
-      if (!bookingIdTooltip.contains(e.target) && !bookingIdInfo.contains(e.target)) {
-        bookingIdTooltip.classList.remove("open");
-      }
+      // Clicking the item centers the map on that spot
+      div.addEventListener("click", function() {
+        map.setView([s.lat, s.lng], 15);
+      });
+      spotsListEl.appendChild(div);
     });
+    spotsPanel.classList.add("open");
+    mainContent.classList.add("shifted-left");
+  }
 
+  function closeSpotsPanel() {
+    spotsPanel.classList.remove("open");
+    mainContent.classList.remove("shifted-left");
 
+    // Show the arrow again
+    const toggleButton = document.getElementById("sidebarToggle");
+    if (toggleButton) toggleButton.classList.remove("hidden");
+  }
 
-  </script>
+  // Show all spots by default if user clicks the arrow
+  function openSpotsPanelAll() {
+    openSpotsPanel(spotsData);
+  }
+
+  /**************************************************************
+   * For the arrow in the map container => show all spots
+   **************************************************************/
+  function spotDirections(spotLat, spotLng) {
+    if (driverLat == null || driverLng == null) {
+      alert("Could not get your current location.");
+      return;
+    }
+    showDirections(driverLat, driverLng, spotLat, spotLng);
+  }
+
+  /**************************************************************
+   * MAP SEARCH FUNCTIONALITY
+   **************************************************************/
+  var mapSearchInput = document.getElementById("mapSearchInput");
+  var suggestionsEl = document.getElementById("suggestions");
+  var searchTimeout = null;
+  mapSearchInput.addEventListener("input", function() {
+    clearTimeout(searchTimeout);
+    var query = this.value.trim();
+    if(query.length < 3) {
+      suggestionsEl.style.display = "none";
+      return;
+    }
+    searchTimeout = setTimeout(function() {
+      var url = "https://nominatim.openstreetmap.org/search?format=json&countrycodes=in&q=" + encodeURIComponent(query);
+      fetch(url)
+        .then(r => r.json())
+        .then(data => {
+          suggestionsEl.innerHTML = "";
+          if(data && data.length > 0) {
+            data.forEach(function(item) {
+              var div = document.createElement("div");
+              div.className = "suggestion-item";
+              div.textContent = item.display_name;
+              div.addEventListener("click", function() {
+                var lat = parseFloat(item.lat);
+                var lng = parseFloat(item.lon);
+                map.setView([lat, lng], 14);
+                suggestionsEl.style.display = "none";
+                mapSearchInput.value = item.display_name;
+                // Filter spots within ~2km
+                var nearby = spotsData.filter(function(s) {
+                  var dist = map.distance([lat, lng], [s.lat, s.lng]);
+                  return dist < 2000;
+                });
+                openSpotsPanel(nearby);
+              });
+              suggestionsEl.appendChild(div);
+            });
+            suggestionsEl.style.display = "block";
+          } else {
+            suggestionsEl.innerHTML = "<div class='suggestion-item'>No results found</div>";
+            suggestionsEl.style.display = "block";
+          }
+        });
+    }, 300);
+  });
+
+  /**************************************************************
+   * BOOKING MODAL FUNCTIONS
+   **************************************************************/
+  function openBookingModal(spotId, fromTime, toTime) {
+    var bookingForm = document.getElementById("bookingForm");
+    bookingForm.action = "/parking/book/" + spotId;
+    if(fromTime) document.getElementById("booking_start").value = fromTime;
+    if(toTime) document.getElementById("booking_end").value = toTime;
+    document.getElementById("bookingModal").style.display = "flex";
+  }
+  document.getElementById("bookingModalClose").onclick = function() {
+    document.getElementById("bookingModal").style.display = "none";
+  };
+  window.onclick = function(event) {
+    if(event.target === document.getElementById("bookingModal")) {
+      document.getElementById("bookingModal").style.display = "none";
+    }
+  };
+
+  /**************************************************************
+   * BOOKING ID INFO TOOLTIP
+   **************************************************************/
+  var bookingIdInfo = document.getElementById("bookingIdInfo");
+  var bookingIdTooltip = document.getElementById("bookingIdTooltip");
+  bookingIdInfo.onclick = function(e) {
+    e.stopPropagation();
+    bookingIdTooltip.classList.toggle("open");
+  };
+  // Hide tooltip if clicking outside
+  window.addEventListener("click", function(e) {
+    if (!bookingIdTooltip.contains(e.target) && !bookingIdInfo.contains(e.target)) {
+      bookingIdTooltip.classList.remove("open");
+    }
+  });
+</script>
+
 </body>
 </html>

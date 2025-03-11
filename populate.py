@@ -2,71 +2,65 @@ from app import app
 from models import db, User, ParkingSpot
 from datetime import time
 
-# Push the app context
+# Make sure your Flask config has:
+# SQLALCHEMY_DATABASE_URI = "postgresql://postgres:student@localhost:5432/smart_parking_db"
+
+# Push the Flask app context
 app.app_context().push()
 
-# Create (or get) the owner with email "smpc2004@gmail.com"
+# 1) Delete ALL existing parking spots
+print("Deleting all existing parking spots...")
+ParkingSpot.query.delete()
+db.session.commit()
+
+# 2) Ensure we have the 'nimi' user with email "nimisha123@gmail.com"
 owner_email = "nimisha123@gmail.com"
 owner = User.query.filter_by(email=owner_email).first()
+
 if not owner:
     owner = User(username="nimi", email=owner_email, role="owner")
-    owner.set_password("nimi")
+    owner.set_password("nimi")  # or any password you want
     db.session.add(owner)
     db.session.commit()
-    print("Owner created: nimi (", owner_email, ")")
+    print(f"Created new owner: {owner.username} ({owner.email})")
 else:
-    print("Owner already exists:", owner_email)
+    print(f"Owner already exists: {owner.username} ({owner.email})")
 
-# Define 20 manually chosen parking spots in Bangalore
-parking_spots = [
-    # Koramangala
-    {"location": "Koramangala 1st Block", "lat": 12.9343, "lng": 77.6185},
-    {"location": "Koramangala Sony Signal", "lat": 12.9370, "lng": 77.6220},
-    {"location": "Koramangala Forum Mall", "lat": 12.9346, "lng": 77.6101},
-    {"location": "Koramangala Wipro Park", "lat": 12.9285, "lng": 77.6271},
-    {"location": "Koramangala 80 Feet Road", "lat": 12.9387, "lng": 77.6278},
-
-    # Jayanagar
-    {"location": "Jayanagar 4th Block", "lat": 12.9280, "lng": 77.5800},
-    {"location": "Jayanagar 9th Block", "lat": 12.9186, "lng": 77.5967},
-    {"location": "Jayanagar Central Mall", "lat": 12.9204, "lng": 77.5852},
-    {"location": "Jayanagar Raghavendra Swamy Mutt", "lat": 12.9243, "lng": 77.5829},
-    {"location": "Jayanagar South End Circle", "lat": 12.9248, "lng": 77.5739},
-
-    # Wilson Garden
-    {"location": "Wilson Garden 10th Cross", "lat": 12.9507, "lng": 77.5891},
-    {"location": "Wilson Garden BMTC Depot", "lat": 12.9486, "lng": 77.5912},
-    {"location": "Wilson Garden Hombegowda Nagar", "lat": 12.9465, "lng": 77.5947},
-    {"location": "Wilson Garden Lakshmi Road", "lat": 12.9498, "lng": 77.5961},
-    {"location": "Wilson Garden NIMHANS Hospital", "lat": 12.9469, "lng": 77.5932},
-
-    # Shivajinagar
-    {"location": "Shivajinagar Bus Stand", "lat": 12.9822, "lng": 77.6044},
-    {"location": "Shivajinagar Commercial Street", "lat": 12.9815, "lng": 77.6092},
-    {"location": "Shivajinagar Russell Market", "lat": 12.9828, "lng": 77.6018},
-    {"location": "Shivajinagar St. Mary's Basilica", "lat": 12.9789, "lng": 77.6046},
-    {"location": "Shivajinagar Bowring Hospital", "lat": 12.9810, "lng": 77.6023},
+# 3) Define 10 named parking spots in Digboi, Assam
+digboi_spots = [
+    {"location": "Digboi Oil Refinery",      "lat": 27.382, "lng": 95.619},
+    {"location": "Digboi War Cemetery",      "lat": 27.383, "lng": 95.615},
+    {"location": "Digboi Market",            "lat": 27.385, "lng": 95.612},
+    {"location": "Digboi College",           "lat": 27.388, "lng": 95.610},
+    {"location": "Digboi Golf Course",       "lat": 27.390, "lng": 95.614},
+    {"location": "Digboi Heritage Park",     "lat": 27.392, "lng": 95.617},
+    {"location": "Digboi Centenary Museum",  "lat": 27.384, "lng": 95.613},
+    {"location": "Digboi Station Road",      "lat": 27.389, "lng": 95.611},
+    {"location": "Digboi Church Road",       "lat": 27.386, "lng": 95.609},
+    {"location": "Digboi Lekhapani Road",    "lat": 27.391, "lng": 95.608},
 ]
 
-# Insert into database
-spots = []
-for i, spot in enumerate(parking_spots):
+# 4) Insert these 10 spots into the DB
+spots_to_add = []
+base_price = 50.0
+
+for i, spot in enumerate(digboi_spots):
     new_spot = ParkingSpot(
         location=spot["location"],
-        price=50.0 + i * 10,  # Incremental pricing
+        price=base_price + (i * 10),  # e.g., 50, 60, 70, ...
         availability=True,
         owner_id=owner.id,
         lat=spot["lat"],
         lng=spot["lng"],
         two_wheeler_spaces=5,
         four_wheeler_spaces=2,
-        description=f"Secure and convenient parking at {spot['location']}.",
+        description=f"Secure parking in Digboi at {spot['location']}.",
         available_from=time(6, 0),
         available_to=time(22, 0)
     )
-    spots.append(new_spot)
+    spots_to_add.append(new_spot)
 
-db.session.add_all(spots)
+db.session.add_all(spots_to_add)
 db.session.commit()
 
-print("Database populated with 20 well-distributed parking spots in Bangalore!")
+print("Populated DB with 10 named parking spots in Digboi, Assam!")
