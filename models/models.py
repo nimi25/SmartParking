@@ -1,4 +1,3 @@
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from flask_bcrypt import Bcrypt
 from sqlalchemy import func
@@ -14,7 +13,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(100), nullable=False, unique=True)
     email = db.Column(db.String(120), nullable=False, unique=True)
     password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.Text, nullable=False)
+    role = db.Column(db.String(20), nullable=False)
 
     # Timestamps
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
@@ -31,9 +30,10 @@ class User(db.Model, UserMixin):
     def check_password(self, password):
         return bcrypt.check_password_hash(self.password_hash, password)
 
+
 # ----------------- PARKING SPOT MODEL -----------------
 class ParkingSpot(db.Model):
-    __tablename__ = 'parking_spot'  # ✅ Matches your database table name
+    __tablename__ = 'parking_spot'
 
     id = db.Column(db.Integer, primary_key=True)
     booked_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
@@ -58,9 +58,10 @@ class ParkingSpot(db.Model):
     owner = db.relationship('User', foreign_keys=[owner_id], backref='owned_spots')
     booked_user = db.relationship('User', foreign_keys=[booked_by], backref='booked_spots', lazy=True)
 
+
 # ------------------- BOOKING MODEL -------------------
 class Booking(db.Model):
-    __tablename__ = 'booking'  # ✅ Matches your database table name
+    __tablename__ = 'booking'
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -79,19 +80,20 @@ class Booking(db.Model):
     spot = db.relationship('ParkingSpot', backref='booking')
     user = db.relationship('User', backref='booking')
 
+
 # ------------------- PAYMENT DETAILS MODEL -------------------
 class PaymentDetails(db.Model):
     __tablename__ = 'payment_details'
 
     id = db.Column(db.Integer, primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
-    upi_id = db.Column(db.String(100), nullable=False, unique=True)
-    phone_number = db.Column(db.String(15), nullable=False)
+    upi_id = db.Column(db.String(100), nullable=True)  # optional unique constraint
+    phone_number = db.Column(db.String(15))
     qr_code = db.Column(db.String(255))
 
     # Timestamps
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
     updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    # Relationship
-    owner = db.relationship('User', backref='payment_details')
+    # Relationship: one PaymentDetails per owner
+    owner = db.relationship('User', backref='payment_details', uselist=False)

@@ -420,7 +420,7 @@
                     data-booking-id="{{ booking.id }}"
                     data-amount="{{ booking.spot.price }}"
                     data-owner="{{ booking.spot.owner.username }}"
-                    data-phone="{{ booking.spot.owner.phone if booking.spot.owner.phone else 'N/A' }}"
+                    data-phone="{{ booking.spot.owner.phone_number if booking.spot.owner.phone_number else 'N/A' }}"
                     data-upi="{{ booking.spot.owner.upi_id if booking.spot.owner.upi_id else 'N/A' }}">
                     Pay
                   </button>
