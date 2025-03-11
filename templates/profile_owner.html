@@ -129,7 +129,7 @@
   <header>
     <h1>Owner Profile</h1>
     <nav>
-      <a href="{{ url_for('profile.owner_profile') }}">
+      <a href="{{ url_for('owner.owner_profile') }}">
         <img src="{{ url_for('static', filename='images/profile.jpg') }}" alt="Profile" />
       </a>
       <a href="{{ url_for('auth.logout') }}">
@@ -150,7 +150,7 @@
       <div class="card">
         <h3>Profile Settings</h3>
         <p>Update your personal information here.</p>
-        <form class="profile-form" method="POST" action="{{ url_for('owner.update_owner_profile') }}" enctype="multipart/form-data">
+        <form class="profile-form" method="POST" action="{{ url_for('owner.profile_owner') }}" enctype="multipart/form-data">
           <label for="username">Username</label>
           <input type="text" id="username" name="username" placeholder="Enter new username" value="{{ current_user.username }}">
           <label for="email">Email</label>

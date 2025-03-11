@@ -107,3 +107,4 @@ def history_driver():
 
 # Alias to support old calls
 dashboard_bp.add_url_rule('/', endpoint='dashboard')
+

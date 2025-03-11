@@ -14,6 +14,7 @@ def owner_dashboard():
         return redirect(url_for('dashboard.driver_dashboard'))
     # Get all parking spots for this owner
     spots = ParkingSpot.query.filter_by(owner_id=current_user.id).all()
+
     # Gather bookings for these spots (join Booking and User)
     joined_data = (
         db.session.query(Booking, User, ParkingSpot)

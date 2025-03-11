@@ -193,20 +193,24 @@ def book_spot(spot_id):
     elif two_wheeler > 0 and four_wheeler > 0:
         booked_vehicle_type = "both"
 
+    vehicle_number = request.form.get("vehicle_number")
     new_booking = Booking(
         user_id=current_user.id,
         spot_id=spot_id,
         two_wheeler=two_wheeler,
         four_wheeler=four_wheeler,
         booked_vehicle_type=booked_vehicle_type,
-        start_time=booking_start,
-        end_time=booking_end,
-        active=True
+        start_time=booking_start_time,
+        end_time=booking_end_time,
+        active=True,
+        vehicle_number=vehicle_number
     )
+    new_booking.status = "Pending"
     db.session.add(new_booking)
     db.session.commit()
     flash("Spot booked successfully!", "success")
     return redirect(url_for('dashboard.dashboard'))
+
 
 @parking_bp.route('/cancel_booking/<int:booking_id>', methods=['POST'])
 @login_required
@@ -246,3 +250,5 @@ def get_directions(spot_id):
 
     data = response.json()
     return jsonify(data)
+
+

@@ -2,21 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Smart Parking - Owner Dashboard</title>
+
+  <!-- Poppins Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
   <style>
-    /* Base Styles */
+    /**************************************************************
+     *            BASE + DASHBOARD LAYOUT STYLES (from parkingspace)
+     **************************************************************/
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Poppins', sans-serif;
     }
     body {
       background: #121212 url("../static/images/background.jpg") no-repeat center center;
       background-size: cover;
-      color: #e0e0e0;
+      background-attachment: fixed; /* Keep background from moving */
+      color: #fff;
+      min-height: 100vh;
+      overflow: hidden; /* Hide any horizontal scrollbar */
     }
+
+    /* HEADER */
     header {
       background: #1f1f1f;
       padding: 1rem 2rem;
@@ -24,10 +41,20 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 2px solid #333;
+      position: relative; /* so we can place hamburger if needed */
+    }
+    .hamburger {
+      display: inline-block;
+      font-size: 1.5rem;
+      cursor: pointer;
+      margin-right: 1rem;
+      color: #fff;
     }
     header h1 {
-      font-size: 1.75rem;
+      font-size: 1.5rem;
       letter-spacing: 1px;
+      flex: 1;
+      margin-left: 1rem;
     }
     nav a {
       margin-left: 1.5rem;
@@ -42,11 +69,18 @@
     nav a:hover {
       opacity: 0.8;
     }
+
+    /* DASHBOARD WRAPPER */
     .dashboard {
       display: grid;
       grid-template-columns: 250px 1fr;
       min-height: calc(100vh - 70px);
+      transition: transform 0.3s ease; /* For potential side panel animation */
     }
+
+    /**************************************************************
+     *         COLLAPSIBLE SIDEBAR with Slide Animation
+     **************************************************************/
     .sidebar {
       background: #1f1f1f;
       padding: 2rem 1rem;
@@ -54,41 +88,106 @@
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      transition: transform 0.3s ease;
+      z-index: 999;
     }
     .sidebar a {
-      display: block;
       padding: 0.75rem 1rem;
       color: #e0e0e0;
       text-decoration: none;
       border-left: 4px solid transparent;
       transition: background 0.3s, border-color 0.3s;
     }
-    .sidebar a:hover, .sidebar a.active {
+    .sidebar a:hover,
+    .sidebar a.active {
       background: #333;
       border-left: 4px solid #00e5ff;
     }
+    /* Collapsed sidebar (translate it off screen) */
+    .sidebar.collapsed {
+      transform: translateX(-250px);
+    }
+
+    /* MAIN CONTENT */
     .content {
+      position: absolute;
+      top: 74px; /* below header */
+      left: 250px; /* beside sidebar */
+      right: 0; bottom: 0;
+      overflow-y: auto; /* only this area scrolls */
       padding: 2rem;
+      transition: left 0.3s ease;
+    }
+    .content.shifted {
+      left: 0;
+    }
+
+    /**************************************************************
+     * MAP CARD
+     **************************************************************/
+    .welcome-map-card {
+      max-width: 1200px;
+      margin: 0 auto 2rem auto;
+      background: rgba(30,30,30,0.95);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+      border-radius: 8px;
+      padding: 1.5rem;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 2rem;
+      gap: 1rem;
+      text-align: center;
+      transition: transform 0.3s, box-shadow 0.3s;
+      animation: fadeInUp 0.6s ease;
     }
-    .welcome-map-card {
-      width: 1300px;
-      height: 600px;
-      background: #1f1f1f;
+    .welcome-map-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.6);
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .welcome-map-card h2 {
+      font-size: 1.3rem;
+      color: #00e5ff;
+      font-weight: 600;
+    }
+    .welcome-map-card p {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    #map {
+      width: 100%;
+      height: 450px; /* Adjust as needed */
+      border-radius: 8px;
+    }
+
+    /**************************************************************
+     * METRICS CARD (Below the map)
+     **************************************************************/
+    .metrics-card {
+      max-width: 1200px;
+      margin: 0 auto 2rem auto;
+      background: rgba(30,30,30,0.95);
       padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      border-radius: 8px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
       display: flex;
       flex-direction: column;
       gap: 1rem;
       transition: transform 0.3s, box-shadow 0.3s;
+      animation: fadeInUp 0.6s ease;
+      text-align: center;
     }
-    .welcome-map-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+    .metrics-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.6);
+    }
+    .metrics-card h3 {
+      font-size: 1.3rem;
+      color: #00e5ff;
+      font-weight: 600;
+      margin-bottom: 1rem;
     }
     .metrics-cards {
       display: flex;
@@ -98,63 +197,125 @@
     }
     .metric-card {
       background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(15px);
+      backdrop-filter: blur(10px);
       border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 20px;
+      border-radius: 8px;
       padding: 20px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       text-align: center;
-      flex: 1 1 250px;
+      flex: 1 1 200px;
+      transition: transform 0.3s, box-shadow 0.3s;
+      animation: fadeInUp 0.6s ease;
+    }
+    .metric-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
     }
     .metric-card h4 {
       color: #00e5ff;
+      margin-bottom: 0.5rem;
     }
-    .quick-actions-card {
-      background: #1f1f1f;
+    .metric-card p {
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+
+    /**************************************************************
+     * PARKING SPOTS CARD
+     **************************************************************/
+    .card {
+      max-width: 1200px;
+      margin: 0 auto 2rem auto;
+      background: rgba(30,30,30,0.95);
       padding: 1.5rem;
-      border-radius: 12px;
-      width: 600px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-      text-align: center;
+      border-radius: 8px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
       transition: transform 0.3s, box-shadow 0.3s;
+      animation: fadeInUp 0.6s ease;
     }
-    .quick-actions-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.6);
     }
-    .quick-actions {
+    .card h3 {
+      font-size: 1.3rem;
+      color: #00e5ff;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .parking-spot-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+    .parking-spot-item {
+      background: rgba(40,40,40,0.95);
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      flex: 1 1 280px;
+      min-width: 280px;
+      max-width: 350px;
+    }
+    .parking-spot-item h4 {
+      color: #00e5ff;
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+    .parking-spot-item p {
+      margin-bottom: 6px;
+    }
+    .spot-actions {
       display: flex;
       justify-content: center;
-      gap: 1.5rem;
-      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
     }
-    .action-btn {
+    .spot-actions a,
+    .spot-actions button {
+      width: 110px;
+      height: 40px;
+      text-align: center;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      border-radius: 5px;
+      text-decoration: none;
+      padding: 8px 0;
+    }
+    .edit-btn {
       background: #00e5ff;
       color: #000;
-      padding: 0.75rem 1.25rem;
-      border-radius: 4px;
-      font-weight: 600;
-      transition: background 0.3s;
     }
-    .action-btn:hover {
-      background: #00cce0;
+    .cancel-btn {
+      background: #ff4444;
+      color: #fff;
     }
   </style>
 </head>
 <body>
+  <!-- HEADER (with hamburger) -->
   <header>
+    <div class="hamburger" onclick="toggleSidebar()">☰</div>
     <h1>Owner Dashboard</h1>
     <nav>
-      <a href="{{ url_for('profile.owner_profile') }}">
-        <img src="../static/images/profile.jpg" alt="Profile" />
+      <a href="{{ url_for('owner.owner_profile') }}">
+        <img src="../static/images/profile.png" alt="Profile" />
       </a>
       <a href="{{ url_for('auth.logout') }}">
-        <img src="../static/images/logout.jpg" alt="Logout" />
+        <img src="../static/images/logout.png" alt="Logout" />
       </a>
     </nav>
   </header>
+
   <div class="dashboard">
-    <aside class="sidebar">
+    <!-- Collapsible Sidebar -->
+    <aside class="sidebar" id="sidebar">
       <a href="{{ url_for('owner.owner_dashboard') }}" class="active">Home</a>
       <a href="{{ url_for('owner.bookings') }}">Bookings</a>
       <a href="{{ url_for('owner.parkingspace') }}">Parking Space</a>
@@ -162,27 +323,94 @@
       <a href="{{ url_for('owner.metrics') }}">Metrics</a>
       <a href="{{ url_for('owner.history') }}">History</a>
     </aside>
-    <main class="content">
+
+    <!-- Main Content -->
+    <main class="content" id="mainContent">
+      <!-- MAP CARD -->
       <div class="welcome-map-card">
-        <div class="welcome">
-          <h3>Welcome, Owner {{ current_user.name or "" }}!</h3>
-          <p>Here's a quick overview of your operations:</p>
-        </div>
-        <div class="metrics-cards">
-          <div class="metric-card"><h4>Total Bookings</h4><p>{{ total_bookings or 0 }}</p></div>
-          <div class="metric-card"><h4>Total Revenue</h4><p>₹{{ total_revenue or 0 }}</p></div>
-          <div class="metric-card"><h4>Available Spots</h4><p>{{ active_spots or 0 }}</p></div>
-        </div>
+        <h2>Welcome Owner!</h2>
+        <p>Hi {{ current_user.username or "" }}, this is your map of all available spots.</p>
+        <div id="map"></div>
       </div>
-      <div class="quick-actions-card">
-        <h3>Quick Actions</h3>
-        <div class="quick-actions">
-          <a href="{{ url_for('owner.bookings') }}" class="action-btn">Approve Booking</a>
-          <a href="{{ url_for('parking.add_parking_spot') }}" class="action-btn">Add New Spot</a>
-          <a href="{{ url_for('owner.metrics') }}" class="action-btn">Metrics</a>
+
+      <!-- METRICS CARD (Optional) -->
+      <div class="metrics-card">
+        <h3>Operations at a Glance</h3>
+        <div class="metrics-cards">
+          <div class="metric-card">
+            <h4>Total Bookings</h4>
+            <p>{{ total_bookings or 0 }}</p>
+          </div>
+          <div class="metric-card">
+            <h4>Total Revenue</h4>
+            <p>₹{{ total_revenue or 0 }}</p>
+          </div>
+          <div class="metric-card">
+            <h4>Available Spots</h4>
+            <p>{{ active_spots or 0 }}</p>
+          </div>
         </div>
+
       </div>
     </main>
   </div>
+
+  <script>
+    /**************************************************************
+     * SIDEBAR COLLAPSE/EXPAND
+     **************************************************************/
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    function toggleSidebar() {
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('shifted');
+    }
+
+    /**************************************************************
+     * LEAFLET MAP for All Spots
+     **************************************************************/
+    var map = L.map('map').setView([12.9716, 77.5946], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Build available spots data from backend (like you do in your route)
+    // e.g. spots = ParkingSpot.query.filter_by(owner_id=current_user.id).all()
+    // Then we pass them to "owner_dashboard.html" as "spots"
+    var spotsData = [
+      {% for spot in spots %}
+        {
+          id: "{{ spot.id }}",
+          lat: {{ spot.lat }},
+          lng: {{ spot.lng }},
+          price: {{ spot.price }},
+          from: "{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}",
+          to: "{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}",
+          location: "{{ spot.location }}"
+        }{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ];
+
+    console.log("Spots Data:", spotsData);
+
+    // We'll collect lat/lng in a bounds for auto-fitting
+    var bounds = L.latLngBounds();
+    let hasSpots = false;
+
+    spotsData.forEach(function(spot) {
+      // Ensure lat/lng are valid
+      if (spot.lat && spot.lng) {
+        hasSpots = true;
+        var marker = L.marker([spot.lat, spot.lng]).addTo(map)
+          .bindPopup(spot.location + "<br>Price: ₹" + spot.price);
+        bounds.extend([spot.lat, spot.lng]);
+      }
+    });
+
+    // If we have at least one spot, fit the map to show them all
+    if (hasSpots) {
+      map.fitBounds(bounds);
+    }
+  </script>
 </body>
 </html>
