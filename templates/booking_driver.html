@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Book Parking Spot - Smart Parking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Poppins Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #121212;
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #1f1f1f;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+    h1 {
+      text-align: center;
+      color: #00e5ff;
+      margin-bottom: 20px;
+    }
+    .spot-info {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #444;
+    }
+    .spot-info p { margin: 5px 0; }
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #444;
+    }
+    .tabs button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: #2a2a2a;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .tabs button.active {
+      background: #00e5ff;
+      color: #000;
+    }
+    .tab-content {
+      margin-bottom: 20px;
+    }
+    .tab-content label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .tab-content input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background: #2a2a2a;
+      color: #fff;
+    }
+    .time-selection {
+      margin-bottom: 20px;
+    }
+    .time-slider {
+      display: flex;
+      overflow-x: auto;
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .time-slot {
+      flex: 0 0 auto;
+      padding: 10px 15px;
+      margin-right: 10px;
+      background: #2a2a2a;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .time-slot.selected {
+      background: #00e5ff;
+      color: #000;
+    }
+    .time-selection-info {
+      margin-bottom: 20px;
+      font-size: 1rem;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .form-group input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background: #2a2a2a;
+      color: #fff;
+    }
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .btn-confirm { background: #00e5ff; color: #000; }
+    .btn-cancel { background: #ff4444; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Book Your Parking Spot</h1>
+
+    <!-- Parking Spot Details -->
+    <div class="spot-info">
+      <p><strong>Location:</strong> {{ spot.location }}</p>
+      <p><strong>Hourly Rate:</strong> ₹{{ spot.price }}/hr</p>
+      <p>
+        <strong>Available:</strong>
+        {% if spot.available_from %}{{ spot.available_from.strftime('%H:%M') }}{% else %}N/A{% endif %}
+        -
+        {% if spot.available_to %}{{ spot.available_to.strftime('%H:%M') }}{% else %}N/A{% endif %}
+      </p>
+      <p><strong>Description:</strong> {{ spot.description }}</p>
+    </div>
+
+    <!-- Booking Form -->
+    <form action="{{ url_for('parking.book_spot_driver', spot_id=spot.id) }}" method="POST" id="bookingForm">
+      <!-- Vehicle Type Tabs -->
+      <div class="tabs">
+        <button type="button" id="tab2W" class="active">2-Wheeler</button>
+        <button type="button" id="tab4W">4-Wheeler</button>
+      </div>
+
+      <!-- Tab Contents -->
+      <div id="tab2WContent" class="tab-content">
+        <label for="two_wheeler">Select number of 2-Wheeler spots (max: {{ spot.two_wheeler_spaces }}):</label>
+        <input type="number" name="two_wheeler" id="two_wheeler" min="0" max="{{ spot.two_wheeler_spaces }}" value="0">
+      </div>
+      <div id="tab4WContent" class="tab-content" style="display: none;">
+        <label for="four_wheeler">Select number of 4-Wheeler spots (max: {{ spot.four_wheeler_spaces }}):</label>
+        <input type="number" name="four_wheeler" id="four_wheeler" min="0" max="{{ spot.four_wheeler_spaces }}" value="0">
+      </div>
+
+      <!-- Time Selection -->
+      <div class="time-selection">
+        <label>Select Booking Time:</label>
+        <div id="timeSlider" class="time-slider"></div>
+        <div class="time-selection-info">
+          Selected: <span id="selectedStart">--:--</span> to <span id="selectedEnd">--:--</span>
+        </div>
+        <input type="hidden" name="booking_start" id="booking_start">
+        <input type="hidden" name="booking_end" id="booking_end">
+      </div>
+
+      <!-- Vehicle Number -->
+      <div class="form-group">
+        <label for="vehicle_number">Vehicle Number:</label>
+        <input type="text" name="vehicle_number" id="vehicle_number" placeholder="e.g. KA01AB1234" required>
+      </div>
+
+      <div class="buttons">
+        <button type="button" class="btn btn-cancel" onclick="goBack()">Cancel</button>
+        <button type="submit" class="btn btn-confirm">Confirm Booking</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // --- Tab Switching ---
+    document.getElementById("tab2W").addEventListener("click", function(){
+      document.getElementById("tab2W").classList.add("active");
+      document.getElementById("tab4W").classList.remove("active");
+      document.getElementById("tab2WContent").style.display = "block";
+      document.getElementById("tab4WContent").style.display = "none";
+    });
+    document.getElementById("tab4W").addEventListener("click", function(){
+      document.getElementById("tab4W").classList.add("active");
+      document.getElementById("tab2W").classList.remove("active");
+      document.getElementById("tab4WContent").style.display = "block";
+      document.getElementById("tab2WContent").style.display = "none";
+    });
+
+    // --- Time Slider Logic ---
+    var availableFrom = "{{ spot.available_from.strftime('%H:%M') if spot.available_from else '00:00' }}";
+    var availableTo = "{{ spot.available_to.strftime('%H:%M') if spot.available_to else '23:00' }}";
+
+    var currentSlots = [];
+    var selectionStartIndex = null;
+    var selectionEndIndex = null;
+    var isDragging = false;
+
+    function timeToMinutes(t) {
+      var parts = t.split(':');
+      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    }
+
+    function minutesToTime(m) {
+      var h = Math.floor(m / 60);
+      var min = m % 60;
+      return ("0" + h).slice(-2) + ":" + ("0" + min).slice(-2);
+    }
+
+    function generateTimeSlots(startTime, endTime, intervalMinutes) {
+      var slots = [];
+      var start = timeToMinutes(startTime);
+      var end = timeToMinutes(endTime);
+      for (var t = start; t < end; t += intervalMinutes) {
+        slots.push(minutesToTime(t));
+      }
+      return slots;
+    }
+
+    function renderTimeSlider(slots) {
+      currentSlots = slots;
+      selectionStartIndex = null;
+      selectionEndIndex = null;
+      var timeSlider = document.getElementById("timeSlider");
+      timeSlider.innerHTML = "";
+      slots.forEach(function(slot, index) {
+        var slotDiv = document.createElement("div");
+        slotDiv.className = "time-slot";
+        slotDiv.textContent = slot;
+        slotDiv.dataset.index = index;
+        slotDiv.addEventListener("mousedown", function(e) {
+          isDragging = true;
+          selectionStartIndex = index;
+          selectionEndIndex = index;
+          updateTimeSelectionUI();
+        });
+        slotDiv.addEventListener("mouseenter", function(e) {
+          if (isDragging) {
+            selectionEndIndex = index;
+            updateTimeSelectionUI();
+          }
+        });
+        slotDiv.addEventListener("mouseup", function(e) {
+          isDragging = false;
+        });
+        timeSlider.appendChild(slotDiv);
+      });
+      document.addEventListener("mouseup", function() {
+        isDragging = false;
+      });
+      document.getElementById("selectedStart").textContent = "--:--";
+      document.getElementById("selectedEnd").textContent = "--:--";
+      document.getElementById("booking_start").value = "";
+      document.getElementById("booking_end").value = "";
+    }
+
+    function updateTimeSelectionUI() {
+      var slots = document.querySelectorAll(".time-slot");
+      slots.forEach(function(slot) {
+        var idx = parseInt(slot.dataset.index);
+        if (selectionStartIndex !== null && selectionEndIndex !== null &&
+            ((idx >= selectionStartIndex && idx <= selectionEndIndex) || (idx >= selectionEndIndex && idx <= selectionStartIndex))) {
+          slot.classList.add("selected");
+        } else {
+          slot.classList.remove("selected");
+        }
+      });
+      if (selectionStartIndex !== null && selectionEndIndex !== null) {
+        var startIdx = Math.min(selectionStartIndex, selectionEndIndex);
+        var endIdx = Math.max(selectionStartIndex, selectionEndIndex);
+        document.getElementById("selectedStart").textContent = currentSlots[startIdx];
+        document.getElementById("selectedEnd").textContent = currentSlots[endIdx];
+        document.getElementById("booking_start").value = currentSlots[startIdx];
+        document.getElementById("booking_end").value = currentSlots[endIdx];
+      }
+    }
+
+    // Generate time slots (60-minute intervals)
+    var timeSlots = generateTimeSlots(availableFrom, availableTo, 60);
+    renderTimeSlider(timeSlots);
+
+    // --- Cancel Button: Redirect back to dashboard ---
+    function goBack() {
+      var returnURL = localStorage.getItem("returnURL");
+      if (returnURL) {
+        window.location.href = returnURL;
+      } else {
+        window.history.back();
+      }
+    }
+  </script>
+</body>
+</html>

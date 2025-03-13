@@ -245,40 +245,6 @@
           </tbody>
         </table>
       </div>
-
-      <!-- PAYMENT HISTORY CARD -->
-      <div class="card">
-        <h3>Payment History</h3>
-        <p>Review your past payment transactions (if any):</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Transaction ID</th>
-              <th>Date</th>
-              <th>Amount (₹)</th>
-              <th>Method</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if payment_history and payment_history|length > 0 %}
-              {% for payment in payment_history %}
-                <tr>
-                  <td>{{ payment.id }}</td>
-                  <td>{{ payment.date.strftime('%Y-%m-%d') if payment.date else 'N/A' }}</td>
-                  <td>{{ payment.amount }}</td>
-                  <td>{{ payment.method or 'N/A' }}</td>
-                  <td>{{ payment.status or 'Completed' }}</td>
-                </tr>
-              {% endfor %}
-            {% else %}
-              <tr>
-                <td colspan="5" style="text-align:center;">No payment history found.</td>
-              </tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
     </main>
   </div>
 

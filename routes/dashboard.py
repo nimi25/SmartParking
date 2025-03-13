@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, session, redirect, url_for, flash
 from flask_login import login_required, current_user
 from models import db, ParkingSpot, Booking, User
 from sqlalchemy import func
+from sqlalchemy.orm import joinedload
 from types import SimpleNamespace
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -89,13 +90,14 @@ def dashboard():
     flash("User role not recognized. Please log in again.", "warning")
     return redirect(url_for('auth.login'))
 
-@dashboard_bp.route('/mybookings', endpoint='my_bookings')
+@dashboard_bp.route('/my_bookings')
 @login_required
 def my_bookings():
-    if session.get('role') != 'driver':
-        flash("Unauthorized", "warning")
-        return redirect(url_for('dashboard.dashboard'))
-    booked_spots = Booking.query.filter_by(user_id=current_user.id).all()
+    booked_spots = Booking.query.options(
+        joinedload(Booking.spot)
+        .joinedload(ParkingSpot.owner)
+        .joinedload(User.payment_details)
+    ).filter(Booking.user_id == current_user.id).all()
     return render_template('my_bookings.html', booked_spots=booked_spots)
 
 @dashboard_bp.route('/history_driver', endpoint='history_driver')

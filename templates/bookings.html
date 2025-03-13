@@ -319,6 +319,9 @@
     <main class="content">
       <div class="bookings-container">
         <h2>Active Bookings</h2>
+        <div style="text-align: center; margin-bottom: 1rem;">
+          <input type="text" id="bookingSearch" placeholder="Search by Booking ID or Vehicle Number" style="padding: 0.5rem; width: 50%; max-width: 400px; border-radius: 4px; border: 1px solid #ccc;">
+        </div>
         {% if bookings %}
           <div class="bookings-grid">
             {% for booking in bookings %}
@@ -426,7 +429,7 @@
       undoBtn.onclick = () => {
         clearTimeout(timer);
         // Show the card again
-        card.style.display = 'block';
+        card.style.display = 'flex';
         // Remove the toast
         document.body.removeChild(toast);
       };
@@ -446,6 +449,19 @@
 
       return false; // Stop the original submit
     }
+
+    // Search functionality for booking cards
+    document.getElementById('bookingSearch').addEventListener('keyup', function() {
+      var query = this.value.toLowerCase();
+      var cards = document.querySelectorAll('.booking-card');
+      cards.forEach(function(card) {
+        if (card.textContent.toLowerCase().indexOf(query) > -1) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
   </script>
 </body>
 </html>

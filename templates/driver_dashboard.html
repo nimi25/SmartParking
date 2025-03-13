@@ -11,510 +11,134 @@
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <!-- Leaflet Routing Machine CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
-
   <style>
-    /**************************************************************
-     * BASE + DASHBOARD LAYOUT (Same as Owner/parkingspace)
-     **************************************************************/
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Poppins', sans-serif;
-    }
+    /* BASE + DASHBOARD LAYOUT */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
     body {
       background: #121212 url("../static/images/background.jpg") no-repeat center center;
-      background-size: cover;
-      background-attachment: fixed;
-      color: #fff;
-      min-height: 100vh;
-      overflow: hidden; /* main scrolling in .content */
+      background-size: cover; background-attachment: fixed; color: #fff;
+      min-height: 100vh; overflow: hidden;
     }
-    /* HEADER */
     header {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 60px; /* Adjust header height */
-      background: #1f1f1f;
-      padding: 1rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 2px solid #333;
-      z-index: 9999;
+      position: fixed; top: 0; left: 0; right: 0; height: 60px;
+      background: #1f1f1f; padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 2px solid #333; z-index: 9999;
     }
-    .hamburger {
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: #fff;
-      margin-right: 1rem;
-    }
-    header h1 {
-      font-size: 1.5rem;
-      letter-spacing: 1px;
-      flex: 1;
-      margin-left: 1rem;
-    }
-    nav a {
-      margin-left: 1.5rem;
-      text-decoration: none;
-      transition: opacity 0.3s;
-    }
-    nav a img {
-      width: 40px;
-      height: 40px;
-      vertical-align: middle;
-    }
-    nav a:hover {
-      opacity: 0.8;
-    }
-    /* DASHBOARD WRAPPER */
+    .hamburger { font-size: 1.5rem; cursor: pointer; color: #fff; margin-right: 1rem; }
+    header h1 { font-size: 1.5rem; letter-spacing: 1px; flex: 1; margin-left: 1rem; }
+    nav a { margin-left: 1.5rem; text-decoration: none; transition: opacity 0.3s; }
+    nav a img { width: 40px; height: 40px; vertical-align: middle; }
+    nav a:hover { opacity: 0.8; }
     .dashboard {
-      display: grid;
-      grid-template-columns: 250px 1fr;
-      min-height: calc(100vh - 60px);
-      transition: transform 0.3s ease;
-      position: relative;
+      display: grid; grid-template-columns: 250px 1fr;
+      min-height: calc(100vh - 60px); transition: transform 0.3s ease; position: relative;
     }
-    /* COLLAPSIBLE SIDEBAR */
     .sidebar {
-      position: fixed;
-      top: 60px;
-      left: 0;
-      width: 250px;
-      bottom: 0;
-      background: #1f1f1f;
-      padding: 2rem 1rem;
-      border-right: 2px solid #333;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      z-index: 9998;
+      position: fixed; top: 60px; left: 0; width: 250px; bottom: 0;
+      background: #1f1f1f; padding: 2rem 1rem; border-right: 2px solid #333;
+      display: flex; flex-direction: column; gap: 1rem; z-index: 9998;
       transition: transform 0.3s ease;
     }
-    .sidebar a {
-      display: block;
-      padding: 0.75rem 1rem;
-      color: #e0e0e0;
-      text-decoration: none;
-      border-left: 4px solid transparent;
-      transition: background 0.3s, border-color 0.3s;
+    .sidebar a { display: block; padding: 0.75rem 1rem; color: #e0e0e0;
+      text-decoration: none; border-left: 4px solid transparent; transition: background 0.3s, border-color 0.3s;
     }
-    .sidebar a:hover,
-    .sidebar a.active {
-      background: #333;
-      border-left: 4px solid #00e5ff;
+    .sidebar a:hover, .sidebar a.active {
+      background: #333; border-left: 4px solid #00e5ff;
     }
-    .sidebar.collapsed {
-      transform: translateX(-250px);
-    }
-    /* MAIN CONTENT */
+    .sidebar.collapsed { transform: translateX(-250px); }
     .content {
-      position: absolute;
-      top: 60px;
-      left: 250px;
-      right: 0; bottom: 0;
-      overflow: hidden;
-      padding: 2rem;
-      transition: left 0.3s ease;
+      position: absolute; top: 60px; left: 250px; right: 0; bottom: 0;
+      overflow: hidden; padding: 2rem; transition: left 0.3s ease;
     }
-    .content.shifted {
-      left: 0;
-    }
-    /* When Spots Panel opens, shift main content left */
-    .content.shifted-left {
-      margin-right: 300px;
-    }
-
-    /**************************************************************
-     * WELCOME & MAP CARD
-     **************************************************************/
+    .content.shifted { left: 0; }
+    .content.shifted-left { margin-right: 300px; }
     .welcome-map-card {
-      width: 1300px;
-      max-width: 90%;
-      height: 800px;
-      margin: 0 auto 2rem auto;
-      background: #1f1f1f;
-      padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      position: relative;
-      animation: fadeIn 1s ease;
+      width: 1300px; max-width: 90%; height: 800px; margin: 0 auto 2rem auto;
+      background: #1f1f1f; padding: 1.5rem; border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4); display: flex; flex-direction: column;
+      gap: 1rem; position: relative; animation: fadeIn 1s ease;
       transition: transform 0.3s, box-shadow 0.3s;
     }
-    .welcome-map-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .welcome {
-      text-align: center;
-    }
-    .welcome h3 {
-      color: #00e5ff;
-      margin-bottom: 0.5rem;
-      font-size: 1rem;
-    }
-    .welcome p {
-      font-size: 1rem;
-      color: #cfcfcf;
-    }
+    .welcome-map-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.6); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .welcome { text-align: center; }
+    .welcome h3 { color: #00e5ff; margin-bottom: 0.5rem; font-size: 1rem; }
+    .welcome p { font-size: 1rem; color: #cfcfcf; }
     .map-container {
-      position: relative;
-      background: #333;
-      border-radius: 8px;
-      flex-grow: 1;
-      overflow: hidden;
+      position: relative; background: #333; border-radius: 8px; flex-grow: 1; overflow: hidden;
     }
-    #map {
-      width: 100%;
-      height: 100%;
-    }
+    #map { width: 100%; height: 100%; }
     .map-search {
-      position: absolute;
-      top: 10px;
-      left: 30%; /* Adjust to avoid overlapping the directions panel */
-      transform: translateX(-50%);
-      width: 300px;
-      z-index: 1000;
+      position: absolute; top: 10px; left: 30%; transform: translateX(-50%);
+      width: 300px; z-index: 1000;
     }
     .map-search input {
-      width: 260%; /* Extended width */
-      padding: 8px;
-      border-radius: 4px;
-      border: none;
-      background: rgba(34,34,34,0.9);
-      color: #fff;
+      width: 260%; padding: 8px; border-radius: 4px; border: none;
+      background: rgba(34,34,34,0.9); color: #fff;
     }
-    .map-search input::placeholder {
-      color: #ccc;
-    }
+    .map-search input::placeholder { color: #ccc; }
     .suggestions {
-      position: absolute;
-      top: 45px;
-      width: 260%;
-      background: rgba(34,34,34,0.9);
-      color: #fff;
-      border-radius: 4px;
-      max-height: 200px;
-      overflow-y: auto;
-      display: none;
+      position: absolute; top: 45px; width: 260%; background: rgba(34,34,34,0.9);
+      color: #fff; border-radius: 4px; max-height: 200px; overflow-y: auto; display: none;
     }
-    .suggestion-item {
-      padding: 8px;
-      cursor: pointer;
+    .suggestion-item { padding: 8px; cursor: pointer; }
+    .suggestion-item:hover { background: rgba(255,255,255,0.2); }
+    /* Show All Spots Button */
+    .sidebar-toggle {
+      position: fixed; top: 50%; right: 10px; background: #00e5ff;
+      color: #000; padding: 8px 12px; border-radius: 50%; cursor: pointer;
+      z-index: 10000; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); transition: transform 0.3s;
     }
-    .suggestion-item:hover {
-      background: rgba(255,255,255,0.2);
-    }
-
-    /* NEW: arrow button to open spots panel manually */
-    .show-spots-arrow {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: #00e5ff;
-      color: #000;
-      padding: 6px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
-      z-index: 1001;
-    }
-    .show-spots-arrow:hover {
-      background: #00cce0;
-    }
-
-    /**************************************************************
-     * SIDE PANEL FOR SPOTS
-     **************************************************************/
+    .sidebar-toggle.hidden { display: none; }
+    /* Spots Panel */
     .spots-panel {
-      position: fixed;
-      top: 60px;
-      right: -300px; /* hidden by default */
-      width: 300px;
-      bottom: 0;
-      background: rgba(30,30,30,0.95);
-      border-left: 2px solid #333;
-      z-index: 9999;
-      transition: right 0.4s ease;
-      overflow-y: auto;
-      padding: 1rem;
+      position: fixed; top: 60px; right: -300px; width: 300px; bottom: 0;
+      background: rgba(30,30,30,0.95); border-left: 2px solid #333; z-index: 9999;
+      transition: right 0.4s ease; overflow-y: auto; padding: 1rem;
     }
-    .spots-panel.open {
-      right: 0;
-    }
+    .spots-panel.open { right: 0; }
     .spots-panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.5rem;
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;
     }
     .spots-panel-header h4 {
-      color: #00e5ff;
-      margin: 0;
-      text-align: center;
-      flex: 1;
+      color: #00e5ff; margin: 0; text-align: center; flex: 1;
     }
     .spots-panel-close {
-      font-size: 1.3rem;
-      color: #fff;
-      cursor: pointer;
-      transition: color 0.3s;
+      font-size: 1.3rem; color: #fff; cursor: pointer; transition: color 0.3s;
     }
-    .spots-panel-close:hover {
-      color: #00e5ff;
-    }
+    .spots-panel-close:hover { color: #00e5ff; }
     .spot-list-item {
-      background: #2a2a2a;
-      padding: 0.75rem;
-      margin-bottom: 0.5rem;
-      border-radius: 6px;
+      background: #2a2a2a; padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 6px;
       transition: background 0.3s;
     }
-    .spot-list-item:hover {
-      background: #333;
-      cursor: pointer;
-    }
-    .spot-list-item p {
-      margin-bottom: 0.25rem;
-      font-size: 0.9rem;
-    }
-    .spot-list-item .detail {
-      font-size: 0.85rem;
-      color: #ccc;
-      margin-bottom: 0.25rem;
-    }
-    .spot-actions {
-      text-align: center;
-      margin-top: 0.5rem;
-    }
+    .spot-list-item:hover { background: #333; cursor: pointer; }
+    .spot-list-item p { margin-bottom: 0.25rem; font-size: 0.9rem; }
+    .spot-list-item .detail { font-size: 0.85rem; color: #ccc; margin-bottom: 0.25rem; }
+    .spot-actions { text-align: center; margin-top: 0.5rem; }
     .spot-actions button {
-      background: #00bcd4;
-      color: #000;
-      padding: 6px 12px;
-      border-radius: 4px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      margin: 0 5px;
+      background: #00bcd4; color: #000; padding: 6px 12px; border-radius: 4px;
+      font-weight: 600; border: none; cursor: pointer; margin: 0 5px;
     }
-
-    /**************************************************************
-     * ACTIVE BOOKINGS CARD (removed quick actions)
-     **************************************************************/
-    .active-bookings-card {
-      background: #1f1f1f;
-      padding: 1.5rem;
-      border-radius: 12px;
-      width: 600px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-      text-align: center;
-      transition: transform 0.3s, box-shadow 0.3s;
-      animation: fadeIn 1.2s ease;
-      margin: 0 auto;
-    }
-    .active-bookings-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
-    }
-    .active-bookings-card h3 {
-      color: #00e5ff;
-      margin-bottom: 1rem;
-      font-size: 1.3rem;
-    }
-    .active-bookings-card p {
-      font-size: 1rem;
-      color: #cfcfcf;
-      margin-bottom: 1rem;
-    }
-    .active-bookings-card a {
-      text-decoration: none;
-      background: #00e5ff;
-      color: #000;
-      padding: 0.75rem 1.25rem;
-      border-radius: 4px;
-      font-weight: 600;
-      transition: background 0.3s;
-    }
-    .active-bookings-card a:hover {
-      background: #00cce0;
-    }
-
-    /**************************************************************
-     * BOOKING MODAL
-     **************************************************************/
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 2000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      align-items: center;
-      justify-content: center;
-      animation: fadeIn 1s ease;
-    }
-    .modal-content {
-      background: #1f1f1f;
-      padding: 20px;
-      border-radius: 8px;
-      width: 400px;
-      position: relative;
-    }
-    .modal-content .close {
-      position: absolute;
-      top: 10px;
-      right: 15px;
-      font-size: 24px;
-      cursor: pointer;
-      color: #fff;
-    }
-    .modal-content .form-group {
-      margin-bottom: 15px;
-      text-align: left;
-    }
-    .modal-content .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      color: #fff;
-    }
-    .modal-content input[type="number"],
-    .modal-content input[type="time"],
-    .modal-content input[type="text"] {
-      width: 100%;
-      padding: 8px;
-      border-radius: 4px;
-      border: 1px solid #444;
-      background: #2a2a2a;
-      color: #fff;
-    }
-    .modal-content button {
-      padding: 10px 15px;
-      background: #00e5ff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
-      color: #000;
-    }
-
-    /**************************************************************
-     * FLASK MESSAGE
-     **************************************************************/
-    .flash-message {
-      position: fixed;
-      top: 70px; /* below header */
-      right: 20px;
-      background: #00e5ff;
-      color: #000;
-      padding: 1rem;
-      border-radius: 6px;
-      z-index: 10000;
-      opacity: 0;
-      transition: opacity 0.5s ease-in-out;
-    }
-    .flash-message.show {
-      opacity: 1;
-    }
-
-    /**************************************************************
-     * BOOKING ID INFO BUTTON & TOOLTIP
-     **************************************************************/
-    .booking-id-info {
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      width: 25px;
-      height: 25px;
-      background: rgba(0,0,0,0.7);
-      color: #fff;
-      border-radius: 50%;
-      text-align: center;
-      line-height: 25px;
-      cursor: pointer;
-      font-size: 1rem;
-      z-index: 10000;
-    }
-    .booking-id-tooltip {
-      display: none;
-      position: absolute;
-      bottom: 40px;
-      right: 10px;
-      background: rgba(0,0,0,0.8);
-      color: #fff;
-      padding: 8px;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      width: 250px;
-      z-index: 10000;
-      animation: fadeIn 1s ease;
-    }
-    .booking-id-tooltip.open {
-      display: block;
-    }
-
-    /**************************************************************
-     * LEAFLET ROUTING MACHINE THEME (Dark, slightly transparent)
-     **************************************************************/
+    /* Leaflet Routing Machine Theme Overrides */
     .leaflet-routing-container {
-      background: rgba(30,30,30,0.9) !important;
-      color: #fff !important;
-      border: none !important;
-      border-radius: 6px !important;
-      box-shadow: none !important;
-      margin-top: 80px !important; /* push below search bar */
+      background: rgba(30,30,30,0.9) !important; color: #fff !important;
+      border: none !important; border-radius: 6px !important;
+      box-shadow: none !important; margin-top: 80px !important;
     }
     .leaflet-routing-container a,
-    .leaflet-routing-container a:hover {
-      color: #00e5ff !important;
-      text-decoration: none !important;
-    }
+    .leaflet-routing-container a:hover { color: #00e5ff !important; text-decoration: none !important; }
     .leaflet-routing-container i,
     .leaflet-routing-container .leaflet-routing-icon {
-      color: #fff !important;
-      filter: invert(100%) !important;
+      color: #fff !important; filter: invert(100%) !important;
     }
-    .leaflet-routing-alt {
-      background: rgba(0,0,0,0.2) !important;
-      color: #fff !important;
-    }
+    .leaflet-routing-alt { background: rgba(0,0,0,0.2) !important; color: #fff !important; }
     .leaflet-routing-container .leaflet-routing-instructions li:hover,
     .leaflet-routing-container .leaflet-routing-instructions li:hover * {
-      background-color: #f5f5f5 !important;
-      color: #000 !important;
-      filter: none !important;
+      background-color: #f5f5f5 !important; color: #000 !important;
     }
-    .sidebar-toggle {
-      position: fixed;
-      top: 50%;
-      right: 10px;
-      background: #00e5ff;
-      color: #000;
-      padding: 8px 12px;
-      border-radius: 50%;
-      cursor: pointer;
-      z-index: 10000;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-      transition: transform 0.3s;
-    }
-    .sidebar-toggle.hidden {
-      display: none;
-    }
-
   </style>
 </head>
 <body>
@@ -532,9 +156,8 @@
     </nav>
   </header>
 
- <div id="sidebarToggle" class="sidebar-toggle" onclick="openSpotsPanelAll()">►</div>
-
-
+  <!-- Show All Spots Button -->
+  <div id="sidebarToggle" class="sidebar-toggle" onclick="openSpotsPanelAll()">►</div>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
@@ -554,9 +177,8 @@
       <a href="{{ url_for('dashboard.history_driver') }}">History</a>
     </aside>
 
-    <!-- SCROLLABLE MAIN CONTENT -->
+    <!-- MAIN CONTENT -->
     <main class="content" id="mainContent">
-
       <!-- WELCOME & MAP CARD -->
       <div class="welcome-map-card">
         <div class="welcome">
@@ -565,7 +187,7 @@
         </div>
         <div class="map-container">
           <div id="map"></div>
-          <!-- Dark search field -->
+          <!-- Map Search Field -->
           <div class="map-search">
             <input type="text" id="mapSearchInput" placeholder="Search locality..." />
             <div id="suggestions" class="suggestions"></div>
@@ -573,7 +195,7 @@
         </div>
       </div>
 
-      <!-- RIGHT-SIDE PANEL FOR SPOTS -->
+      <!-- SPOTS PANEL (Right Side) -->
       <div class="spots-panel" id="spotsPanel">
         <div class="spots-panel-header">
           <h4>Nearby Spots</h4>
@@ -581,312 +203,202 @@
         </div>
         <div id="spotsList"></div>
       </div>
-
-      <!-- BOOKING MODAL -->
-      <div id="bookingModal" class="modal">
-        <div class="modal-content">
-          <!-- Booking ID info button -->
-          <div class="booking-id-info" id="bookingIdInfo">i</div>
-          <div class="booking-id-tooltip" id="bookingIdTooltip">
-            Booking ID = BK + [Time/Date + last 2 digits of your vehicle number]
-          </div>
-          <span id="bookingModalClose" class="close">&times;</span>
-          <h3>Book Your Spot</h3>
-          <form id="bookingForm" method="POST" action="">
-            <div class="form-group">
-              <label for="vehicle_number">Vehicle Number:</label>
-              <input type="text" id="vehicle_number" name="vehicle_number" required placeholder="e.g. KA01AB1234" />
-            </div>
-            <div class="form-group">
-              <label for="two_wheeler">2-Wheeler Spots:</label>
-              <input type="number" id="two_wheeler" name="two_wheeler" min="0" value="1" required />
-            </div>
-            <div class="form-group">
-              <label for="four_wheeler">4-Wheeler Spots:</label>
-              <input type="number" id="four_wheeler" name="four_wheeler" min="0" value="0" required />
-            </div>
-            <div class="form-group">
-              <label for="booking_start">Booking Start (HH:MM):</label>
-              <input type="time" id="booking_start" name="booking_start" required />
-            </div>
-            <div class="form-group">
-              <label for="booking_end">Booking End (HH:MM):</label>
-              <input type="time" id="booking_end" name="booking_end" required />
-            </div>
-            <button type="submit">Confirm Booking</button>
-          </form>
-        </div>
-      </div>
     </main>
   </div>
 
+  <!-- Leaflet Scripts -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
   <script>
-  /**************************************************************
-   * SIDEBAR COLLAPSE/EXPAND
-   **************************************************************/
-  const sidebar = document.getElementById('sidebar');
-  const mainContent = document.getElementById('mainContent');
-  function toggleSidebar() {
-    sidebar.classList.toggle('collapsed');
-    mainContent.classList.toggle('shifted');
-  }
-
-  /**************************************************************
-   * LEAFLET MAP + ROUTING CONTROL
-   **************************************************************/
-  var map = L.map('map').setView([12.9716, 77.5946], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
-
-  var routingControl = null;
-  function showDirections(driverLat, driverLng, spotLat, spotLng) {
-    if (routingControl) {
-      map.removeControl(routingControl);
+    /**************************************************************
+     * SIDEBAR COLLAPSE/EXPAND
+     **************************************************************/
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    function toggleSidebar() {
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('shifted');
     }
-    routingControl = L.Routing.control({
-      waypoints: [
-        L.latLng(driverLat, driverLng),
-        L.latLng(spotLat, spotLng)
-      ],
-      routeWhileDragging: false,
-      showAlternatives: false,
-      createMarker: function() { return null; }
+
+    /**************************************************************
+     * LEAFLET MAP + ROUTING CONTROL
+     **************************************************************/
+    var map = L.map('map').setView([12.9716, 77.5946], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
-
-    // Add a close button to the routing container
-    setTimeout(function() {
-      var container = routingControl.getContainer();
-      if (container) {
-        var closeBtn = document.createElement('button');
-        closeBtn.innerHTML = '×';
-        closeBtn.style.position = 'absolute';
-        closeBtn.style.top = '5px';
-        closeBtn.style.right = '5px';
-        closeBtn.style.background = 'transparent';
-        closeBtn.style.border = 'none';
-        closeBtn.style.color = '#fff';
-        closeBtn.style.fontSize = '1.5rem';
-        closeBtn.style.cursor = 'pointer';
-        closeBtn.style.zIndex = '10000';
-        closeBtn.addEventListener('click', function() {
-          map.removeControl(routingControl);
-          routingControl = null;
-        });
-        container.appendChild(closeBtn);
-      }
-    }, 500);
-  }
-
-  /**************************************************************
-   * CURRENT LOCATION
-   **************************************************************/
-  var driverLat = null;
-  var driverLng = null;
-  var currentLocationMarker;
-  function updateCurrentLocation() {
-    if (!navigator.geolocation) {
-      alert("Geolocation not supported.");
-      return;
+    var routingControl = null;
+    function showDirections(driverLat, driverLng, spotLat, spotLng) {
+      if (routingControl) { map.removeControl(routingControl); }
+      routingControl = L.Routing.control({
+        waypoints: [ L.latLng(driverLat, driverLng), L.latLng(spotLat, spotLng) ],
+        routeWhileDragging: false, showAlternatives: false,
+        createMarker: function() { return null; }
+      }).addTo(map);
+      setTimeout(function() {
+        var container = routingControl.getContainer();
+        if (container) {
+          var closeBtn = document.createElement('button');
+          closeBtn.innerHTML = '×';
+          closeBtn.style.position = 'absolute';
+          closeBtn.style.top = '5px';
+          closeBtn.style.right = '5px';
+          closeBtn.style.background = 'transparent';
+          closeBtn.style.border = 'none';
+          closeBtn.style.color = '#fff';
+          closeBtn.style.fontSize = '1.5rem';
+          closeBtn.style.cursor = 'pointer';
+          closeBtn.style.zIndex = '10000';
+          closeBtn.addEventListener('click', function() {
+            map.removeControl(routingControl); routingControl = null;
+          });
+          container.appendChild(closeBtn);
+        }
+      }, 500);
     }
-    navigator.geolocation.getCurrentPosition(function(pos) {
-      driverLat = pos.coords.latitude;
-      driverLng = pos.coords.longitude;
-      var redIcon = L.icon({
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-      });
-      if (currentLocationMarker) {
-        currentLocationMarker.setLatLng([driverLat, driverLng]);
-      } else {
-        currentLocationMarker = L.marker([driverLat, driverLng], {icon: redIcon}).addTo(map)
-          .bindPopup("You are here");
-      }
-    }, function(err) {
-      console.error(err);
-      alert("Could not get current location.");
-    }, { enableHighAccuracy: true });
-  }
-  updateCurrentLocation();
 
-  /**************************************************************
-   * SPOTS DATA (from backend)
-   **************************************************************/
-  var spotsData = [
-    {% for spot in available_spots %}
-    {
-      id: "{{ spot.id }}",
-      lat: {{ spot.lat }},
-      lng: {{ spot.lng }},
-      price: parseFloat("{{ spot.price }}"),
-      from: "{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}",
-      to: "{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}",
-      location: "{{ spot.location }}",
-      two_wheeler: {{ spot.two_wheeler_spaces or 0 }},
-      four_wheeler: {{ spot.four_wheeler_spaces or 0 }},
-      description: "{{ spot.description or 'No description available' }}"
-    }{% if not loop.last %},{% endif %}
-    {% endfor %}
-  ];
-  console.log("Driver Spots Data:", spotsData);
+    /**************************************************************
+     * CURRENT LOCATION
+     **************************************************************/
+    var driverLat = null, driverLng = null, currentLocationMarker;
+    function updateCurrentLocation() {
+      if (!navigator.geolocation) { alert("Geolocation not supported."); return; }
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        driverLat = pos.coords.latitude; driverLng = pos.coords.longitude;
+        var redIcon = L.icon({
+          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+          iconSize: [25, 41], iconAnchor: [12, 41],
+          popupAnchor: [1, -34], shadowSize: [41, 41]
+        });
+        if (currentLocationMarker) {
+          currentLocationMarker.setLatLng([driverLat, driverLng]);
+        } else {
+          currentLocationMarker = L.marker([driverLat, driverLng], {icon: redIcon}).addTo(map)
+            .bindPopup("You are here");
+        }
+      }, function(err) { console.error(err); alert("Could not get current location."); }, { enableHighAccuracy: true });
+    }
+    updateCurrentLocation();
 
-  // Add markers for each spot
-  spotsData.forEach(function(s) {
-    L.marker([s.lat, s.lng]).addTo(map)
-      .bindPopup("<b>" + s.location + "</b><br>Price: ₹" + s.price);
-  });
-
-  /**************************************************************
-   * SPOTS PANEL (Right Side)
-   **************************************************************/
-  var spotsPanel = document.getElementById("spotsPanel");
-  var spotsListEl = document.getElementById("spotsList");
-  var spotsPanelClose = document.getElementById("spotsPanelClose");
-  spotsPanelClose.onclick = function() {
-    closeSpotsPanel();
-  };
-
-  function openSpotsPanel(nearbySpots) {
-    // Hide the arrow
-    const toggleButton = document.getElementById("sidebarToggle");
-    if (toggleButton) toggleButton.classList.add("hidden");
-
-    spotsListEl.innerHTML = "";
-    nearbySpots.forEach(function(s) {
-      var div = document.createElement("div");
-      div.className = "spot-list-item";
-      var spotHtml = "";
-      spotHtml += "<p><strong>" + s.location + "</strong></p>";
-      spotHtml += "<p class='detail'>Price: ₹" + s.price + "</p>";
-      spotHtml += "<p class='detail'>Available: " + (s.from || "N/A") + " - " + (s.to || "N/A") + "</p>";
-      spotHtml += "<p class='detail'>2-Wheeler Spots: " + s.two_wheeler + "</p>";
-      spotHtml += "<p class='detail'>4-Wheeler Spots: " + s.four_wheeler + "</p>";
-      spotHtml += "<p class='detail'>Description: " + s.description + "</p>";
-      spotHtml += "<div class='spot-actions'><button onclick='spotDirections(" + s.lat + "," + s.lng + ")'>Directions</button><button onclick='openBookingModal(\"" + s.id + "\", \"" + s.from + "\", \"" + s.to + "\")'>Book</button></div>";
-      div.innerHTML = spotHtml;
-
-      // Clicking the item centers the map on that spot
-      div.addEventListener("click", function() {
-        map.setView([s.lat, s.lng], 15);
-      });
-      spotsListEl.appendChild(div);
+    /**************************************************************
+     * SPOTS DATA (from backend)
+     **************************************************************/
+    var spotsData = [
+      {% for spot in available_spots %}
+      {
+        id: "{{ spot.id }}",
+        lat: {{ spot.lat }},
+        lng: {{ spot.lng }},
+        price: parseFloat("{{ spot.price }}"),
+        from: "{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}",
+        to: "{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}",
+        location: "{{ spot.location }}",
+        two_wheeler: {{ spot.two_wheeler_spaces or 0 }},
+        four_wheeler: {{ spot.four_wheeler_spaces or 0 }},
+        description: "{{ spot.description or 'No description available' }}"
+      }{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ];
+    console.log("Driver Spots Data:", spotsData);
+    spotsData.forEach(function(s) {
+      L.marker([s.lat, s.lng]).addTo(map)
+        .bindPopup("<b>" + s.location + "</b><br>Price: ₹" + s.price);
     });
-    spotsPanel.classList.add("open");
-    mainContent.classList.add("shifted-left");
-  }
 
-  function closeSpotsPanel() {
-    spotsPanel.classList.remove("open");
-    mainContent.classList.remove("shifted-left");
-
-    // Show the arrow again
-    const toggleButton = document.getElementById("sidebarToggle");
-    if (toggleButton) toggleButton.classList.remove("hidden");
-  }
-
-  // Show all spots by default if user clicks the arrow
-  function openSpotsPanelAll() {
-    openSpotsPanel(spotsData);
-  }
-
-  /**************************************************************
-   * For the arrow in the map container => show all spots
-   **************************************************************/
-  function spotDirections(spotLat, spotLng) {
-    if (driverLat == null || driverLng == null) {
-      alert("Could not get your current location.");
-      return;
+    /**************************************************************
+     * SPOTS PANEL (Right Side)
+     **************************************************************/
+    var spotsPanel = document.getElementById("spotsPanel"),
+        spotsListEl = document.getElementById("spotsList"),
+        spotsPanelClose = document.getElementById("spotsPanelClose");
+    spotsPanelClose.onclick = function() { closeSpotsPanel(); };
+    function openSpotsPanel(nearbySpots) {
+      const toggleButton = document.getElementById("sidebarToggle");
+      if (toggleButton) toggleButton.classList.add("hidden");
+      spotsListEl.innerHTML = "";
+      nearbySpots.forEach(function(s) {
+        var div = document.createElement("div");
+        div.className = "spot-list-item";
+        var spotHtml = "";
+        spotHtml += "<p><strong>" + s.location + "</strong></p>";
+        spotHtml += "<p class='detail'>Price: ₹" + s.price + "</p>";
+        spotHtml += "<p class='detail'>Available: " + (s.from || "N/A") + " - " + (s.to || "N/A") + "</p>";
+        spotHtml += "<p class='detail'>2-Wheeler Spots: " + s.two_wheeler + "</p>";
+        spotHtml += "<p class='detail'>4-Wheeler Spots: " + s.four_wheeler + "</p>";
+        spotHtml += "<p class='detail'>Description: " + s.description + "</p>";
+        // Updated redirect: now pointing to "/parking/booking_driver"
+        spotHtml += "<div class='spot-actions'><button onclick='spotDirections(" + s.lat + "," + s.lng + ")'>Directions</button>";
+        spotHtml += "<button onclick='redirectToBooking(\"" + s.id + "\")'>Book</button></div>";
+        div.innerHTML = spotHtml;
+        div.addEventListener("click", function() { map.setView([s.lat, s.lng], 15); });
+        spotsListEl.appendChild(div);
+      });
+      spotsPanel.classList.add("open");
+      mainContent.classList.add("shifted-left");
     }
-    showDirections(driverLat, driverLng, spotLat, spotLng);
-  }
-
-  /**************************************************************
-   * MAP SEARCH FUNCTIONALITY
-   **************************************************************/
-  var mapSearchInput = document.getElementById("mapSearchInput");
-  var suggestionsEl = document.getElementById("suggestions");
-  var searchTimeout = null;
-  mapSearchInput.addEventListener("input", function() {
-    clearTimeout(searchTimeout);
-    var query = this.value.trim();
-    if(query.length < 3) {
-      suggestionsEl.style.display = "none";
-      return;
+    function closeSpotsPanel() {
+      spotsPanel.classList.remove("open");
+      mainContent.classList.remove("shifted-left");
+      const toggleButton = document.getElementById("sidebarToggle");
+      if (toggleButton) toggleButton.classList.remove("hidden");
     }
-    searchTimeout = setTimeout(function() {
-      var url = "https://nominatim.openstreetmap.org/search?format=json&countrycodes=in&q=" + encodeURIComponent(query);
-      fetch(url)
-        .then(r => r.json())
-        .then(data => {
-          suggestionsEl.innerHTML = "";
-          if(data && data.length > 0) {
-            data.forEach(function(item) {
-              var div = document.createElement("div");
-              div.className = "suggestion-item";
-              div.textContent = item.display_name;
-              div.addEventListener("click", function() {
-                var lat = parseFloat(item.lat);
-                var lng = parseFloat(item.lon);
-                map.setView([lat, lng], 14);
-                suggestionsEl.style.display = "none";
-                mapSearchInput.value = item.display_name;
-                // Filter spots within ~2km
-                var nearby = spotsData.filter(function(s) {
-                  var dist = map.distance([lat, lng], [s.lat, s.lng]);
-                  return dist < 2000;
+    function openSpotsPanelAll() { openSpotsPanel(spotsData); }
+
+    /**************************************************************
+     * MAP SEARCH FUNCTIONALITY
+     **************************************************************/
+    var mapSearchInput = document.getElementById("mapSearchInput"),
+        suggestionsEl = document.getElementById("suggestions"),
+        searchTimeout = null;
+    mapSearchInput.addEventListener("input", function() {
+      clearTimeout(searchTimeout);
+      var query = this.value.trim();
+      if(query.length < 3) { suggestionsEl.style.display = "none"; return; }
+      searchTimeout = setTimeout(function() {
+        var url = "https://nominatim.openstreetmap.org/search?format=json&countrycodes=in&q=" + encodeURIComponent(query);
+        fetch(url)
+          .then(r => r.json())
+          .then(data => {
+            suggestionsEl.innerHTML = "";
+            if(data && data.length > 0) {
+              data.forEach(function(item) {
+                var div = document.createElement("div");
+                div.className = "suggestion-item";
+                div.textContent = item.display_name;
+                div.addEventListener("click", function() {
+                  var lat = parseFloat(item.lat), lng = parseFloat(item.lon);
+                  map.setView([lat, lng], 14);
+                  suggestionsEl.style.display = "none";
+                  mapSearchInput.value = item.display_name;
+                  var nearby = spotsData.filter(function(s) {
+                    var dist = map.distance([lat, lng], [s.lat, s.lng]);
+                    return dist < 2000;
+                  });
+                  openSpotsPanel(nearby);
                 });
-                openSpotsPanel(nearby);
+                suggestionsEl.appendChild(div);
               });
-              suggestionsEl.appendChild(div);
-            });
-            suggestionsEl.style.display = "block";
-          } else {
-            suggestionsEl.innerHTML = "<div class='suggestion-item'>No results found</div>";
-            suggestionsEl.style.display = "block";
-          }
-        });
-    }, 300);
-  });
+              suggestionsEl.style.display = "block";
+            } else {
+              suggestionsEl.innerHTML = "<div class='suggestion-item'>No results found</div>";
+              suggestionsEl.style.display = "block";
+            }
+          });
+      }, 300);
+    });
 
-  /**************************************************************
-   * BOOKING MODAL FUNCTIONS
-   **************************************************************/
-  function openBookingModal(spotId, fromTime, toTime) {
-    var bookingForm = document.getElementById("bookingForm");
-    bookingForm.action = "/parking/book/" + spotId;
-    if(fromTime) document.getElementById("booking_start").value = fromTime;
-    if(toTime) document.getElementById("booking_end").value = toTime;
-    document.getElementById("bookingModal").style.display = "flex";
-  }
-  document.getElementById("bookingModalClose").onclick = function() {
-    document.getElementById("bookingModal").style.display = "none";
-  };
-  window.onclick = function(event) {
-    if(event.target === document.getElementById("bookingModal")) {
-      document.getElementById("bookingModal").style.display = "none";
+    /**************************************************************
+     * REDIRECT TO BOOKING PAGE
+     **************************************************************/
+    // Save the current URL so the booking page can redirect back,
+    // then redirect to the booking page route.
+    function redirectToBooking(spotId) {
+      localStorage.setItem("returnURL", window.location.href);
+      // IMPORTANT: Because your parking blueprint is registered with "/parking",
+      // the booking page route is "/parking/booking_driver?spotId=..."
+      window.location.href = "/parking/booking_driver?spotId=" + encodeURIComponent(spotId);
     }
-  };
-
-  /**************************************************************
-   * BOOKING ID INFO TOOLTIP
-   **************************************************************/
-  var bookingIdInfo = document.getElementById("bookingIdInfo");
-  var bookingIdTooltip = document.getElementById("bookingIdTooltip");
-  bookingIdInfo.onclick = function(e) {
-    e.stopPropagation();
-    bookingIdTooltip.classList.toggle("open");
-  };
-  // Hide tooltip if clicking outside
-  window.addEventListener("click", function(e) {
-    if (!bookingIdTooltip.contains(e.target) && !bookingIdInfo.contains(e.target)) {
-      bookingIdTooltip.classList.remove("open");
-    }
-  });
-</script>
-
+  </script>
 </body>
 </html>
