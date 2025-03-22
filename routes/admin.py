@@ -45,26 +45,16 @@ def parking_management():
 @login_required
 @admin_required
 def reports():
-    """
-    Pass real data to the 'admin_reports.html' template so it won't show N/A.
-    Adjust queries if your ParkingSpot model or columns differ
-    (e.g., if you don't actually have an 'availability' boolean).
-    """
     total_users = User.query.count()
     total_spots = ParkingSpot.query.count()
 
-    # If your model has a boolean 'availability' column:
     available_spots = ParkingSpot.query.filter_by(availability=True).count()
     booked_spots = ParkingSpot.query.filter_by(availability=False).count()
-
-    # If you have a Booking model, you can count actual bookings here.
-    # For now, let's just treat "booked spots" as "total_bookings":
     total_bookings = booked_spots
 
-    # Example: Summation of price for all spots that are 'booked' (availability=False).
     revenue = db.session.query(func.sum(ParkingSpot.price)) \
-                        .filter(ParkingSpot.availability == False) \
-                        .scalar() or 0
+                  .filter(ParkingSpot.availability == False) \
+                  .scalar() or 0
 
     return render_template(
         'admin_reports.html',
@@ -81,13 +71,7 @@ def reports():
 @login_required
 @admin_required
 def analytics():
-    """
-    Pass real data to 'admin_analytics.html'.
-    Adjust queries to match your model columns or logic.
-    """
-    # Sum of all two_wheeler_spaces, for example:
     total_two_wheeler = db.session.query(func.sum(ParkingSpot.two_wheeler_spaces)).scalar() or 0
-    # Sum of all four_wheeler_spaces:
     total_four_wheeler = db.session.query(func.sum(ParkingSpot.four_wheeler_spaces)).scalar() or 0
 
     return render_template(
@@ -101,15 +85,9 @@ def analytics():
 @login_required
 @admin_required
 def system_settings():
-    """
-    If you want to handle POST form submissions for system settings,
-    you can do so here. Right now, we just render the template.
-    """
     if request.method == 'POST':
-        # Example: read form inputs (site_name, maintenance_mode, etc.)
         site_name = request.form.get('site_name')
         maintenance_mode = request.form.get('maintenance_mode')
-        # Save to DB or config as needed
         flash("System settings updated.", "success")
         return redirect(url_for('admin.system_settings'))
     return render_template('admin_system_settings.html')
@@ -122,12 +100,28 @@ def add_user():
     if request.method == 'POST':
         username = request.form.get('username')
         email = request.form.get('email')
-        # Additional form processing can be done here
-        new_user = User(username=username, email=email)
+        password = request.form.get('password')
+        role = request.form.get('role')  # Capture the role from the form
+
+        # Debug flash messages if any field is missing.
+        if not username or not email or not password or not role:
+            flash("One or more fields are missing.", "danger")
+            return redirect(url_for('admin.add_user'))
+
+        if role not in ['admin', 'owner', 'driver']:
+            flash("Invalid role selected. Please try again.", "danger")
+            return redirect(url_for('admin.user_management'))
+
+        # Create a new user using keyword arguments to ensure all required parameters are passed.
+        new_user = User(username=username, email=email, role=role)
+        new_user.set_password(password)
+
         db.session.add(new_user)
         db.session.commit()
-        flash("New user added successfully.", "success")
+
+        flash("User added successfully!", "success")
         return redirect(url_for('admin.user_management'))
+
     return render_template('admin_add_user.html')
 
 # Edit Parking Spot route
@@ -200,3 +194,4 @@ def delete_user(user_id):
         db.session.rollback()
         flash("Error deleting user: " + str(e), "danger")
     return redirect(url_for('admin.admin_dashboard'))
+
