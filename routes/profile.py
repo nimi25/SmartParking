@@ -1,7 +1,7 @@
+import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from models import db, User, bcrypt
-import os
 
 profile_bp = Blueprint('profile', __name__)
 
@@ -16,7 +16,7 @@ def driver_profile():
         current_user.username = username
         current_user.email = email
         if password:
-            current_user.password = bcrypt.generate_password_hash(password).decode('utf-8')
+            current_user.set_password(password)
         if profile_pic:
             filename = profile_pic.filename
             profile_pic.save(os.path.join('static/uploads', filename))
@@ -37,7 +37,7 @@ def owner_profile():
         current_user.username = username
         current_user.email = email
         if password:
-            current_user.password = bcrypt.generate_password_hash(password).decode('utf-8')
+            current_user.set_password(password)
         if profile_pic:
             filename = profile_pic.filename
             profile_pic.save(os.path.join('static/uploads', filename))
@@ -58,7 +58,7 @@ def admin_profile():
         current_user.username = username
         current_user.email = email
         if password:
-            current_user.password = bcrypt.generate_password_hash(password).decode('utf-8')
+            current_user.set_password(password)
         if profile_pic:
             filename = profile_pic.filename
             profile_pic.save(os.path.join('static/uploads', filename))

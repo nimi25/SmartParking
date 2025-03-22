@@ -1,0 +1,12 @@
+<!-- Begin Payment Details Partial -->
+<h3 style="color: #00e5ff; text-align: center; margin-bottom: 1rem;">Payment Details</h3>
+<p style="text-align: center;"><strong>UPI ID:</strong> {{ payment.upi_id or 'N/A' }}</p>
+<p style="text-align: center;"><strong>Phone Number:</strong> {{ payment.phone_number or 'N/A' }}</p>
+{% if payment.qr_code %}
+  <div style="text-align: center;">
+    <img src="{{ url_for('static', filename='uploads/' + payment.qr_code) }}" alt="QR Code" style="border: 2px solid #00e5ff; border-radius: 8px; width: 200px; height: 200px; object-fit: cover;">
+  </div>
+{% else %}
+  <p style="text-align: center;"><em>No QR code uploaded.</em></p>
+{% endif %}
+<!-- End Payment Details Partial -->

@@ -26,7 +26,6 @@
       height: 100%;
       overflow: hidden; /* remove horizontal scroll */
     }
-
     body {
       background: #121212 url("{{ url_for('static', filename='images/background.jpg') }}") no-repeat center center;
       background-size: cover;
@@ -128,12 +127,11 @@
       padding: 1.5rem;
       border-radius: 12px;
       width: 100%;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-      transition: transform 0.3s, box-shadow 0.3s;
-      margin-bottom: 2rem;
-      animation: fadeIn 1s ease;
       max-width: 1000px;
       margin: 0 auto 2rem auto; /* center horizontally */
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      transition: transform 0.3s, box-shadow 0.3s;
+      animation: fadeIn 1s ease;
     }
     .card:hover {
       transform: translateY(-5px);
@@ -166,7 +164,6 @@
     table tr:hover {
       background: #2a2a2a;
     }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -201,7 +198,6 @@
     </aside>
 
     <main class="content" id="mainContent">
-      <!-- PAST BOOKINGS CARD -->
       <div class="card">
         <h3>Past Bookings</h3>
         <p>Below is a summary of your past bookings (completed or canceled):</p>
@@ -221,25 +217,47 @@
             {% if booking_history and booking_history|length > 0 %}
               {% for booking in booking_history %}
                 <tr>
-                  <!-- Custom ID logic if vehicle_number & created_at exist -->
                   {% if booking.vehicle_number and booking.created_at %}
                     {% set custom_id = "BK" ~ booking.created_at.strftime('%d%H%M%S') ~ booking.vehicle_number[-2:] %}
                   {% else %}
                     {% set custom_id = booking.id %}
                   {% endif %}
-
                   <td>{{ custom_id }}</td>
                   <td>{{ booking.vehicle_number or 'N/A' }}</td>
-                  <td>{{ booking.spot.location if booking.spot else 'N/A' }}</td>
-                  <td>{{ booking.created_at.strftime('%Y-%m-%d') if booking.created_at else 'N/A' }}</td>
-                  <td>{{ booking.created_at.strftime('%I:%M %p') if booking.created_at else 'N/A' }}</td>
-                  <td>{{ booking.spot.price if booking.spot else 'N/A' }}</td>
+                  <td>
+                    {% if booking.parking_space and booking.parking_space.parking_spot %}
+                      {{ booking.parking_space.parking_spot.location }}
+                    {% else %}
+                      N/A
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if booking.created_at %}
+                      {{ booking.created_at.strftime('%Y-%m-%d') }}
+                    {% else %}
+                      N/A
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if booking.created_at %}
+                      {{ booking.created_at.strftime('%I:%M %p') }}
+                    {% else %}
+                      N/A
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if booking.parking_space and booking.parking_space.parking_spot %}
+                      ₹{{ booking.parking_space.parking_spot.price }}
+                    {% else %}
+                      N/A
+                    {% endif %}
+                  </td>
                   <td>{{ booking.status }}</td>
                 </tr>
               {% endfor %}
             {% else %}
               <tr>
-                <td colspan="8" style="text-align:center;">No booking history found.</td>
+                <td colspan="7" style="text-align:center;">No booking history found.</td>
               </tr>
             {% endif %}
           </tbody>

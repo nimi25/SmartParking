@@ -156,7 +156,6 @@
       flex-direction: column;
       gap: 1rem;
     }
-
     .payment-form label {
       font-weight: 600;
       margin-bottom: 0.25rem;
@@ -234,11 +233,11 @@
     <div class="hamburger" onclick="toggleSidebar()">☰</div>
     <h1>Owner Dashboard</h1>
     <nav>
-      <a href="{{ url_for('profile.driver_profile') }}">
-        <img src="../static/images/profile.png" alt="Profile" />
+      <a href="{{ url_for('profile.owner_profile') }}">
+        <img src="{{ url_for('static', filename='images/profile.png') }}" alt="Profile" />
       </a>
       <a href="{{ url_for('auth.logout') }}">
-        <img src="../static/images/logout.png" alt="Logout" />
+        <img src="{{ url_for('static', filename='images/logout.png') }}" alt="Logout" />
       </a>
     </nav>
   </header>
@@ -248,8 +247,8 @@
     <aside class="sidebar" id="sidebar">
       <a href="{{ url_for('dashboard.dashboard') }}">Home</a>
       <a href="{{ url_for('owner.bookings') }}">Bookings</a>
-      <a href="{{ url_for('owner.parkingspace') }}">Parking Space</a>
-      <a href="{{ url_for('owner.payment') }}" class="active">Payment</a>
+      <a href="{{ url_for('owner.parkingspace') }}" class="active">Parking Space</a>
+      <a href="{{ url_for('owner.payment') }}">Payment</a>
       <a href="{{ url_for('owner.metrics') }}">Metrics</a>
       <a href="{{ url_for('owner.history') }}">History</a>
     </aside>
@@ -258,7 +257,7 @@
     <main class="content" id="mainContent">
       <div class="card">
         <h3>Payment Setup</h3>
-        <p>Enter your UPI ID, phone number, and (optionally) a QR code.</p>
+        <p>Enter your UPI ID, phone number, and (optionally) a QR code screenshot.</p>
 
         <form class="payment-form"
               method="POST"
@@ -269,47 +268,31 @@
             <!-- Left side: Payment fields -->
             <div class="payment-fields">
               <label for="upi-id">UPI ID:</label>
-              {% if payment_info and (payment_info.upi_id or payment_info.phone_number or payment_info.qr_code) %}
-                <!-- If we have existing info, read-only -->
-                <input type="text" id="upi-id" name="upi_id"
-                       value="{{ payment_info.upi_id or '' }}"
-                       readonly>
-              {% else %}
-                <input type="text" id="upi-id" name="upi_id"
-                       value="{{ payment_info.upi_id or '' }}">
-              {% endif %}
+              <input type="text" id="upi-id" name="upi_id"
+                     value="{{ payment_info.upi_id or '' }}">
 
               <label for="phone-number">Phone Number:</label>
-              {% if payment_info and (payment_info.upi_id or payment_info.phone_number or payment_info.qr_code) %}
-                <input type="text" id="phone-number" name="phone_number"
-                       value="{{ payment_info.phone_number or '' }}"
-                       readonly>
-              {% else %}
-                <input type="text" id="phone-number" name="phone_number"
-                       value="{{ payment_info.phone_number or '' }}">
-              {% endif %}
+              <input type="text" id="phone-number" name="phone_number"
+                     value="{{ payment_info.phone_number or '' }}">
+
+              <label for="qr-code">Upload QR Code:</label>
+              <input type="file" id="qr-code" name="qr_code" accept="image/*">
 
               {% if payment_info and (payment_info.upi_id or payment_info.phone_number or payment_info.qr_code) %}
-                <!-- Hide the Upload field entirely if there's existing info -->
-              {% else %}
-                <label for="qr-code">Upload QR Code:</label>
-                <input type="file" id="qr-code" name="qr_code" accept="image/*">
-              {% endif %}
-
-              {% if payment_info and (payment_info.upi_id or payment_info.phone_number or payment_info.qr_code) %}
-                <!-- Show Delete button if any payment data is present -->
+                <button type="submit" class="btn save-btn">
+                  Save
+                </button>
                 <button type="submit" class="btn delete-btn" formaction="{{ url_for('owner.delete_payment') }}">
                   Delete
                 </button>
               {% else %}
-                <!-- Otherwise, show Save button -->
                 <button type="submit" class="btn save-btn">
                   Save
                 </button>
               {% endif %}
             </div>
 
-            <!-- Right side: Big QR code preview if exists -->
+            <!-- Right side: QR code preview if exists -->
             <div class="qr-container">
               {% if payment_info and payment_info.qr_code %}
                 <img src="{{ url_for('static', filename='uploads/' + payment_info.qr_code) }}" alt="QR Code">

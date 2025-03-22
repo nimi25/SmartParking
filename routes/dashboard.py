@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, session, redirect, url_for, flash
 from flask_login import login_required, current_user
-from models import db, ParkingSpot, Booking, User
+from models import db, ParkingSpot, Booking, User, ParkingSpace
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 from types import SimpleNamespace
@@ -12,45 +12,49 @@ dashboard_bp = Blueprint('dashboard', __name__)
 def dashboard():
     role = session.get('role')
 
-    # DRIVER DASHBOARD
     if role == 'driver':
         available_spots = ParkingSpot.query.all()
-        booked_spots = Booking.query.filter_by(user_id=current_user.id).all()
+        booked_spots = Booking.query.options(
+            joinedload(Booking.parking_space).joinedload(ParkingSpace.parking_spot)
+        ).filter_by(user_id=current_user.id).all()
         return render_template('driver_dashboard.html',
                                available_spots=available_spots,
                                booked_spots=booked_spots)
 
-    # OWNER DASHBOARD
     elif role == 'owner':
         spots = ParkingSpot.query.filter_by(owner_id=current_user.id).all()
         joined_data = (
-            db.session.query(Booking, User, ParkingSpot)
+            db.session.query(Booking, User, ParkingSpace, ParkingSpot)
             .join(User, Booking.user_id == User.id)
-            .join(ParkingSpot, Booking.spot_id == ParkingSpot.id)
+            .join(ParkingSpace, Booking.parking_space_id == ParkingSpace.id)
+            .join(ParkingSpot, ParkingSpace.parking_spot_id == ParkingSpot.id)
             .filter(ParkingSpot.owner_id == current_user.id)
             .all()
         )
         all_bookings = []
-        for booking_obj, user_obj, spot_obj in joined_data:
+        for b, u, ps, s in joined_data:
             booking_dict = {
-                "id": booking_obj.id,
-                "driver_name": user_obj.username,
-                "email": user_obj.email,
-                "vehicle_number": booking_obj.vehicle_number,
-                "spot_location": spot_obj.location,
-                "spot_price": spot_obj.price,
-                "spot_lat": spot_obj.lat,
-                "spot_lng": spot_obj.lng,
-                "created_at": booking_obj.created_at,
-                "start_time": booking_obj.start_time,
-                "end_time": booking_obj.end_time,
-                "vehicle_type": booking_obj.booked_vehicle_type or "N/A",
-                "active": booking_obj.active,
-                "status": booking_obj.status
+                "id": b.id,
+                "driver_name": u.username,
+                "email": u.email,
+                "vehicle_number": b.vehicle_number,
+                "spot_location": s.location,
+                "spot_price": s.price,
+                "spot_lat": s.lat,
+                "spot_lng": s.lng,
+                "created_at": b.created_at,
+                "start_time": b.start_time,
+                "end_time": b.end_time,
+                "vehicle_type": ps.vehicle_type,
+                "sub_spot_number": ps.sub_spot_number,
+                "active": b.active,
+                "status": b.status,
+                "session_id": b.session_id if b.session_id is not None else str(b.id),
+                "phone_number": b.phone_number
             }
             all_bookings.append(SimpleNamespace(**booking_dict))
         total_bookings = len(all_bookings)
-        total_revenue = sum(spot_obj.price for (_, _, spot_obj) in joined_data)
+        total_revenue = sum(s.price for (_, _, _, s) in joined_data)
         active_spots = sum(1 for s in spots if s.availability)
         return render_template('owner_dashboard.html',
                                spots=spots,
@@ -59,7 +63,6 @@ def dashboard():
                                total_revenue=total_revenue,
                                active_spots=active_spots)
 
-    # ADMIN DASHBOARD
     elif role == 'admin':
         users = User.query.all()
         total_users = User.query.count()
@@ -68,12 +71,10 @@ def dashboard():
         booked_spots = ParkingSpot.query.filter_by(availability=False).count()
         total_bookings = Booking.query.count()
         revenue = db.session.query(func.sum(ParkingSpot.price))\
-                    .filter(ParkingSpot.status == 'booked').scalar() or 0
+                      .filter(ParkingSpot.status == 'booked').scalar() or 0
         spots = ParkingSpot.query.all()
-        total_two_wheeler = db.session.query(func.sum(ParkingSpot.two_wheeler_spaces))\
-                                .filter(ParkingSpot.availability == True).scalar() or 0
-        total_four_wheeler = db.session.query(func.sum(ParkingSpot.four_wheeler_spaces))\
-                                 .filter(ParkingSpot.availability == True).scalar() or 0
+        total_two_wheeler = 0
+        total_four_wheeler = 0
         return render_template('admin_dashboard.html',
                                users=users,
                                total_users=total_users,
@@ -86,19 +87,83 @@ def dashboard():
                                total_four_wheeler=total_four_wheeler,
                                spots=spots)
 
-    # FALLBACK
     flash("User role not recognized. Please log in again.", "warning")
     return redirect(url_for('auth.login'))
 
 @dashboard_bp.route('/my_bookings')
 @login_required
 def my_bookings():
-    booked_spots = Booking.query.options(
-        joinedload(Booking.spot)
-        .joinedload(ParkingSpot.owner)
-        .joinedload(User.payment_details)
-    ).filter(Booking.user_id == current_user.id).all()
-    return render_template('my_bookings.html', booked_spots=booked_spots)
+    # For the driver side: group bookings by session_id.
+    bookings = Booking.query.options(
+        joinedload(Booking.parking_space).joinedload(ParkingSpace.parking_spot)
+    ).filter_by(user_id=current_user.id).all()
+
+    grouped_bookings = {}
+    for b in bookings:
+        session_key = b.session_id if b.session_id is not None else str(b.id)
+        booking_details = {
+            "id": b.id,
+            "vehicle_number": b.vehicle_number,
+            "created_at": b.created_at,
+            "start_time": b.start_time,
+            "end_time": b.end_time,
+            "status": b.status,
+            "vehicle_type": b.parking_space.vehicle_type,
+            "sub_spot_number": b.parking_space.sub_spot_number,
+            "spot_location": b.parking_space.parking_spot.location,
+            "spot_price": b.parking_space.parking_spot.price,
+            "spot_lat": b.parking_space.parking_spot.lat,
+            "spot_lng": b.parking_space.parking_spot.lng,
+            "spot_description": b.parking_space.parking_spot.description,
+            "booking_id": "BK" + b.created_at.strftime('%d%H%M%S') + (b.vehicle_number[-2:] if b.vehicle_number else str(b.id)),
+            "session_id": session_key,
+            "phone_number": b.phone_number
+        }
+        grouped_bookings.setdefault(session_key, []).append(booking_details)
+
+    return render_template("my_bookings.html", grouped_bookings=grouped_bookings)
+
+@dashboard_bp.route('/owner/bookings')
+@login_required
+def owner_bookings():
+    if session.get('role') != 'owner':
+        flash("Unauthorized", "danger")
+        return redirect(url_for('dashboard.dashboard'))
+
+    joined_data = (
+        db.session.query(Booking, User, ParkingSpace, ParkingSpot)
+        .join(User, Booking.user_id == User.id)
+        .join(ParkingSpace, Booking.parking_space_id == ParkingSpace.id)
+        .join(ParkingSpot, ParkingSpace.parking_spot_id == ParkingSpot.id)
+        .filter(ParkingSpot.owner_id == current_user.id)
+        .all()
+    )
+    all_bookings = []
+    for b, u, ps, s in joined_data:
+        booking_dict = {
+            "id": b.id,
+            "driver_name": u.username,
+            "email": u.email,
+            "vehicle_number": b.vehicle_number,
+            "spot_location": s.location,
+            "spot_price": s.price,
+            "spot_lat": s.lat,
+            "spot_lng": s.lng,
+            "created_at": b.created_at,
+            "start_time": b.start_time,
+            "end_time": b.end_time,
+            "vehicle_type": ps.vehicle_type,
+            "sub_spot_number": ps.sub_spot_number,
+            "active": b.active,
+            "status": b.status,
+            "session_id": b.session_id if b.session_id is not None else str(b.id),
+            "phone_number": b.phone_number
+        }
+        all_bookings.append(SimpleNamespace(**booking_dict))
+    grouped_bookings = {}
+    for booking in all_bookings:
+        grouped_bookings.setdefault(booking.session_id, []).append(booking)
+    return render_template("bookings.html", grouped_bookings=grouped_bookings)
 
 @dashboard_bp.route('/history_driver', endpoint='history_driver')
 @login_required
@@ -107,8 +172,7 @@ def history_driver():
         flash("Unauthorized", "warning")
         return redirect(url_for('dashboard.dashboard'))
     booking_history = Booking.query.filter_by(user_id=current_user.id).all()
-    payment_history = []  # Adjust as needed if you have a Payment model.
+    payment_history = []  # Adjust as needed
     return render_template('history_driver.html', booking_history=booking_history, payment_history=payment_history)
 
-# Alias to support old calls
 dashboard_bp.add_url_rule('/', endpoint='dashboard')

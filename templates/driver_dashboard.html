@@ -15,129 +15,294 @@
 
   <style>
     /* BASE + DASHBOARD LAYOUT */
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
     body {
       background: #121212 url("../static/images/background.jpg") no-repeat center center;
-      background-size: cover; background-attachment: fixed; color: #fff;
-      min-height: 100vh; overflow: hidden;
+      background-size: cover;
+      background-attachment: fixed;
+      color: #fff;
+      min-height: 100vh;
+      overflow: hidden;
     }
     header {
-      position: fixed; top: 0; left: 0; right: 0; height: 60px;
-      background: #1f1f1f; padding: 1rem 2rem;
-      display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 2px solid #333; z-index: 9999;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #1f1f1f;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #333;
+      z-index: 9999;
     }
-    .hamburger { font-size: 1.5rem; cursor: pointer; color: #fff; margin-right: 1rem; }
-    header h1 { font-size: 1.5rem; letter-spacing: 1px; flex: 1; margin-left: 1rem; }
-    nav a { margin-left: 1.5rem; text-decoration: none; transition: opacity 0.3s; }
-    nav a img { width: 40px; height: 40px; vertical-align: middle; }
-    nav a:hover { opacity: 0.8; }
+    .hamburger {
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #fff;
+      margin-right: 1rem;
+    }
+    header h1 {
+      font-size: 1.5rem;
+      letter-spacing: 1px;
+      flex: 1;
+      margin-left: 1rem;
+    }
+    nav a {
+      margin-left: 1.5rem;
+      text-decoration: none;
+      transition: opacity 0.3s;
+    }
+    nav a img {
+      width: 40px;
+      height: 40px;
+      vertical-align: middle;
+    }
+    nav a:hover {
+      opacity: 0.8;
+    }
     .dashboard {
-      display: grid; grid-template-columns: 250px 1fr;
-      min-height: calc(100vh - 60px); transition: transform 0.3s ease; position: relative;
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: calc(100vh - 60px);
+      transition: transform 0.3s ease;
+      position: relative;
     }
     .sidebar {
-      position: fixed; top: 60px; left: 0; width: 250px; bottom: 0;
-      background: #1f1f1f; padding: 2rem 1rem; border-right: 2px solid #333;
-      display: flex; flex-direction: column; gap: 1rem; z-index: 9998;
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 250px;
+      bottom: 0;
+      background: #1f1f1f;
+      padding: 2rem 1rem;
+      border-right: 2px solid #333;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      z-index: 9998;
       transition: transform 0.3s ease;
     }
-    .sidebar a { display: block; padding: 0.75rem 1rem; color: #e0e0e0;
-      text-decoration: none; border-left: 4px solid transparent; transition: background 0.3s, border-color 0.3s;
+    .sidebar a {
+      display: block;
+      padding: 0.75rem 1rem;
+      color: #e0e0e0;
+      text-decoration: none;
+      border-left: 4px solid transparent;
+      transition: background 0.3s, border-color 0.3s;
     }
-    .sidebar a:hover, .sidebar a.active {
-      background: #333; border-left: 4px solid #00e5ff;
+    .sidebar a:hover,
+    .sidebar a.active {
+      background: #333;
+      border-left: 4px solid #00e5ff;
     }
-    .sidebar.collapsed { transform: translateX(-250px); }
+    .sidebar.collapsed {
+      transform: translateX(-250px);
+    }
     .content {
-      position: absolute; top: 60px; left: 250px; right: 0; bottom: 0;
-      overflow: hidden; padding: 2rem; transition: left 0.3s ease;
+      position: absolute;
+      top: 60px;
+      left: 250px;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+      padding: 2rem;
+      transition: left 0.3s ease;
     }
-    .content.shifted { left: 0; }
-    .content.shifted-left { margin-right: 300px; }
+    .content.shifted {
+      left: 0;
+    }
+    .content.shifted-left {
+      margin-right: 300px;
+    }
     .welcome-map-card {
-      width: 1300px; max-width: 90%; height: 800px; margin: 0 auto 2rem auto;
-      background: #1f1f1f; padding: 1.5rem; border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4); display: flex; flex-direction: column;
-      gap: 1rem; position: relative; animation: fadeIn 1s ease;
+      width: 1300px;
+      max-width: 90%;
+      height: 800px;
+      margin: 0 auto 2rem auto;
+      background: #1f1f1f;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      position: relative;
+      animation: fadeIn 1s ease;
       transition: transform 0.3s, box-shadow 0.3s;
     }
-    .welcome-map-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.6); }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .welcome { text-align: center; }
-    .welcome h3 { color: #00e5ff; margin-bottom: 0.5rem; font-size: 1rem; }
-    .welcome p { font-size: 1rem; color: #cfcfcf; }
-    .map-container {
-      position: relative; background: #333; border-radius: 8px; flex-grow: 1; overflow: hidden;
+    .welcome-map-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
     }
-    #map { width: 100%; height: 100%; }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .welcome {
+      text-align: center;
+    }
+    .welcome h3 {
+      color: #00e5ff;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+    }
+    .welcome p {
+      font-size: 1rem;
+      color: #cfcfcf;
+    }
+    .map-container {
+      position: relative;
+      background: #333;
+      border-radius: 8px;
+      flex-grow: 1;
+      overflow: hidden;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
     .map-search {
-      position: absolute; top: 10px; left: 30%; transform: translateX(-50%);
-      width: 300px; z-index: 1000;
+      position: absolute;
+      top: 10px;
+      left: 30%;
+      transform: translateX(-50%);
+      width: 300px;
+      z-index: 1000;
     }
     .map-search input {
-      width: 260%; padding: 8px; border-radius: 4px; border: none;
-      background: rgba(34,34,34,0.9); color: #fff;
+      width: 260%;
+      padding: 8px;
+      border-radius: 4px;
+      border: none;
+      background: rgba(34,34,34,0.9);
+      color: #fff;
     }
-    .map-search input::placeholder { color: #ccc; }
-    .suggestions {
-      position: absolute; top: 45px; width: 260%; background: rgba(34,34,34,0.9);
-      color: #fff; border-radius: 4px; max-height: 200px; overflow-y: auto; display: none;
+    .map-search input::placeholder {
+      color: #ccc;
     }
-    .suggestion-item { padding: 8px; cursor: pointer; }
-    .suggestion-item:hover { background: rgba(255,255,255,0.2); }
-    /* Show All Spots Button */
     .sidebar-toggle {
-      position: fixed; top: 50%; right: 10px; background: #00e5ff;
-      color: #000; padding: 8px 12px; border-radius: 50%; cursor: pointer;
-      z-index: 10000; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); transition: transform 0.3s;
+      position: fixed;
+      top: 50%;
+      right: 10px;
+      background: #00e5ff;
+      color: #000;
+      padding: 8px 12px;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 10000;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s;
     }
-    .sidebar-toggle.hidden { display: none; }
-    /* Spots Panel */
+    .sidebar-toggle.hidden {
+      display: none;
+    }
     .spots-panel {
-      position: fixed; top: 60px; right: -300px; width: 300px; bottom: 0;
-      background: rgba(30,30,30,0.95); border-left: 2px solid #333; z-index: 9999;
-      transition: right 0.4s ease; overflow-y: auto; padding: 1rem;
+      position: fixed;
+      top: 60px;
+      right: -350px;
+      width: 350px;
+      bottom: 0;
+      background: rgba(30,30,30,0.95);
+      border-left: 2px solid #333;
+      z-index: 9999;
+      transition: right 0.4s ease;
+      overflow-y: auto;
+      padding: 1rem;
     }
-    .spots-panel.open { right: 0; }
+    .spots-panel.open {
+      right: 0;
+    }
     .spots-panel-header {
-      display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
     }
     .spots-panel-header h4 {
-      color: #00e5ff; margin: 0; text-align: center; flex: 1;
+      color: #00e5ff;
+      margin: 0;
+      flex: 1;
+      text-align: left;
+      font-size: 1.1rem;
     }
     .spots-panel-close {
-      font-size: 1.3rem; color: #fff; cursor: pointer; transition: color 0.3s;
+      font-size: 1.5rem;
+      color: #fff;
+      cursor: pointer;
+      transition: color 0.3s;
     }
-    .spots-panel-close:hover { color: #00e5ff; }
+    .spots-panel-close:hover {
+      color: #00e5ff;
+    }
     .spot-list-item {
-      background: #2a2a2a; padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 6px;
+      background: #2a2a2a;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
       transition: background 0.3s;
     }
-    .spot-list-item:hover { background: #333; cursor: pointer; }
-    .spot-list-item p { margin-bottom: 0.25rem; font-size: 0.9rem; }
-    .spot-list-item .detail { font-size: 0.85rem; color: #ccc; margin-bottom: 0.25rem; }
-    .spot-actions { text-align: center; margin-top: 0.5rem; }
-    .spot-actions button {
-      background: #00bcd4; color: #000; padding: 6px 12px; border-radius: 4px;
-      font-weight: 600; border: none; cursor: pointer; margin: 0 5px;
+    .spot-list-item:hover {
+      background: #333;
+      cursor: pointer;
     }
-    /* Leaflet Routing Machine Theme Overrides */
-    .leaflet-routing-container {
-      background: rgba(30,30,30,0.9) !important; color: #fff !important;
-      border: none !important; border-radius: 6px !important;
-      box-shadow: none !important; margin-top: 80px !important;
+    .spot-list-item p {
+      margin: 4px 0;
+      font-size: 0.9rem;
+      color: #ccc;
     }
-    .leaflet-routing-container a,
-    .leaflet-routing-container a:hover { color: #00e5ff !important; text-decoration: none !important; }
-    .leaflet-routing-container i,
-    .leaflet-routing-container .leaflet-routing-icon {
-      color: #fff !important; filter: invert(100%) !important;
+    .spot-actions {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
     }
-    .leaflet-routing-alt { background: rgba(0,0,0,0.2) !important; color: #fff !important; }
-    .leaflet-routing-container .leaflet-routing-instructions li:hover,
-    .leaflet-routing-container .leaflet-routing-instructions li:hover * {
-      background-color: #f5f5f5 !important; color: #000 !important;
+    .spot-actions button,
+    .spot-actions a {
+      padding: 6px 10px;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+      background: #00e5ff;
+      color: #000;
+      transition: background 0.3s;
+    }
+    .spot-actions button:hover,
+    .spot-actions a:hover {
+      background: #00cce0;
+    }
+    .suggestions {
+      position: absolute;
+      top: 45px;
+      width: 260%;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      border-radius: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+    }
+    .suggestion-item {
+      padding: 8px;
+      cursor: pointer;
+    }
+    .suggestion-item:hover {
+      background: rgba(255,255,255,0.2);
     }
   </style>
 </head>
@@ -156,7 +321,7 @@
     </nav>
   </header>
 
-  <!-- Show All Spots Button -->
+  <!-- Show All Spots Toggle Button -->
   <div id="sidebarToggle" class="sidebar-toggle" onclick="openSpotsPanelAll()">►</div>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -172,7 +337,8 @@
   <div class="dashboard">
     <!-- COLLAPSIBLE SIDEBAR -->
     <aside class="sidebar" id="sidebar">
-      <a href="{{ url_for('dashboard.driver_dashboard') }}" class="active">Home</a>
+      <!-- CHANGE HERE: use dashboard.dashboard instead of dashboard.driver_dashboard -->
+      <a href="{{ url_for('dashboard.dashboard') }}" class="active">Home</a>
       <a href="{{ url_for('dashboard.my_bookings') }}">My Bookings</a>
       <a href="{{ url_for('dashboard.history_driver') }}">History</a>
     </aside>
@@ -210,195 +376,224 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
   <script>
-    /**************************************************************
-     * SIDEBAR COLLAPSE/EXPAND
-     **************************************************************/
-    const sidebar = document.getElementById('sidebar');
-    const mainContent = document.getElementById('mainContent');
-    function toggleSidebar() {
-      sidebar.classList.toggle('collapsed');
-      mainContent.classList.toggle('shifted');
-    }
+    document.addEventListener('DOMContentLoaded', function() {
+      // Clear any stored returnURL on load.
+      localStorage.removeItem("returnURL");
 
-    /**************************************************************
-     * LEAFLET MAP + ROUTING CONTROL
-     **************************************************************/
-    var map = L.map('map').setView([12.9716, 77.5946], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-    var routingControl = null;
-    function showDirections(driverLat, driverLng, spotLat, spotLng) {
-      if (routingControl) { map.removeControl(routingControl); }
-      routingControl = L.Routing.control({
-        waypoints: [ L.latLng(driverLat, driverLng), L.latLng(spotLat, spotLng) ],
-        routeWhileDragging: false, showAlternatives: false,
-        createMarker: function() { return null; }
+      /**************************************************************
+       * SIDEBAR COLLAPSE/EXPAND
+       **************************************************************/
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('mainContent');
+      function toggleSidebar() {
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('shifted');
+      }
+      window.toggleSidebar = toggleSidebar;
+
+      /**************************************************************
+       * LEAFLET MAP + ROUTING CONTROL
+       **************************************************************/
+      var map = L.map('map').setView([12.9716, 77.5946], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
-      setTimeout(function() {
-        var container = routingControl.getContainer();
-        if (container) {
-          var closeBtn = document.createElement('button');
-          closeBtn.innerHTML = '×';
-          closeBtn.style.position = 'absolute';
-          closeBtn.style.top = '5px';
-          closeBtn.style.right = '5px';
-          closeBtn.style.background = 'transparent';
-          closeBtn.style.border = 'none';
-          closeBtn.style.color = '#fff';
-          closeBtn.style.fontSize = '1.5rem';
-          closeBtn.style.cursor = 'pointer';
-          closeBtn.style.zIndex = '10000';
-          closeBtn.addEventListener('click', function() {
-            map.removeControl(routingControl); routingControl = null;
+
+      // Add current location marker and parking spot pins
+      var currentLocationMarker;
+      var parkingMarkers = []; // To hold parking spot markers
+
+      function updateCurrentLocation() {
+        if (!navigator.geolocation) {
+          alert("Geolocation not supported.");
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          var driverLat = pos.coords.latitude;
+          var driverLng = pos.coords.longitude;
+          var redIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
           });
-          container.appendChild(closeBtn);
-        }
-      }, 500);
-    }
+          if (currentLocationMarker) {
+            currentLocationMarker.setLatLng([driverLat, driverLng]);
+          } else {
+            currentLocationMarker = L.marker([driverLat, driverLng], {icon: redIcon}).addTo(map)
+              .bindPopup("You are here");
+          }
+        }, function(err) {
+          console.error(err);
+          alert("Could not get current location.");
+        }, { enableHighAccuracy: true });
+      }
+      updateCurrentLocation();
 
-    /**************************************************************
-     * CURRENT LOCATION
-     **************************************************************/
-    var driverLat = null, driverLng = null, currentLocationMarker;
-    function updateCurrentLocation() {
-      if (!navigator.geolocation) { alert("Geolocation not supported."); return; }
-      navigator.geolocation.getCurrentPosition(function(pos) {
-        driverLat = pos.coords.latitude; driverLng = pos.coords.longitude;
-        var redIcon = L.icon({
-          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-          iconSize: [25, 41], iconAnchor: [12, 41],
-          popupAnchor: [1, -34], shadowSize: [41, 41]
-        });
-        if (currentLocationMarker) {
-          currentLocationMarker.setLatLng([driverLat, driverLng]);
-        } else {
-          currentLocationMarker = L.marker([driverLat, driverLng], {icon: redIcon}).addTo(map)
-            .bindPopup("You are here");
-        }
-      }, function(err) { console.error(err); alert("Could not get current location."); }, { enableHighAccuracy: true });
-    }
-    updateCurrentLocation();
+      // Spots data from backend (populated via Jinja)
+      var spotsData = [
+        {% for spot in available_spots %}
+        {
+          id: "{{ spot.id }}",
+          lat: {{ spot.lat }},
+          lng: {{ spot.lng }},
+          price: parseFloat("{{ spot.price }}"),
+          from: "{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}",
+          to: "{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}",
+          location: "{{ spot.location }}",
+          two_wheeler: {{ (spot.spaces | selectattr('vehicle_type', 'equalto', '2W') | list | length) }},
+          four_wheeler: {{ (spot.spaces | selectattr('vehicle_type', 'equalto', '4W') | list | length) }},
+          description: "{{ spot.description or 'No description available' }}"
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+      ];
+      console.log("Driver Spots Data:", spotsData);
 
-    /**************************************************************
-     * SPOTS DATA (from backend)
-     **************************************************************/
-    var spotsData = [
-      {% for spot in available_spots %}
-      {
-        id: "{{ spot.id }}",
-        lat: {{ spot.lat }},
-        lng: {{ spot.lng }},
-        price: parseFloat("{{ spot.price }}"),
-        from: "{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}",
-        to: "{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}",
-        location: "{{ spot.location }}",
-        two_wheeler: {{ spot.two_wheeler_spaces or 0 }},
-        four_wheeler: {{ spot.four_wheeler_spaces or 0 }},
-        description: "{{ spot.description or 'No description available' }}"
-      }{% if not loop.last %},{% endif %}
-      {% endfor %}
-    ];
-    console.log("Driver Spots Data:", spotsData);
-    spotsData.forEach(function(s) {
-      L.marker([s.lat, s.lng]).addTo(map)
-        .bindPopup("<b>" + s.location + "</b><br>Price: ₹" + s.price);
-    });
-
-    /**************************************************************
-     * SPOTS PANEL (Right Side)
-     **************************************************************/
-    var spotsPanel = document.getElementById("spotsPanel"),
-        spotsListEl = document.getElementById("spotsList"),
-        spotsPanelClose = document.getElementById("spotsPanelClose");
-    spotsPanelClose.onclick = function() { closeSpotsPanel(); };
-    function openSpotsPanel(nearbySpots) {
-      const toggleButton = document.getElementById("sidebarToggle");
-      if (toggleButton) toggleButton.classList.add("hidden");
-      spotsListEl.innerHTML = "";
-      nearbySpots.forEach(function(s) {
-        var div = document.createElement("div");
-        div.className = "spot-list-item";
-        var spotHtml = "";
-        spotHtml += "<p><strong>" + s.location + "</strong></p>";
-        spotHtml += "<p class='detail'>Price: ₹" + s.price + "</p>";
-        spotHtml += "<p class='detail'>Available: " + (s.from || "N/A") + " - " + (s.to || "N/A") + "</p>";
-        spotHtml += "<p class='detail'>2-Wheeler Spots: " + s.two_wheeler + "</p>";
-        spotHtml += "<p class='detail'>4-Wheeler Spots: " + s.four_wheeler + "</p>";
-        spotHtml += "<p class='detail'>Description: " + s.description + "</p>";
-        // Updated redirect: now pointing to "/parking/booking_driver"
-        spotHtml += "<div class='spot-actions'><button onclick='spotDirections(" + s.lat + "," + s.lng + ")'>Directions</button>";
-        spotHtml += "<button onclick='redirectToBooking(\"" + s.id + "\")'>Book</button></div>";
-        div.innerHTML = spotHtml;
-        div.addEventListener("click", function() { map.setView([s.lat, s.lng], 15); });
-        spotsListEl.appendChild(div);
+      // Add markers for each parking spot
+      spotsData.forEach(function(spot) {
+        var marker = L.marker([spot.lat, spot.lng]).addTo(map)
+          .bindPopup("<strong>" + spot.location + "</strong><br>Price: ₹" + spot.price);
+        parkingMarkers.push(marker);
       });
-      spotsPanel.classList.add("open");
-      mainContent.classList.add("shifted-left");
-    }
-    function closeSpotsPanel() {
-      spotsPanel.classList.remove("open");
-      mainContent.classList.remove("shifted-left");
-      const toggleButton = document.getElementById("sidebarToggle");
-      if (toggleButton) toggleButton.classList.remove("hidden");
-    }
-    function openSpotsPanelAll() { openSpotsPanel(spotsData); }
 
-    /**************************************************************
-     * MAP SEARCH FUNCTIONALITY
-     **************************************************************/
-    var mapSearchInput = document.getElementById("mapSearchInput"),
-        suggestionsEl = document.getElementById("suggestions"),
-        searchTimeout = null;
-    mapSearchInput.addEventListener("input", function() {
-      clearTimeout(searchTimeout);
-      var query = this.value.trim();
-      if(query.length < 3) { suggestionsEl.style.display = "none"; return; }
-      searchTimeout = setTimeout(function() {
-        var url = "https://nominatim.openstreetmap.org/search?format=json&countrycodes=in&q=" + encodeURIComponent(query);
-        fetch(url)
-          .then(r => r.json())
-          .then(data => {
-            suggestionsEl.innerHTML = "";
-            if(data && data.length > 0) {
-              data.forEach(function(item) {
-                var div = document.createElement("div");
-                div.className = "suggestion-item";
-                div.textContent = item.display_name;
-                div.addEventListener("click", function() {
-                  var lat = parseFloat(item.lat), lng = parseFloat(item.lon);
-                  map.setView([lat, lng], 14);
-                  suggestionsEl.style.display = "none";
-                  mapSearchInput.value = item.display_name;
-                  var nearby = spotsData.filter(function(s) {
-                    var dist = map.distance([lat, lng], [s.lat, s.lng]);
-                    return dist < 2000;
-                  });
-                  openSpotsPanel(nearby);
-                });
-                suggestionsEl.appendChild(div);
-              });
-              suggestionsEl.style.display = "block";
-            } else {
-              suggestionsEl.innerHTML = "<div class='suggestion-item'>No results found</div>";
-              suggestionsEl.style.display = "block";
-            }
+      /**************************************************************
+       * SPOTS PANEL (Right Side)
+       **************************************************************/
+      var spotsPanel = document.getElementById("spotsPanel"),
+          spotsListEl = document.getElementById("spotsList"),
+          spotsPanelClose = document.getElementById("spotsPanelClose");
+      spotsPanelClose.onclick = function() { closeSpotsPanel(); };
+
+      function openSpotsPanel(nearbySpots) {
+        const toggleButton = document.getElementById("sidebarToggle");
+        if (toggleButton) toggleButton.classList.add("hidden");
+        spotsListEl.innerHTML = "";
+        nearbySpots.forEach(function(s) {
+          var div = document.createElement("div");
+          div.className = "spot-list-item";
+
+          var pLocation = document.createElement("p");
+          pLocation.innerHTML = "<strong>" + s.location + "</strong>";
+          div.appendChild(pLocation);
+
+          var pPrice = document.createElement("p");
+          pPrice.className = "detail";
+          pPrice.textContent = "Price: ₹" + s.price;
+          div.appendChild(pPrice);
+
+          var pAvailable = document.createElement("p");
+          pAvailable.className = "detail";
+          pAvailable.textContent = "Available: " + (s.from || "N/A") + " - " + (s.to || "N/A");
+          div.appendChild(pAvailable);
+
+          var pTwoWheeler = document.createElement("p");
+          pTwoWheeler.className = "detail";
+          pTwoWheeler.textContent = "2-Wheeler Spots: " + s.two_wheeler;
+          div.appendChild(pTwoWheeler);
+
+          var pFourWheeler = document.createElement("p");
+          pFourWheeler.className = "detail";
+          pFourWheeler.textContent = "4-Wheeler Spots: " + s.four_wheeler;
+          div.appendChild(pFourWheeler);
+
+          var pDescription = document.createElement("p");
+          pDescription.className = "detail";
+          pDescription.textContent = "Description: " + s.description;
+          div.appendChild(pDescription);
+
+          var actionsDiv = document.createElement("div");
+          actionsDiv.className = "spot-actions";
+
+          var btnDirections = document.createElement("button");
+          btnDirections.type = "button";
+          btnDirections.textContent = "Directions";
+          btnDirections.addEventListener("click", function(e) {
+            e.stopPropagation();
+            spotDirections(s.lat, s.lng);
           });
-      }, 300);
-    });
+          actionsDiv.appendChild(btnDirections);
 
-    /**************************************************************
-     * REDIRECT TO BOOKING PAGE
-     **************************************************************/
-    // Save the current URL so the booking page can redirect back,
-    // then redirect to the booking page route.
-    function redirectToBooking(spotId) {
-      localStorage.setItem("returnURL", window.location.href);
-      // IMPORTANT: Because your parking blueprint is registered with "/parking",
-      // the booking page route is "/parking/booking_driver?spotId=..."
-      window.location.href = "/parking/booking_driver?spotId=" + encodeURIComponent(spotId);
-    }
+          var linkBook = document.createElement("a");
+          linkBook.href = "/parking/booking_driver?spotId=" + encodeURIComponent(s.id);
+          linkBook.textContent = "Book";
+          linkBook.addEventListener("click", function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            window.location.href = this.href;
+          });
+          actionsDiv.appendChild(linkBook);
+
+          div.appendChild(actionsDiv);
+
+          div.addEventListener("click", function(e) {
+            if (e.target.closest("button") || e.target.closest("a")) return;
+            map.setView([s.lat, s.lng], 15);
+          });
+
+          spotsListEl.appendChild(div);
+        });
+        spotsPanel.classList.add("open");
+        mainContent.classList.add("shifted-left");
+      }
+      function closeSpotsPanel() {
+        spotsPanel.classList.remove("open");
+        mainContent.classList.remove("shifted-left");
+        const toggleButton = document.getElementById("sidebarToggle");
+        if (toggleButton) toggleButton.classList.remove("hidden");
+      }
+      window.openSpotsPanelAll = function() {
+        openSpotsPanel(spotsData);
+      };
+
+      /**************************************************************
+       * MAP SEARCH FUNCTIONALITY
+       **************************************************************/
+      var mapSearchInput = document.getElementById("mapSearchInput"),
+          suggestionsEl = document.getElementById("suggestions"),
+          searchTimeout = null;
+      mapSearchInput.addEventListener("input", function() {
+        clearTimeout(searchTimeout);
+        var query = this.value.trim();
+        if (query.length < 3) {
+          suggestionsEl.style.display = "none";
+          return;
+        }
+        searchTimeout = setTimeout(function() {
+          var url = "https://nominatim.openstreetmap.org/search?format=json&countrycodes=in&q=" + encodeURIComponent(query);
+          fetch(url)
+            .then(r => r.json())
+            .then(data => {
+              suggestionsEl.innerHTML = "";
+              if (data && data.length > 0) {
+                data.forEach(function(item) {
+                  var div = document.createElement("div");
+                  div.className = "suggestion-item";
+                  div.textContent = item.display_name;
+                  div.addEventListener("click", function() {
+                    var lat = parseFloat(item.lat),
+                        lng = parseFloat(item.lon);
+                    map.setView([lat, lng], 14);
+                    suggestionsEl.style.display = "none";
+                    mapSearchInput.value = item.display_name;
+                    var nearby = spotsData.filter(function(s) {
+                      var dist = map.distance([lat, lng], [s.lat, s.lng]);
+                      return dist < 2000;
+                    });
+                    openSpotsPanel(nearby);
+                  });
+                  suggestionsEl.appendChild(div);
+                });
+                suggestionsEl.style.display = "block";
+              } else {
+                suggestionsEl.innerHTML = "<div class='suggestion-item'>No results found</div>";
+                suggestionsEl.style.display = "block";
+              }
+            });
+        }, 300);
+      });
+    });
   </script>
 </body>
 </html>

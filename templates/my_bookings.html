@@ -4,29 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Smart Parking - My Bookings</title>
-  <!-- Poppins Font -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <!-- Leaflet CSS -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- Leaflet CSS for Map Previews -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    /* Base & Layout */
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    /* Reset & Base */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
+      font-family: 'Poppins', sans-serif;
       background: #121212 url("../static/images/background.jpg") no-repeat center center;
       background-size: cover;
-      background-attachment: fixed;
-      color: #fff;
+      color: #eee;
       min-height: 100vh;
-      overflow: auto;
+      overflow-x: hidden;
+      line-height: 1.6;
     }
+    a { color: inherit; text-decoration: none; }
+    /* Fixed Header */
     header {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
+      top: 0; left: 0; right: 0;
+      height: 70px;
       background: #1f1f1f;
       padding: 1rem 2rem;
       display: flex;
@@ -35,241 +36,278 @@
       border-bottom: 2px solid #333;
       z-index: 10000;
     }
-    .hamburger { font-size: 1.5rem; cursor: pointer; color: #fff; margin-right: 1rem; }
-    header h1 { font-size: 1.5rem; letter-spacing: 1px; flex: 1; text-align: left; }
-    nav a { margin-left: 1.5rem; text-decoration: none; transition: opacity 0.3s; }
-    nav a img { width: 40px; height: 40px; vertical-align: middle; }
-    nav a:hover { opacity: 0.8; }
-    .dashboard {
-      display: grid;
-      grid-template-columns: 250px 1fr;
-      min-height: calc(100vh - 60px);
-      margin-top: 60px;
-      position: relative;
+    header h1 {
+      font-size: 1.6rem;
+      letter-spacing: 1px;
+      text-align: left;
+      flex: 1;
+      margin: 0;
     }
-    /* Sidebar */
+    header nav a img {
+      width: 40px; height: 40px;
+      margin-left: 1.5rem;
+      transition: opacity 0.3s;
+    }
+    header nav a:hover { opacity: 0.8; }
+    .hamburger {
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #fff;
+      margin-right: 1rem;
+    }
+    /* Fixed Sidebar */
     .sidebar {
+      position: fixed;
+      top: 70px;
+      left: 0;
+      bottom: 0;
+      width: 250px;
       background: #1f1f1f;
       padding: 2rem 1rem;
       border-right: 2px solid #333;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
-      transition: transform 0.3s ease;
+      gap: 1.2rem;
       z-index: 9998;
+      transition: transform 0.3s ease;
     }
     .sidebar a {
       display: block;
       padding: 0.75rem 1rem;
-      color: #e0e0e0;
-      text-decoration: none;
       border-left: 4px solid transparent;
       transition: background 0.3s, border-color 0.3s;
+      font-size: 1rem;
     }
-    .sidebar a:hover,
-    .sidebar a.active {
+    .sidebar a:hover, .sidebar a.active {
       background: #333;
       border-left: 4px solid #00e5ff;
     }
-    .sidebar.collapsed { transform: translateX(-250px); }
+    .sidebar.collapsed {
+      transform: translateX(-250px);
+    }
     /* Main Content */
-    .content { padding: 2rem; overflow-y: auto; }
-    .my-bookings-container {
-      background: rgba(31, 31, 31, 0.95);
+    .content {
+      position: absolute;
+      top: 70px;
+      left: 250px;
+      right: 0;
+      bottom: 0;
+      overflow-y: auto;
       padding: 2rem;
-      border-radius: 12px;
+      transition: left 0.3s ease;
+    }
+    /* Rounded Container for Bookings */
+    .bookings-container {
+      background: rgba(31,31,31,0.95);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin: 0 auto;
       max-width: 1200px;
-      margin: 2rem auto;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-      animation: fadeIn 1s ease;
     }
-    .my-bookings-container h2 {
-      text-align: center;
-      font-size: 2rem;
+    /* Heading Container */
+    .page-heading {
       margin-bottom: 1.5rem;
-      color: #00e5ff;
     }
-    /* One booking card per row */
+    .page-heading h2 {
+      font-size: 1.8rem;
+      color: #00e5ff;
+      text-align: left;
+      margin: 0;
+    }
+    /* Booking Cards Grid */
     .bookings-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 2rem;
     }
-    /* Booking Card */
     .booking-card {
       background: #1f1f1f;
       border-radius: 12px;
       overflow: hidden;
-      transition: transform 0.3s, box-shadow 0.3s;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
       display: flex;
       flex-direction: column;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
     }
     .booking-card:hover {
       transform: translateY(-5px);
       box-shadow: 0 8px 16px rgba(0,0,0,0.6);
     }
-    /* Header Section */
     .booking-header {
       background: #2c2c2c;
       padding: 1rem;
       border-bottom: 1px solid #444;
       display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    .booking-meta {
-      display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+    .booking-header .meta {
       font-size: 0.9rem;
       color: #ccc;
-    }
-    .booking-meta .booking-id {
       font-weight: 600;
+    }
+    .booking-header .booking-time {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
       color: #00e5ff;
     }
-    .booking-meta .booking-datetime {
-      font-weight: 600;
-      color: #fff;
-    }
-    .booking-time { font-size: 0.9rem; color: #00e5ff; }
-    /* Timeline for Booked Slots */
-    .booking-timeline-container { margin-top: 0.5rem; }
-    .booking-timeline {
-      position: relative;
-      height: 8px;
-      background: #444;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    .timeline-booked {
-      position: absolute;
-      height: 100%;
-      background: #00e5ff;
-    }
-    .timeline-labels {
-      font-size: 0.8rem;
-      color: #ccc;
-      margin-top: 0.25rem;
-      display: flex;
-      justify-content: space-between;
-    }
-    /* Body Section */
     .booking-body {
+      padding: 1.2rem;
       display: flex;
-      gap: 1rem;
-      padding: 1rem;
+      flex-wrap: wrap;
+      gap: 1.5rem;
     }
-    .booking-details { flex: 1; }
+    .booking-details {
+      flex: 1;
+      min-width: 250px;
+    }
     .booking-details p {
       margin-bottom: 0.6rem;
       font-size: 0.95rem;
       color: #ccc;
     }
     .booking-details p strong { color: #00e5ff; }
+    .booking-details table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    .booking-details th,
+    .booking-details td {
+      padding: 0.4rem;
+      border-bottom: 1px solid #444;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    .booking-details th { background: #2a2a2a; }
     .booking-map {
-      width: 220px;
-      height: 150px;
+      width: 240px;
+      height: 160px;
       border-radius: 8px;
       overflow: hidden;
+      flex-shrink: 0;
     }
-    /* Footer / Actions */
-    .booking-actions {
+    .booking-footer {
+      padding: 1rem;
+      border-top: 1px solid #444;
       display: flex;
       flex-wrap: wrap;
       gap: 1rem;
-      padding: 1rem;
-      border-top: 1px solid #444;
       justify-content: flex-end;
     }
-    .booking-actions button,
-    .booking-actions a,
-    .booking-actions form button {
-      padding: 0.5rem 1rem;
+    /* Common Button Styling for Booking Footer */
+    .booking-footer button {
+      padding: 0.75rem 1.25rem;
+      font-size: 1rem;
       border: none;
-      border-radius: 4px;
+      border-radius: 8px;
       cursor: pointer;
       font-weight: 600;
-      text-decoration: none;
       white-space: nowrap;
-      transition: background 0.3s;
+      transition: background 0.3s ease, transform 0.2s ease;
+      text-decoration: none;
     }
-    .view-directions-btn { background: #00e5ff; color: #000; }
-    .view-directions-btn:hover { background: #00cce0; }
-    .pay-btn { background: #ff9800; color: #fff; }
-    .pay-btn:hover { background: #e68900; }
-    .cancel-btn { background: #ff4444; color: #fff; }
-    .cancel-btn:hover { background: #ff2222; }
-    .view-receipt-btn { background: #00a8ff; color: #fff; }
-    .view-receipt-btn:hover { background: #0088cc; }
+    .directions-btn {
+      background: #00e5ff;
+      color: #000;
+    }
+    .directions-btn:hover {
+      background: #00cce0;
+      transform: scale(1.03);
+    }
+    .invoice-btn {
+      background: #ffc107;
+      color: #000;
+    }
+    .invoice-btn:hover {
+      background: #ffb300;
+      transform: scale(1.03);
+    }
+    .cancel-btn {
+      background: #ff4444;
+      color: #fff;
+    }
+    .cancel-btn:hover {
+      background: #ff2222;
+      transform: scale(1.03);
+    }
+    .invoice-section {
+      background: #2a2a2a;
+      padding: 1rem;
+      border-top: 1px solid #444;
+      display: none;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      border-radius: 0 0 12px 12px;
+    }
+    .invoice-section table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+    }
+    .invoice-section th,
+    .invoice-section td {
+      padding: 0.4rem;
+      border-bottom: 1px solid #555;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    .invoice-total {
+      text-align: right;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #00e5ff;
+      margin-top: 0.5rem;
+    }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    @media (max-width: 800px) {
-      .booking-body { flex-direction: column; }
-      .booking-map { width: 100%; height: 200px; }
+    @media (max-width: 768px) {
+      .dashboard { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .content { left: 0; }
+      header { padding: 0 1rem; }
     }
-    /* Reinvented Receipt Popup */
-    #receiptPopup {
+    /* Modal Styles */
+    .modal {
       display: none;
       position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.85);
-      z-index: 9999;
-      justify-content: center;
-      align-items: center;
-      padding: 1rem;
-    }
-    #receiptPopup.show { display: flex; }
-    #receiptPopup .popup-content {
-      background: #1f1f1f;
-      color: #fff;
-      padding: 2rem;
-      border-radius: 12px;
-      max-width: 500px;
+      z-index: 10001;
+      left: 0;
+      top: 0;
       width: 100%;
-      position: relative;
-      animation: fadeIn 0.4s ease-in-out;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.8);
     }
-    #receiptPopup .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: #ff4444;
-      border: none;
+    .modal-content {
+      background-color: #1f1f1f;
+      margin: 10% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 90%;
+      max-width: 400px;
+      border-radius: 8px;
       color: #fff;
-      padding: 0.4rem 0.6rem;
-      border-radius: 50%;
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
       cursor: pointer;
-      font-size: 1rem;
     }
-    #receiptPopup h3 {
-      color: #00e5ff;
-      margin-bottom: 1rem;
-      text-align: center;
-    }
-    #receiptPopup table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 1rem;
-    }
-    #receiptPopup table td {
-      padding: 0.5rem;
-      border-bottom: 1px solid #444;
-      font-size: 0.9rem;
-    }
-    #receiptPopup table td:first-child {
-      color: #00e5ff;
-      font-weight: 600;
-      width: 40%;
+    .close:hover,
+    .close:focus {
+      color: #fff;
+      text-decoration: none;
+      cursor: pointer;
     }
   </style>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body>
-  <!-- FIXED HEADER -->
   <header>
     <div class="hamburger" onclick="toggleSidebar()">☰</div>
     <h1>Driver Dashboard</h1>
@@ -282,234 +320,260 @@
       </a>
     </nav>
   </header>
-
   <div class="dashboard">
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
+    <!-- Fixed Sidebar -->
+    <aside class="sidebar" id="sidebar">
       <a href="{{ url_for('dashboard.driver_dashboard') }}">Home</a>
       <a href="{{ url_for('dashboard.my_bookings') }}" class="active">My Bookings</a>
       <a href="{{ url_for('dashboard.history_driver') }}">History</a>
     </aside>
-
-    <!-- MAIN CONTENT -->
-    <main class="content">
-      <div class="my-bookings-container">
-        <h2>My Bookings</h2>
-        {% if booked_spots %}
+    <!-- Main Content -->
+    <main class="content" id="mainContent">
+      <div class="bookings-container">
+        <div class="page-heading">
+          <h2>Your Bookings</h2>
+        </div>
+        {% if grouped_bookings and grouped_bookings|length > 0 %}
           <div class="bookings-grid">
-            {% for booking in booked_spots %}
-              <div class="booking-card">
-                <!-- Booking Header -->
+            {% for session_id, bookings in grouped_bookings.items() %}
+              <div class="booking-card" id="booking-card-{{ session_id }}">
                 <div class="booking-header">
-                  <div class="booking-meta">
-                    <span class="booking-datetime">
-                      Booked on: {{ booking.created_at.strftime('%Y-%m-%d') }} at {{ booking.created_at.strftime('%H:%M:%S') }}
-                    </span>
-                    {% if booking.vehicle_number and booking.created_at %}
-                      {% set booking_id = "BK" ~ booking.created_at.strftime('%d%H%M%S') ~ booking.vehicle_number[-2:] %}
-                    {% else %}
-                      {% set booking_id = booking.id %}
-                    {% endif %}
-                    <span class="booking-id">#{{ booking_id }}</span>
+                  <div class="meta">
+                    <span>Booked on: {{ bookings[0].created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
                   </div>
-                  {% if booking.start_time and booking.end_time %}
-                    {% set start_minutes = booking.start_time.hour * 60 + booking.start_time.minute %}
-                    {% set end_minutes = booking.end_time.hour * 60 + booking.end_time.minute %}
-                    {% set duration = ((end_minutes - start_minutes) / 60) | round(2) %}
-                    {% set total_price = (booking.spot.price * duration) | round(2) %}
-                    <div class="booking-time">
-                      Time Booked: {{ booking.start_time.strftime('%H:%M') }} – {{ booking.end_time.strftime('%H:%M') }}
-                    </div>
-                    <div class="booking-timeline-container">
-                      <div class="booking-timeline">
-                        <div class="timeline-booked" style="left: {{ (start_minutes/1440*100)|round(2) }}%; width: {{ ((end_minutes - start_minutes)/1440*100)|round(2) }}%;"></div>
-                      </div>
-                      <div class="timeline-labels">
-                        <span>{{ booking.start_time.strftime('%H:%M') }}</span>
-                        <span>{{ booking.end_time.strftime('%H:%M') }}</span>
-                      </div>
-                    </div>
-                  {% endif %}
                 </div>
-                <!-- Booking Body -->
                 <div class="booking-body">
                   <div class="booking-details">
-                    <p><strong>Owner:</strong> {{ booking.spot.owner.username }}</p>
-                    <p><strong>Vehicle Number:</strong> {{ booking.vehicle_number }}</p>
-                    <p><strong>Location:</strong> {{ booking.spot.location }}</p>
-                    <p>
-                      <strong>Price:</strong><br>
-                      Hourly Rate: ₹{{ booking.spot.price }}<br>
-                      Duration: {{ duration if duration is defined else "N/A" }} hours<br>
-                      <strong>Total:</strong> ₹{{ total_price if total_price is defined else booking.spot.price }}
-                    </p>
-                    <p>
-                      <strong>Booked Spots:</strong>
-                      2-Wheeler: {{ booking.two_wheeler }}, 4-Wheeler: {{ booking.four_wheeler }}
-                    </p>
-                    <p><strong>Status:</strong> <span class="booking-status {{ booking.status|lower }}">{{ booking.status }}</span></p>
+                    {% if bookings[0].spot_description %}
+                      <p><strong>Description:</strong> {{ bookings[0].spot_description }}</p>
+                    {% else %}
+                      <p><strong>Description:</strong> No description available.</p>
+                    {% endif %}
+                    <table id="booking-table-{{ session_id }}">
+                      <thead>
+                        <tr>
+                          <th>Vehicle Type</th>
+                          <th>Space #</th>
+                          <th>Time</th>
+                          <th>Vehicle Number</th>
+                          <th>Status</th>
+                          <th>Booking ID</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% set ns = namespace(total_hours=0) %}
+                        {% for booking in bookings %}
+                          {% set start_str = booking.start_time.strftime('%H:%M') %}
+                          {% set end_str = booking.end_time.strftime('%H:%M') %}
+                          {% set start_parts = start_str.split(':') %}
+                          {% set end_parts = end_str.split(':') %}
+                          {% set start_minutes = (start_parts[0]|int * 60) + (start_parts[1]|int) %}
+                          {% set end_minutes = (end_parts[0]|int * 60) + (end_parts[1]|int) %}
+                          {% set diff = (end_minutes - start_minutes) / 60 %}
+                          {% set ns.total_hours = ns.total_hours + diff %}
+                          <tr id="booking-row-{{ booking.id }}">
+                            <td>{{ booking.vehicle_type }}</td>
+                            <td>{{ booking.sub_spot_number }}</td>
+                            <td>{{ start_str }} - {{ end_str }}</td>
+                            <td id="vehicle-number-{{ booking.id }}">{{ booking.vehicle_number }}</td>
+                            <td>{{ booking.status }}</td>
+                            <td>{{ booking.booking_id }}</td>
+                            <td>
+                              {% if booking.status == 'Pending' %}
+                                <button class="cancel-btn" onclick="cancelBooking({{ booking.id }}, '{{ session_id }}')">Cancel</button>
+                              {% else %}
+                                Locked
+                              {% endif %}
+                            </td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                    <button class="invoice-btn" onclick="toggleInvoice('invoice-{{ session_id }}')">View Invoice</button>
+                    <div class="invoice-section" id="invoice-{{ session_id }}">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Space</th>
+                            <th>Hours</th>
+                            <th>Price/hr (₹)</th>
+                            <th>Amount (₹)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for booking in bookings %}
+                            {% set start_str = booking.start_time.strftime('%H:%M') %}
+                            {% set end_str = booking.end_time.strftime('%H:%M') %}
+                            {% set start_parts = start_str.split(':') %}
+                            {% set end_parts = end_str.split(':') %}
+                            {% set start_minutes = (start_parts[0]|int * 60) + (start_parts[1]|int) %}
+                            {% set end_minutes = (end_parts[0]|int * 60) + (end_parts[1]|int) %}
+                            {% set hours = ((end_minutes - start_minutes) / 60)|round(2) %}
+                            <tr>
+                              <td>{{ booking.vehicle_type }} - #{{ booking.sub_spot_number }}</td>
+                              <td>{{ hours }}</td>
+                              <td>{{ booking.spot_price }}</td>
+                              <td>{{ (hours * booking.spot_price)|round(2) }}</td>
+                            </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                      <div class="invoice-total" id="invoice-total-{{ session_id }}">
+                        Total Hours: {{ ns.total_hours|round(2) }}<br/>
+                        Total Amount: ₹{{ (ns.total_hours * bookings[0].spot_price)|round(2) }}
+                      </div>
+                    </div>
                   </div>
-                  <div class="booking-map" id="map-{{ booking.id }}"></div>
+                  <div class="booking-map" id="map-{{ session_id }}"></div>
                 </div>
-                <!-- Booking Actions -->
-                <div class="booking-actions">
-                  <button class="view-directions-btn"
-                          data-spot-id="{{ booking.spot.id }}"
-                          data-lat="{{ booking.spot.lat }}"
-                          data-lng="{{ booking.spot.lng }}">
-                    Directions
+                <div class="booking-footer">
+                  <button class="directions-btn"
+                          data-lat="{{ bookings[0].spot_lat }}"
+                          data-lng="{{ bookings[0].spot_lng }}">
+                    Get Directions
                   </button>
-                  <button type="button" class="pay-btn booking-pay-btn"
-                          data-booking-id="{{ booking.id }}"
-                          data-amount="{{ total_price if total_price is defined else booking.spot.price }}"
-                          data-owner="{{ booking.spot.owner.username }}"
-                          data-phone="{{ booking.spot.owner.payment_details.phone_number if booking.spot.owner.payment_details and booking.spot.owner.payment_details.phone_number else 'N/A' }}"
-                          data-upi="{{ booking.spot.owner.payment_details.upi_id if booking.spot.owner.payment_details and booking.spot.owner.payment_details.upi_id else 'N/A' }}">
-                    Pay
-                  </button>
-                  <button type="button" class="view-receipt-btn"
-                          data-booking-id="#{{ booking_id }}"
-                          data-datetime="{{ booking.created_at.strftime('%Y-%m-%d %H:%M:%S') }}"
-                          {% if booking.start_time and booking.end_time %}
-                          data-booking-time="{{ booking.start_time.strftime('%H:%M') }} – {{ booking.end_time.strftime('%H:%M') }}"
-                          {% else %}
-                          data-booking-time="N/A"
-                          {% endif %}
-                          data-duration="{{ duration if duration is defined else 'N/A' }}"
-                          data-total-price="₹{{ total_price if total_price is defined else booking.spot.price }}"
-                          data-owner="{{ booking.spot.owner.username }}"
-                          data-vehicle="{{ booking.vehicle_number }}"
-                          data-location="{{ booking.spot.location }}"
-                          data-hourly-rate="₹{{ booking.spot.price }}"
-                          data-spots="2-Wheeler: {{ booking.two_wheeler }}, 4-Wheeler: {{ booking.four_wheeler }}">
-                    View Receipt
-                  </button>
-                  <form method="POST"
-                        action="{{ url_for('parking.cancel_booking', booking_id=booking.id) }}"
-                        onsubmit="return confirm('Are you sure you want to delete this booking?');"
-                        style="display: inline;">
-                    <button type="submit" class="cancel-btn">Delete</button>
-                  </form>
+                  <button class="invoice-btn" onclick="openPaymentModal({{ bookings[0].id }})">Pay Now</button>
                 </div>
               </div>
             {% endfor %}
           </div>
         {% else %}
-          <p style="text-align: center;">No bookings found.</p>
+          <p style="text-align: center; font-size: 1.2rem; margin-top: 2rem;">No bookings found.</p>
         {% endif %}
       </div>
     </main>
   </div>
-
-  <!-- Reinvented Receipt Popup Modal -->
-  <div id="receiptPopup">
-    <div class="popup-content">
-      <button id="closeReceiptPopup" class="close-btn">X</button>
-      <h3>Booking Receipt</h3>
-      <table>
-        <tr>
-          <td>Booking ID</td>
-          <td id="receiptBookingId"></td>
-        </tr>
-        <tr>
-          <td>Booked On</td>
-          <td id="receiptDatetime"></td>
-        </tr>
-        <tr>
-          <td>Time Booked</td>
-          <td id="receiptTime"></td>
-        </tr>
-        <tr>
-          <td>Duration</td>
-          <td id="receiptDuration"></td>
-        </tr>
-        <tr>
-          <td>Total Price</td>
-          <td id="receiptTotalPrice"></td>
-        </tr>
-        <tr>
-          <td>Owner</td>
-          <td id="receiptOwner"></td>
-        </tr>
-        <tr>
-          <td>Vehicle</td>
-          <td id="receiptVehicle"></td>
-        </tr>
-        <tr>
-          <td>Location</td>
-          <td id="receiptLocation"></td>
-        </tr>
-        <tr>
-          <td>Hourly Rate</td>
-          <td id="receiptHourlyRate"></td>
-        </tr>
-        <tr>
-          <td>Booked Spots</td>
-          <td id="receiptSpots"></td>
-        </tr>
-      </table>
+  <!-- Modal Popup for Payment Details -->
+  <div id="paymentModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closePaymentModal()">&times;</span>
+      <div id="paymentModalContent">
+        <!-- Payment details will be loaded here via AJAX -->
+      </div>
     </div>
   </div>
-
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // Sidebar toggle functionality
-    const sidebarEl = document.querySelector('.sidebar');
-    function toggleSidebar() { sidebarEl.classList.toggle('collapsed'); }
-
-    // Initialize Leaflet maps for each booking card
-    {% for booking in booked_spots %}
-      var map{{ booking.id }} = L.map('map-{{ booking.id }}').setView([{{ booking.spot.lat }}, {{ booking.spot.lng }}], 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map{{ booking.id }});
-      L.marker([{{ booking.spot.lat }}, {{ booking.spot.lng }}]).addTo(map{{ booking.id }});
+    function toggleSidebar() {
+      document.getElementById("sidebar").classList.toggle("collapsed");
+    }
+    function toggleInvoice(id) {
+      var el = document.getElementById(id);
+      if (el.style.display === "none" || el.style.display === "") {
+        el.style.display = "flex";
+      } else {
+        el.style.display = "none";
+      }
+    }
+    // Dynamically update invoice totals for a given booking card
+    function updateInvoiceTotals(session_id) {
+      var tableBody = document.querySelector("#booking-table-" + session_id + " tbody");
+      var rows = tableBody.querySelectorAll("tr");
+      var totalHours = 0;
+      rows.forEach(function(row) {
+        var timeText = row.cells[2].innerText.trim();
+        var parts = timeText.split(" - ");
+        if (parts.length === 2) {
+          var startParts = parts[0].split(":");
+          var endParts = parts[1].split(":");
+          var startMinutes = parseInt(startParts[0], 10) * 60 + parseInt(startParts[1], 10);
+          var endMinutes = parseInt(endParts[0], 10) * 60 + parseInt(endParts[1], 10);
+          totalHours += (endMinutes - startMinutes) / 60;
+        }
+      });
+      var spotPrice = parseFloat(document.querySelector("#invoice-" + session_id + " tbody tr td:nth-child(3)").innerText);
+      var totalAmount = totalHours * spotPrice;
+      var invoiceTotalEl = document.getElementById("invoice-total-" + session_id);
+      invoiceTotalEl.innerHTML = "Total Hours: " + totalHours.toFixed(2) + "<br/>Total Amount: ₹" + totalAmount.toFixed(2);
+    }
+    // Cancel booking via AJAX and update the card dynamically
+    function cancelBooking(booking_id, session_id) {
+      if(confirm("Are you sure you want to cancel this booking?")) {
+        fetch("{{ url_for('parking.cancel_booking', booking_id=0) }}".replace("0", booking_id), {
+          method: "POST",
+          headers: {"X-Requested-With": "XMLHttpRequest"}
+        }).then(response => response.json())
+          .then(data => {
+            if(data.error) {
+              alert(data.error);
+            } else {
+              alert("Booking cancelled.");
+              var row = document.getElementById("booking-row-" + booking_id);
+              if(row) {
+                row.parentNode.removeChild(row);
+              }
+              updateInvoiceTotals(session_id);
+              var tableBody = document.querySelector("#booking-table-" + session_id + " tbody");
+              if(tableBody.children.length === 0) {
+                var card = document.getElementById("booking-card-" + session_id);
+                if(card) {
+                  card.parentNode.removeChild(card);
+                }
+              }
+            }
+          }).catch(err => {
+            console.error(err);
+            alert("An error occurred while cancelling booking.");
+          });
+      }
+    }
+    // Initialize map for each booking card (one map per session)
+    {% for session_id, bookings in grouped_bookings.items() %}
+      (function() {
+        var mapEl = document.getElementById("map-" + "{{ session_id }}");
+        if (mapEl) {
+          var map = L.map(mapEl, { zoomControl: false, attributionControl: false })
+                      .setView([{{ bookings[0].spot_lat }}, {{ bookings[0].spot_lng }}], 15);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {}).addTo(map);
+          L.marker([{{ bookings[0].spot_lat }}, {{ bookings[0].spot_lng }}]).addTo(map);
+        }
+      })();
     {% endfor %}
-
     // Directions button functionality
-    document.querySelectorAll(".view-directions-btn").forEach(function(btn) {
+    document.querySelectorAll(".directions-btn").forEach(function(btn) {
       btn.addEventListener("click", function() {
-        var destLat = parseFloat(btn.getAttribute("data-lat"));
-        var destLng = parseFloat(btn.getAttribute("data-lng"));
         if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(function(pos) {
-            var originLat = pos.coords.latitude;
-            var originLng = pos.coords.longitude;
+          navigator.geolocation.getCurrentPosition(function(position) {
+            var originLat = position.coords.latitude;
+            var originLng = position.coords.longitude;
+            var destLat = parseFloat(btn.getAttribute("data-lat"));
+            var destLng = parseFloat(btn.getAttribute("data-lng"));
             var gmapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}`;
-            window.open(gmapsUrl, '_blank');
+            window.open(gmapsUrl, "_blank");
           }, function(err) {
-            alert("Could not get current location for directions.");
+            alert("Unable to retrieve your location for directions.");
           });
         } else {
           alert("Geolocation is not supported by this browser.");
         }
       });
     });
-
-    // Receipt Popup functionality
-    const receiptPopup = document.getElementById("receiptPopup");
-    const closeReceiptPopup = document.getElementById("closeReceiptPopup");
-    document.querySelectorAll(".view-receipt-btn").forEach(function(btn) {
-      btn.addEventListener("click", function() {
-        // Populate receipt details from data attributes
-        document.getElementById("receiptBookingId").textContent = btn.getAttribute("data-booking-id");
-        document.getElementById("receiptDatetime").textContent = btn.getAttribute("data-datetime");
-        document.getElementById("receiptTime").textContent = btn.getAttribute("data-booking-time");
-        document.getElementById("receiptDuration").textContent = btn.getAttribute("data-duration") + " hours";
-        document.getElementById("receiptTotalPrice").textContent = btn.getAttribute("data-total-price");
-        document.getElementById("receiptOwner").textContent = btn.getAttribute("data-owner");
-        document.getElementById("receiptVehicle").textContent = btn.getAttribute("data-vehicle");
-        document.getElementById("receiptLocation").textContent = btn.getAttribute("data-location");
-        document.getElementById("receiptHourlyRate").textContent = btn.getAttribute("data-hourly-rate");
-        document.getElementById("receiptSpots").textContent = btn.getAttribute("data-spots");
-        receiptPopup.classList.add("show");
+    // Payment modal functions: load payment details via AJAX using booking id
+    function openPaymentModal(bookingId) {
+      fetch("{{ url_for('payment.payment_details', booking_id=0) }}".replace("0", bookingId), {
+        method: "GET",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      })
+      .then(response => response.text())
+      .then(html => {
+        document.getElementById("paymentModalContent").innerHTML = html;
+        document.getElementById("paymentModal").style.display = "block";
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Unable to load payment details.");
       });
-    });
-    closeReceiptPopup.addEventListener("click", function() {
-      receiptPopup.classList.remove("show");
-    });
-    window.addEventListener("click", function(e) {
-      if (e.target === receiptPopup) { receiptPopup.classList.remove("show"); }
-    });
+    }
+    function closePaymentModal() {
+      document.getElementById("paymentModal").style.display = "none";
+    }
+    window.onclick = function(event) {
+      var modal = document.getElementById("paymentModal");
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
   </script>
 </body>
 </html>

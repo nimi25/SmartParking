@@ -177,7 +177,6 @@
     <div class="hamburger" onclick="toggleSidebar()">☰</div>
     <h1>Driver Dashboard</h1>
     <nav>
-      <!-- Use profile.driver_profile -->
       <a href="{{ url_for('profile.driver_profile') }}">
         <img src="{{ url_for('static', filename='images/profile.png') }}" alt="Profile" />
       </a>
@@ -205,9 +204,9 @@
             <tr>
               <th>Booking ID</th>
               <th>Location</th>
+              <th>Space</th>
               <th>Booked Date</th>
-              <th>Booked Time</th>
-              <th>Price</th>
+              <th>Time Slot</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -215,19 +214,49 @@
           {% if booking_history %}
             {% for booking in booking_history %}
               <tr>
-                <!-- Build custom booking ID if vehicle_number & created_at exist -->
+                {# Build custom booking ID if vehicle_number & created_at exist #}
                 {% if booking.vehicle_number and booking.created_at %}
                   {% set custom_id = "BK" ~ booking.created_at.strftime('%d%H%M%S') ~ booking.vehicle_number[-2:] %}
+                {% else %}
+                  {% set custom_id = booking.id %}
                 {% endif %}
 
                 <td>{{ custom_id }}</td>
-                <td>{{ booking.spot.location }}</td>
-                <!-- The date/time they booked => booking.created_at -->
-                <td>{{ booking.created_at.strftime('%Y-%m-%d') if booking.created_at else 'N/A' }}</td>
-                <td>{{ booking.created_at.strftime('%I:%M %p') if booking.created_at else 'N/A' }}</td>
-                <td>₹{{ booking.spot.price }}</td>
 
-                <!-- Status logic: if canceled => "Canceled", if owner deleted => "Rejected", else booking.status -->
+                {# Use booking.parking_space.parking_spot for location #}
+                <td>
+                  {{ booking.parking_space.parking_spot.location if booking.parking_space and booking.parking_space.parking_spot else "N/A" }}
+                </td>
+
+                {# Show the sub_spot_number + vehicle_type #}
+                <td>
+                  {% if booking.parking_space %}
+                    {{ booking.parking_space.vehicle_type }} #{{ booking.parking_space.sub_spot_number }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </td>
+
+                {# The date/time they booked => booking.created_at #}
+                <td>
+                  {% if booking.created_at %}
+                    {{ booking.created_at.strftime('%Y-%m-%d') }}<br>
+                    {{ booking.created_at.strftime('%I:%M %p') }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </td>
+
+                {# Start/End time for the booking #}
+                <td>
+                  {% if booking.start_time and booking.end_time %}
+                    {{ booking.start_time.strftime('%H:%M') }} – {{ booking.end_time.strftime('%H:%M') }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </td>
+
+                {# Status logic #}
                 <td>
                   {% if booking.status == 'Canceled' %}
                     Canceled

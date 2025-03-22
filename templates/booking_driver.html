@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    /* Base styles */
     body {
       background: #121212;
       color: #fff;
@@ -17,7 +18,7 @@
       padding: 20px;
     }
     .container {
-      max-width: 800px;
+      max-width: 1000px;
       margin: auto;
       background: #1f1f1f;
       padding: 20px;
@@ -29,16 +30,19 @@
       color: #00e5ff;
       margin-bottom: 20px;
     }
-    .spot-info {
+    .spot-details {
       margin-bottom: 20px;
       padding-bottom: 10px;
       border-bottom: 1px solid #444;
     }
-    .spot-info p { margin: 5px 0; }
+    .spot-details p {
+      margin: 5px 0;
+    }
+    /* Tabs for vehicle types */
     .tabs {
       display: flex;
-      margin-bottom: 20px;
-      border-bottom: 1px solid #444;
+      margin: 20px 0;
+      border-bottom: 2px solid #444;
     }
     .tabs button {
       flex: 1;
@@ -54,48 +58,98 @@
       background: #00e5ff;
       color: #000;
     }
-    .tab-content {
-      margin-bottom: 20px;
+    .instructions {
+      margin: 10px 0;
+      font-size: 0.9rem;
+      color: #ccc;
     }
-    .tab-content label {
-      display: block;
+    /* Grid styles */
+    #gridContainer {
+      margin: 20px 0;
+    }
+    .grid-header, .grid-row {
+      display: grid;
+      grid-template-columns: 100px repeat(var(--num-slots), 1fr);
+      align-items: center;
+      gap: 2px;
+    }
+    .grid-header {
+      font-weight: bold;
+      text-align: center;
       margin-bottom: 5px;
     }
-    .tab-content input[type="number"] {
-      width: 100%;
-      padding: 10px;
-      border-radius: 4px;
-      border: 1px solid #444;
+    .grid-row .cell {
       background: #2a2a2a;
-      color: #fff;
-    }
-    .time-selection {
-      margin-bottom: 20px;
-    }
-    .time-slider {
-      display: flex;
-      overflow-x: auto;
-      border: 1px solid #444;
-      border-radius: 4px;
       padding: 10px;
-      margin-bottom: 10px;
-    }
-    .time-slot {
-      flex: 0 0 auto;
-      padding: 10px 15px;
-      margin-right: 10px;
-      background: #2a2a2a;
-      border-radius: 4px;
+      text-align: center;
       cursor: pointer;
+      user-select: none;
       transition: background 0.2s;
+      position: relative;
     }
-    .time-slot.selected {
+    .grid-row .cell:hover {
+      background: #3a3a3a;
+    }
+    .grid-row .cell.selected {
       background: #00e5ff;
       color: #000;
     }
-    .time-selection-info {
-      margin-bottom: 20px;
-      font-size: 1rem;
+    /* Booked cell styling with strike-through and overlay */
+    .grid-row .cell.booked {
+      background: #ff4444;
+      cursor: not-allowed;
+      text-decoration: line-through;
+    }
+    .grid-row .cell.booked::after {
+      content: "Booked";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.7);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      pointer-events: none;
+    }
+    .row-label {
+      background: #1a1a1a;
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+    /* Cart styles */
+    .cart {
+      margin: 20px 0;
+      padding: 10px;
+      background: #2a2a2a;
+      border-radius: 4px;
+    }
+    .cart h3 {
+      margin-bottom: 10px;
+      color: #00e5ff;
+    }
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid #444;
+    }
+    .cart-item:last-child {
+      border-bottom: none;
+    }
+    .cart-item button {
+      background: #ff4444;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+    /* Form & Buttons */
+    form {
+      margin-top: 20px;
     }
     .form-group {
       margin-bottom: 15px;
@@ -115,6 +169,7 @@
     .buttons {
       display: flex;
       justify-content: space-between;
+      margin-top: 20px;
     }
     .btn {
       padding: 10px 20px;
@@ -126,14 +181,30 @@
     }
     .btn-confirm { background: #00e5ff; color: #000; }
     .btn-cancel { background: #ff4444; color: #fff; }
+    /* Tooltip message styling */
+    .tooltip {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 4px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 100;
+    }
+    .tooltip.show {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Book Your Parking Spot</h1>
-
-    <!-- Parking Spot Details -->
-    <div class="spot-info">
+    <!-- Spot Details -->
+    <div class="spot-details">
       <p><strong>Location:</strong> {{ spot.location }}</p>
       <p><strong>Hourly Rate:</strong> ₹{{ spot.price }}/hr</p>
       <p>
@@ -144,42 +215,39 @@
       </p>
       <p><strong>Description:</strong> {{ spot.description }}</p>
     </div>
-
+    <!-- Vehicle Type Tabs -->
+    <div class="tabs">
+      <button type="button" id="tab2W" class="active">2-Wheeler</button>
+      <button type="button" id="tab4W">4-Wheeler</button>
+    </div>
+    <!-- Instructions -->
+    <div class="instructions">
+      Click and drag within a row to select a continuous time slot. Then click "Add Selection" to add it to your booking cart.
+      You can add multiple selections (across different sub-spots or vehicle types). Booked slots (in red) cannot be selected.
+    </div>
+    <!-- Grid Container -->
+    <div id="gridContainer"></div>
+    <!-- Action Buttons -->
+    <div style="text-align:center; margin:10px 0;">
+      <button type="button" class="btn btn-confirm" onclick="addSelectionToCart()">Add Selection</button>
+      <button type="button" class="btn btn-cancel" onclick="clearCart()">Clear Cart</button>
+    </div>
+    <!-- Booking Cart -->
+    <div class="cart" id="bookingCart">
+      <h3>Booking Cart</h3>
+      <div id="cartItems">
+        <!-- Cart items will be rendered here -->
+      </div>
+    </div>
     <!-- Booking Form -->
-    <form action="{{ url_for('parking.book_spot_driver', spot_id=spot.id) }}" method="POST" id="bookingForm">
-      <!-- Vehicle Type Tabs -->
-      <div class="tabs">
-        <button type="button" id="tab2W" class="active">2-Wheeler</button>
-        <button type="button" id="tab4W">4-Wheeler</button>
-      </div>
-
-      <!-- Tab Contents -->
-      <div id="tab2WContent" class="tab-content">
-        <label for="two_wheeler">Select number of 2-Wheeler spots (max: {{ spot.two_wheeler_spaces }}):</label>
-        <input type="number" name="two_wheeler" id="two_wheeler" min="0" max="{{ spot.two_wheeler_spaces }}" value="0">
-      </div>
-      <div id="tab4WContent" class="tab-content" style="display: none;">
-        <label for="four_wheeler">Select number of 4-Wheeler spots (max: {{ spot.four_wheeler_spaces }}):</label>
-        <input type="number" name="four_wheeler" id="four_wheeler" min="0" max="{{ spot.four_wheeler_spaces }}" value="0">
-      </div>
-
-      <!-- Time Selection -->
-      <div class="time-selection">
-        <label>Select Booking Time:</label>
-        <div id="timeSlider" class="time-slider"></div>
-        <div class="time-selection-info">
-          Selected: <span id="selectedStart">--:--</span> to <span id="selectedEnd">--:--</span>
-        </div>
-        <input type="hidden" name="booking_start" id="booking_start">
-        <input type="hidden" name="booking_end" id="booking_end">
-      </div>
-
-      <!-- Vehicle Number -->
+    <!-- The form submission is handled via AJAX -->
+    <form id="bookingForm" action="{{ url_for('parking.book_spot_driver', spot_id=spot.id) }}" method="POST">
+      <!-- Hidden field to hold JSON string of all cart items -->
+      <input type="hidden" name="cart_data" id="cart_data" value="">
       <div class="form-group">
-        <label for="vehicle_number">Vehicle Number:</label>
-        <input type="text" name="vehicle_number" id="vehicle_number" placeholder="e.g. KA01AB1234" required>
+        <label for="phone_number">Phone Number:</label>
+        <input type="text" name="phone_number" id="phone_number" placeholder="e.g. 9876543210" required>
       </div>
-
       <div class="buttons">
         <button type="button" class="btn btn-cancel" onclick="goBack()">Cancel</button>
         <button type="submit" class="btn btn-confirm">Confirm Booking</button>
@@ -187,114 +255,251 @@
     </form>
   </div>
 
-  <script>
-    // --- Tab Switching ---
-    document.getElementById("tab2W").addEventListener("click", function(){
-      document.getElementById("tab2W").classList.add("active");
-      document.getElementById("tab4W").classList.remove("active");
-      document.getElementById("tab2WContent").style.display = "block";
-      document.getElementById("tab4WContent").style.display = "none";
-    });
-    document.getElementById("tab4W").addEventListener("click", function(){
-      document.getElementById("tab4W").classList.add("active");
-      document.getElementById("tab2W").classList.remove("active");
-      document.getElementById("tab4WContent").style.display = "block";
-      document.getElementById("tab2WContent").style.display = "none";
-    });
+  <!-- Tooltip Message -->
+  <div id="tooltip" class="tooltip"></div>
 
-    // --- Time Slider Logic ---
+  <script>
+    // Global backend variables (populated via Jinja)
     var availableFrom = "{{ spot.available_from.strftime('%H:%M') if spot.available_from else '00:00' }}";
     var availableTo = "{{ spot.available_to.strftime('%H:%M') if spot.available_to else '23:00' }}";
+    var num2W = {{ num2W }};
+    var num4W = {{ num4W }};
+    var intervalMinutes = 60; // 60-minute intervals
+    // bookedIntervals is a JSON object with keys "2W" and "4W"
+    var bookedIntervals = {{ booked_intervals|default('{}')|tojson }};
 
-    var currentSlots = [];
-    var selectionStartIndex = null;
-    var selectionEndIndex = null;
-    var isDragging = false;
+    // Global selection state for each vehicle type
+    var selectionStates = {
+      "2W": { selectedRow: null, selectedStartCol: null, selectedEndCol: null },
+      "4W": { selectedRow: null, selectedStartCol: null, selectedEndCol: null }
+    };
+
+    // Global vehicle type indicator
+    var selectedVehicleType = "2W";
+    var cart = [];
+
+    function showTooltip(message) {
+      var tooltip = document.getElementById("tooltip");
+      tooltip.textContent = message;
+      tooltip.classList.add("show");
+      setTimeout(function() {
+        tooltip.classList.remove("show");
+      }, 2000);
+    }
 
     function timeToMinutes(t) {
       var parts = t.split(':');
-      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+      return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
     }
-
     function minutesToTime(m) {
       var h = Math.floor(m / 60);
       var min = m % 60;
-      return ("0" + h).slice(-2) + ":" + ("0" + min).slice(-2);
+      return (h < 10 ? "0" + h : h) + ":" + (min < 10 ? "0" + min : min);
     }
-
-    function generateTimeSlots(startTime, endTime, intervalMinutes) {
+    function generateTimeSlots(startTime, endTime, interval) {
       var slots = [];
       var start = timeToMinutes(startTime);
       var end = timeToMinutes(endTime);
-      for (var t = start; t < end; t += intervalMinutes) {
+      for (var t = start; t <= end; t += interval) {
         slots.push(minutesToTime(t));
       }
       return slots;
     }
+    var timeSlots = generateTimeSlots(availableFrom, availableTo, intervalMinutes);
 
-    function renderTimeSlider(slots) {
-      currentSlots = slots;
-      selectionStartIndex = null;
-      selectionEndIndex = null;
-      var timeSlider = document.getElementById("timeSlider");
-      timeSlider.innerHTML = "";
-      slots.forEach(function(slot, index) {
-        var slotDiv = document.createElement("div");
-        slotDiv.className = "time-slot";
-        slotDiv.textContent = slot;
-        slotDiv.dataset.index = index;
-        slotDiv.addEventListener("mousedown", function(e) {
-          isDragging = true;
-          selectionStartIndex = index;
-          selectionEndIndex = index;
-          updateTimeSelectionUI();
-        });
-        slotDiv.addEventListener("mouseenter", function(e) {
-          if (isDragging) {
-            selectionEndIndex = index;
-            updateTimeSelectionUI();
+    function renderGrid() {
+      var gridContainer = document.getElementById("gridContainer");
+      gridContainer.innerHTML = "";
+      var numRows = (selectedVehicleType === "2W") ? num2W : num4W;
+      gridContainer.style.setProperty("--num-slots", timeSlots.length);
+
+      var headerRow = document.createElement("div");
+      headerRow.className = "grid-header";
+      var emptyHeader = document.createElement("div");
+      emptyHeader.textContent = "";
+      headerRow.appendChild(emptyHeader);
+      timeSlots.forEach(function(slot) {
+        var headerCell = document.createElement("div");
+        headerCell.className = "cell";
+        headerCell.style.cursor = "default";
+        headerCell.textContent = slot;
+        headerRow.appendChild(headerCell);
+      });
+      gridContainer.appendChild(headerRow);
+
+      var bookedForType = bookedIntervals[selectedVehicleType] || [];
+      for (var r = 0; r < ((selectedVehicleType === "2W") ? num2W : num4W); r++) {
+        var rowDiv = document.createElement("div");
+        rowDiv.className = "grid-row";
+        var labelCell = document.createElement("div");
+        labelCell.className = "row-label";
+        labelCell.textContent = "Spot " + (r + 1);
+        rowDiv.appendChild(labelCell);
+        timeSlots.forEach(function(slot, c) {
+          var cell = document.createElement("div");
+          cell.className = "cell";
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          cell.dataset.time = slot;
+          var isBooked = bookedForType.some(function(booking) {
+            return booking.sub_spot === r &&
+                   timeToMinutes(slot) >= timeToMinutes(booking.start) &&
+                   timeToMinutes(slot) < timeToMinutes(booking.end);
+          });
+          if (isBooked) {
+            cell.classList.add("booked");
+            cell.addEventListener("click", function(e) {
+              showTooltip("This slot is already booked!");
+            });
+          } else {
+            cell.addEventListener("mousedown", cellMouseDown);
+            cell.addEventListener("mouseenter", cellMouseEnter);
+            cell.addEventListener("mouseup", cellMouseUp);
           }
+          rowDiv.appendChild(cell);
         });
-        slotDiv.addEventListener("mouseup", function(e) {
-          isDragging = false;
-        });
-        timeSlider.appendChild(slotDiv);
-      });
-      document.addEventListener("mouseup", function() {
-        isDragging = false;
-      });
-      document.getElementById("selectedStart").textContent = "--:--";
-      document.getElementById("selectedEnd").textContent = "--:--";
-      document.getElementById("booking_start").value = "";
-      document.getElementById("booking_end").value = "";
+        gridContainer.appendChild(rowDiv);
+      }
+      updateSelectionDisplay();
     }
 
-    function updateTimeSelectionUI() {
-      var slots = document.querySelectorAll(".time-slot");
-      slots.forEach(function(slot) {
-        var idx = parseInt(slot.dataset.index);
-        if (selectionStartIndex !== null && selectionEndIndex !== null &&
-            ((idx >= selectionStartIndex && idx <= selectionEndIndex) || (idx >= selectionEndIndex && idx <= selectionStartIndex))) {
-          slot.classList.add("selected");
-        } else {
-          slot.classList.remove("selected");
-        }
-      });
-      if (selectionStartIndex !== null && selectionEndIndex !== null) {
-        var startIdx = Math.min(selectionStartIndex, selectionEndIndex);
-        var endIdx = Math.max(selectionStartIndex, selectionEndIndex);
-        document.getElementById("selectedStart").textContent = currentSlots[startIdx];
-        document.getElementById("selectedEnd").textContent = currentSlots[endIdx];
-        document.getElementById("booking_start").value = currentSlots[startIdx];
-        document.getElementById("booking_end").value = currentSlots[endIdx];
+    function cellMouseDown(e) {
+      if (this.classList.contains("booked")) return;
+      isSelecting = true;
+      var state = selectionStates[selectedVehicleType];
+      state.selectedRow = parseInt(this.dataset.row, 10);
+      state.selectedStartCol = parseInt(this.dataset.col, 10);
+      state.selectedEndCol = state.selectedStartCol;
+      updateSelectionDisplay();
+    }
+    function cellMouseEnter(e) {
+      var state = selectionStates[selectedVehicleType];
+      if (isSelecting && parseInt(this.dataset.row, 10) === state.selectedRow) {
+        if (this.classList.contains("booked")) return;
+        state.selectedEndCol = parseInt(this.dataset.col, 10);
+        updateSelectionDisplay();
       }
     }
-
-    // Generate time slots (60-minute intervals)
-    var timeSlots = generateTimeSlots(availableFrom, availableTo, 60);
-    renderTimeSlider(timeSlots);
-
-    // --- Cancel Button: Redirect back to dashboard ---
+    function cellMouseUp(e) {
+      var state = selectionStates[selectedVehicleType];
+      if (!isSelecting) return;
+      isSelecting = false;
+      updateSelectionDisplay();
+      var start = Math.min(state.selectedStartCol, state.selectedEndCol);
+      var end = Math.max(state.selectedStartCol, state.selectedEndCol);
+      var rowCells = document.querySelectorAll(".grid-row .cell[data-row='" + state.selectedRow + "']");
+      var invalid = false;
+      rowCells.forEach(function(cell) {
+        var col = parseInt(cell.dataset.col, 10);
+        if (col >= start && col <= end && cell.classList.contains("booked")) {
+          invalid = true;
+        }
+      });
+      if (invalid) {
+        showTooltip("Your selection overlaps with booked slots.");
+      }
+      // Do not clear state so the visual selection remains.
+    }
+    function updateSelectionDisplay() {
+      var cells = document.querySelectorAll(".grid-row .cell");
+      cells.forEach(function(cell) { cell.classList.remove("selected"); });
+      var state = selectionStates[selectedVehicleType];
+      if (state.selectedRow !== null && state.selectedStartCol !== null && state.selectedEndCol !== null) {
+        var start = Math.min(state.selectedStartCol, state.selectedEndCol);
+        var end = Math.max(state.selectedStartCol, state.selectedEndCol);
+        var rowCells = document.querySelectorAll(".grid-row .cell[data-row='" + state.selectedRow + "']");
+        rowCells.forEach(function(cell) {
+          var col = parseInt(cell.dataset.col, 10);
+          if (col >= start && col <= end && !cell.classList.contains("booked")) {
+            cell.classList.add("selected");
+          }
+        });
+      }
+    }
+    // Add selection to cart (prevent duplicate entries)
+    function addSelectionToCart() {
+      var state = selectionStates[selectedVehicleType];
+      if (state.selectedRow === null || state.selectedStartCol === null || state.selectedEndCol === null) {
+        alert("Please make a selection first.");
+        return;
+      }
+      var start = Math.min(state.selectedStartCol, state.selectedEndCol);
+      var end = Math.max(state.selectedStartCol, state.selectedEndCol);
+      var bookingStart = timeSlots[start];
+      // Set booking end to be the slot immediately after the last selected cell, if available.
+      var bookingEnd = (end + 1 < timeSlots.length) ? timeSlots[end + 1] : timeSlots[end];
+      // Check for duplicate entry.
+      var exists = cart.some(function(item) {
+        return item.vehicle_type === selectedVehicleType &&
+               item.sub_spot === state.selectedRow &&
+               item.booking_start === bookingStart &&
+               item.booking_end === bookingEnd;
+      });
+      if (exists) {
+        showTooltip("This slot is already added to the cart.");
+        return;
+      }
+      var cartItem = {
+        vehicle_type: selectedVehicleType,
+        sub_spot: state.selectedRow,
+        booking_start: bookingStart,
+        booking_end: bookingEnd,
+        vehicle_number: ""
+      };
+      cart.push(cartItem);
+      renderCart();
+      // Do not clear selection state; let the visual selection remain.
+    }
+    function renderCart() {
+      var cartDiv = document.getElementById("cartItems");
+      cartDiv.innerHTML = "";
+      if (cart.length === 0) {
+        cartDiv.innerHTML = "<p>No selections added.</p>";
+        return;
+      }
+      cart.forEach(function(item, index) {
+        var itemDiv = document.createElement("div");
+        itemDiv.className = "cart-item";
+        itemDiv.innerHTML = "<span>" +
+          item.vehicle_type + " - Spot #" + (item.sub_spot + 1) + " : " +
+          item.booking_start + " to " + item.booking_end + " | Vehicle: " +
+          "<input type='text' placeholder='Enter Vehicle Number' value='" + (item.vehicle_number || "") + "' data-index='" + index + "' style='width:150px;'>" +
+          "</span>";
+        var removeBtn = document.createElement("button");
+        removeBtn.textContent = "Remove";
+        removeBtn.onclick = function() {
+          cart.splice(index, 1);
+          renderCart();
+        };
+        itemDiv.appendChild(removeBtn);
+        cartDiv.appendChild(itemDiv);
+      });
+      var inputs = cartDiv.querySelectorAll("input[type='text']");
+      inputs.forEach(function(input) {
+        input.addEventListener("input", function() {
+          var idx = parseInt(this.getAttribute("data-index"), 10);
+          cart[idx].vehicle_number = this.value.trim();
+        });
+      });
+    }
+    function clearCart() {
+      cart = [];
+      renderCart();
+    }
+    // Tab switching (do not clear selection state)
+    document.getElementById("tab2W").addEventListener("click", function(){
+      selectedVehicleType = "2W";
+      this.classList.add("active");
+      document.getElementById("tab4W").classList.remove("active");
+      renderGrid();
+    });
+    document.getElementById("tab4W").addEventListener("click", function(){
+      selectedVehicleType = "4W";
+      this.classList.add("active");
+      document.getElementById("tab2W").classList.remove("active");
+      renderGrid();
+    });
+    renderGrid();
     function goBack() {
       var returnURL = localStorage.getItem("returnURL");
       if (returnURL) {
@@ -303,6 +508,40 @@
         window.history.back();
       }
     }
+    // AJAX-based form submission to process booking and then redirect to the driver's dashboard
+    document.getElementById("bookingForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      if (cart.length === 0) {
+        alert("Your booking cart is empty. Please add at least one selection.");
+        return;
+      }
+      for (var i = 0; i < cart.length; i++) {
+        if (!cart[i].vehicle_number || cart[i].vehicle_number.trim() === "") {
+          alert("Please enter the vehicle number for each booking selection.");
+          return;
+        }
+      }
+      document.getElementById("cart_data").value = JSON.stringify(cart);
+      var formData = new FormData(this);
+      fetch(this.action, {
+        method: "POST",
+        body: formData,
+        headers: {"X-Requested-With": "XMLHttpRequest"}
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          alert("All selected spots booked successfully!");
+          window.location.href = "{{ url_for('dashboard.driver_dashboard') }}";
+        }
+      })
+      .catch(err => {
+        console.error("Booking submission error:", err);
+        alert("An error occurred while processing your booking.");
+      });
+    });
   </script>
 </body>
 </html>
