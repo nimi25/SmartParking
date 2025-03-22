@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Smart Parking - Parking Space</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Poppins Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,24 +16,16 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <style>
-    /**************************************************************
-     *            BASE + DASHBOARD LAYOUT STYLES
-     **************************************************************/
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Poppins', sans-serif;
-    }
+    /* Base & Layout */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
     body {
-      background: #121212 url("../static/images/background.jpg") no-repeat center center;
+      background: #121212 url("{{ url_for('static', filename='images/background.jpg') }}") no-repeat center center;
       background-size: cover;
       background-attachment: fixed;
       color: #fff;
       min-height: 100vh;
-      overflow: hidden; /* Hide any horizontal scrollbar */
+      overflow: hidden;
     }
-
     /* HEADER */
     header {
       background: #1f1f1f;
@@ -41,46 +34,23 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 2px solid #333;
-      position: relative;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 10000;
     }
-    .hamburger {
-      display: inline-block;
-      font-size: 1.5rem;
-      cursor: pointer;
-      margin-right: 1rem;
-      color: #fff;
-    }
-    header h1 {
-      font-size: 1.5rem; /* Smaller heading */
-      letter-spacing: 1px;
-      flex: 1;
-      margin-left: 1rem;
-    }
-    nav a {
-      margin-left: 1.5rem;
-      text-decoration: none;
-      transition: opacity 0.3s;
-    }
-    nav a img {
-      width: 40px;
-      height: 40px;
-      vertical-align: middle;
-    }
-    nav a:hover {
-      opacity: 0.8;
-    }
+    .hamburger { font-size: 1.5rem; cursor: pointer; color: #fff; margin-right: 1rem; }
+    header h1 { font-size: 1.5rem; letter-spacing: 1px; flex: 1; margin-left: 1rem; }
+    nav a { margin-left: 1.5rem; text-decoration: none; transition: opacity 0.3s; }
+    nav a img { width: 40px; height: 40px; vertical-align: middle; }
+    nav a:hover { opacity: 0.8; }
 
-    /* DASHBOARD WRAPPER */
     .dashboard {
       display: grid;
       grid-template-columns: 250px 1fr;
       min-height: calc(100vh - 70px);
-      transition: transform 0.3s ease; /* For potential side panel animation */
+      position: relative;
     }
-
-    /**************************************************************
-     *         COLLAPSIBLE SIDEBAR with Slide Animation
-     **************************************************************/
+    /* SIDEBAR */
     .sidebar {
       background: #1f1f1f;
       padding: 2rem 1rem;
@@ -89,40 +59,35 @@
       flex-direction: column;
       gap: 1rem;
       transition: transform 0.3s ease;
-      z-index: 999;
+      z-index: 9998;
     }
     .sidebar a {
+      display: block;
       padding: 0.75rem 1rem;
       color: #e0e0e0;
       text-decoration: none;
       border-left: 4px solid transparent;
       transition: background 0.3s, border-color 0.3s;
     }
-    .sidebar a:hover,
-    .sidebar a.active {
+    .sidebar a:hover, .sidebar a.active {
       background: #333;
       border-left: 4px solid #00e5ff;
     }
-    .sidebar.collapsed {
-      transform: translateX(-250px);
-    }
-
+    .sidebar.collapsed { transform: translateX(-250px); }
     /* MAIN CONTENT */
     .content {
       position: absolute;
-      top: 74px; /* below header */
-      left: 250px; /* beside sidebar */
-      right: 0; bottom: 0;
-      overflow-y: auto; /* only this area scrolls */
+      top: 74px;
+      left: 250px;
+      right: 0;
+      bottom: 0;
+      overflow-y: auto;
       padding: 2rem;
     }
-
-    /**************************************************************
-     *   CUSTOM COLLAPSIBLE ADD SPOT SECTION (FORM + MAP)
-     **************************************************************/
+    /* COLLAPSIBLE ADD SPOT SECTION */
     .collapsible-container {
       max-width: 1200px;
-      margin: 0 auto 2rem auto;
+      margin: 0 auto 2rem;
       background: rgba(30,30,30,0.95);
       box-shadow: 0 8px 20px rgba(0,0,0,0.6);
       border-radius: 8px;
@@ -133,9 +98,8 @@
       cursor: pointer;
       display: flex;
       align-items: center;
-      background: #333;
-      border-bottom: 2px solid #444;
       background: rgba(34,34,34,0.9);
+      border-bottom: 2px solid #444;
     }
     .collapsible-header h2 {
       margin-left: 0.5rem;
@@ -156,9 +120,7 @@
     .collapsible-container.expanded .collapsible-arrow {
       transform: rotate(90deg);
     }
-    .collapsible-container.expanded .collapsible-content {
-      opacity: 1;
-    }
+    .collapsible-container.expanded .collapsible-content { opacity: 1; }
     .add-spot-container {
       display: flex;
       gap: 30px;
@@ -211,9 +173,7 @@
       transition: transform 0.2s ease;
       margin-top: 10px;
     }
-    button.btn:hover {
-      transform: translateY(-2px);
-    }
+    button.btn:hover { transform: translateY(-2px); }
     .map-column {
       flex: 1 1 400px;
       min-width: 400px;
@@ -222,10 +182,7 @@
       overflow: hidden;
       box-shadow: 0 8px 20px rgba(0,0,0,0.6);
     }
-    #map {
-      width: 100%;
-      height: 750px;
-    }
+    #map { width: 100%; height: 750px; }
     .map-search {
       position: absolute;
       top: 20px;
@@ -248,7 +205,7 @@
       top: 55px;
       left: 20px;
       right: 50px;
-      background: rgba(34,34,34,0.9);
+      background: rgba(0, 0, 0, 0.6);
       border: 1px solid #444;
       border-radius: 5px;
       max-height: 200px;
@@ -259,12 +216,10 @@
     .suggestion-item {
       padding: 10px;
       cursor: pointer;
-      color: #00e5ff;
+      color: #fff;
       border-bottom: 1px solid #333;
     }
-    .suggestion-item:hover {
-      background: #333;
-    }
+    .suggestion-item:hover { background: rgba(0,0,0,0.8); }
     .location-input-wrapper {
       position: relative;
       display: flex;
@@ -289,21 +244,16 @@
       align-items: center;
       justify-content: center;
     }
-    .location-input-wrapper button:hover {
-      background: #00bcd4;
-    }
+    .location-input-wrapper button:hover { background: #00bcd4; }
 
-    /**************************************************************
-     *   SPOTS LISTING
-     **************************************************************/
+    /* Parking Spots Listing */
     .card {
       background: rgba(30,30,30,0.95);
       border-radius: 8px;
       padding: 20px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.6);
       max-width: 1200px;
-      margin: 0 auto;
-      margin-bottom: 2rem;
+      margin: 0 auto 2rem;
     }
     .card h3 {
       font-size: 1.2rem;
@@ -357,49 +307,68 @@
       text-decoration: none;
       padding: 8px 0;
     }
-    .edit-btn {
-      background: #00e5ff;
-      color: #000;
-    }
-    .cancel-btn {
-      background: #ff4444;
-      color: #fff;
+    .edit-btn { background: #00e5ff; color: #000; }
+    .cancel-btn { background: #ff4444; color: #fff; }
+    /* Removed Manage Spaces button */
+    /* "Booked Out" Styles */
+    .booked-out-card { background: rgba(60,60,60,0.95); }
+    .parking-spot-item.booked-out { background: rgba(80,80,80,0.95); }
+    .parking-spot-item.booked-out h4 { color: #ccc; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    /**************************************************************
-     *   "BOOKED OUT" SECTION
-     **************************************************************/
-    .booked-out-card {
-      background: rgba(60,60,60,0.95);
+    /* NEW: Modal Edit Interface Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 10001;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.7);
     }
-    .parking-spot-item.booked-out {
-      background: rgba(80,80,80,0.95);
+    .modal-content {
+      background: #1e1e1e;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      position: relative;
     }
-    .parking-spot-item.booked-out h4 {
-      color: #ccc;
+    .close {
+      position: absolute;
+      right: 15px;
+      top: 10px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #fff;
     }
   </style>
 </head>
 <body>
-  <!-- HEADER + NAV + HAMBURGER -->
+  <!-- HEADER -->
   <header>
     <div class="hamburger" onclick="toggleSidebar()">☰</div>
     <h1>Owner Dashboard</h1>
     <nav>
       <a href="{{ url_for('profile.owner_profile') }}">
-        <img src="../static/images/profile.png" alt="Profile" />
+        <img src="{{ url_for('static', filename='images/profile.png') }}" alt="Profile" />
       </a>
       <a href="{{ url_for('auth.logout') }}">
-        <img src="../static/images/logout.png" alt="Logout" />
+        <img src="{{ url_for('static', filename='images/logout.png') }}" alt="Logout" />
       </a>
     </nav>
   </header>
 
-  <!-- SIDEBAR + MAIN CONTENT -->
   <div class="dashboard">
-    <!-- Sidebar (collapsible) -->
+    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
-      <a href="{{ url_for('owner.owner_dashboard') }}">Home</a>
+      <a href="{{ url_for('dashboard.dashboard') }}">Home</a>
       <a href="{{ url_for('owner.bookings') }}">Bookings</a>
       <a href="{{ url_for('owner.parkingspace') }}" class="active">Parking Space</a>
       <a href="{{ url_for('owner.payment') }}">Payment</a>
@@ -407,7 +376,7 @@
       <a href="{{ url_for('owner.history') }}">History</a>
     </aside>
 
-    <!-- Main Content -->
+    <!-- MAIN CONTENT -->
     <main class="content">
       <!-- Collapsible "Add Parking Spot" Container -->
       <div class="collapsible-container" id="addSpotCollapsible">
@@ -431,18 +400,19 @@
                 <!-- Hidden lat/lng fields -->
                 <input type="hidden" id="lat" name="lat" required>
                 <input type="hidden" id="lng" name="lng" required>
-
                 <div class="form-group">
                   <label for="price">Price (per hour)</label>
                   <input type="number" step="0.01" id="price" name="price" required>
                 </div>
+                <!-- Define Individual Parking Spaces -->
                 <div class="form-group">
-                  <label for="two_wheeler_spaces">2-Wheeler Spaces</label>
-                  <input type="number" id="two_wheeler_spaces" name="two_wheeler_spaces" min="0" value="0">
-                </div>
-                <div class="form-group">
-                  <label for="four_wheeler_spaces">4-Wheeler Spaces</label>
-                  <input type="number" id="four_wheeler_spaces" name="four_wheeler_spaces" min="0" value="0">
+                  <label>Define Individual Parking Spaces</label>
+                  <div style="display: flex; gap:10px;">
+                    <button type="button" id="add2WBtn" class="btn" style="width: auto;">Add 2-Wheeler Space</button>
+                    <button type="button" id="add4WBtn" class="btn" style="width: auto;">Add 4-Wheeler Space</button>
+                  </div>
+                  <ul id="spacesList"></ul>
+                  <input type="hidden" name="spaces_data" id="spaces_data" value="">
                 </div>
                 <div class="form-group">
                   <label for="available_from">Available From</label>
@@ -456,7 +426,7 @@
                   <label for="description">Description</label>
                   <textarea id="description" name="description"></textarea>
                 </div>
-                <button type="submit" class="btn">Add Spot</button>
+                <button type="submit" class="btn">Confirm Parking Spot</button>
               </form>
             </div>
 
@@ -464,7 +434,7 @@
             <div class="map-column">
               <div class="map-search">
                 <input type="text" id="map-search-input" placeholder="Search location...">
-                <div id="suggestions" class="suggestions"></div>
+                <div id="map-search-suggestions" class="suggestions"></div>
               </div>
               <div id="map"></div>
             </div>
@@ -472,12 +442,8 @@
         </div>
       </div>
 
-      <!--
-        Separate the "Available" vs. "Booked Out" spots
-        by checking spot.availability in Jinja.
-      -->
-      {% set available_spots = spots|selectattr('availability','equalto',True)|list %}
-      {% set booked_out_spots = spots|selectattr('availability','equalto',False)|list %}
+      {% set available_spots = spots | selectattr('availability', 'equalto', True) | list %}
+      {% set booked_out_spots = spots | selectattr('availability', 'equalto', False) | list %}
 
       <!-- AVAILABLE SPOTS -->
       <div class="card">
@@ -489,18 +455,19 @@
                 <h4>{{ spot.location }}</h4>
                 <p><strong>Price:</strong> ₹{{ spot.price }}</p>
                 <p><strong>Status:</strong> Available</p>
-                <div class="map-container-spot" id="map-{{ spot.id }}"></div>
-                <p><strong>2-Wheeler Spaces:</strong> {{ spot.two_wheeler_spaces }}</p>
-                <p><strong>4-Wheeler Spaces:</strong> {{ spot.four_wheeler_spaces }}</p>
+                <div class="map-container-spot" id="map-available-{{ spot.id }}"></div>
+                <p><strong>2-Wheeler Spaces:</strong> {{ spot.spaces | selectattr('vehicle_type', 'equalto', '2W') | list | length }}</p>
+                <p><strong>4-Wheeler Spaces:</strong> {{ spot.spaces | selectattr('vehicle_type', 'equalto', '4W') | list | length }}</p>
                 <p><strong>Description:</strong> {{ spot.description or "N/A" }}</p>
                 <div class="spot-actions">
-                  <a href="{{ url_for('parking.update_parking_spot', spot_id=spot.id) }}" class="edit-btn">Edit</a>
-                  <form action="{{ url_for('parking.delete_parking_spot', spot_id=spot.id) }}"
-                        method="POST"
-                        onsubmit="return confirm('Are you sure you want to delete this spot?');">
+                  <!-- NEW: Edit Button now triggers the modal with pre-filled details -->
+                  <button type="button" class="edit-btn" onclick="openEditModal({{ spot.id }}, '{{ spot.location|escape }}', '{{ spot.price }}', '{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}', '{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}', '{{ spot.description|escape }}', '{{ spot.lat }}', '{{ spot.lng }}')">Edit</button>
+                  <form method="POST" action="{{ url_for('parking.delete_parking_spot', spot_id=spot.id) }}" onsubmit="return confirm('Are you sure you want to delete this spot?');" style="display:inline;">
                     <button type="submit" class="cancel-btn">Delete</button>
                   </form>
                 </div>
+                <!-- The old inline edit form is now hidden -->
+                <div id="editForm-{{ spot.id }}" class="edit-form" style="display: none;"></div>
               </div>
             {% endfor %}
           {% else %}
@@ -519,11 +486,10 @@
                 <h4>{{ spot.location }}</h4>
                 <p><strong>Price:</strong> ₹{{ spot.price }}</p>
                 <p><strong>Status:</strong> Unavailable</p>
-                <div class="map-container-spot" id="map-{{ spot.id }}"></div>
-                <p><strong>2-Wheeler Spaces:</strong> {{ spot.two_wheeler_spaces }}</p>
-                <p><strong>4-Wheeler Spaces:</strong> {{ spot.four_wheeler_spaces }}</p>
+                <div class="map-container-spot" id="map-booked-{{ spot.id }}"></div>
+                <p><strong>2-Wheeler Spaces:</strong> {{ spot.spaces | selectattr('vehicle_type', 'equalto', '2W') | list | length }}</p>
+                <p><strong>4-Wheeler Spaces:</strong> {{ spot.spaces | selectattr('vehicle_type', 'equalto', '4W') | list | length }}</p>
                 <p><strong>Description:</strong> {{ spot.description or "N/A" }}</p>
-
               </div>
             {% endfor %}
           {% else %}
@@ -534,130 +500,249 @@
     </main>
   </div>
 
+  <!-- NEW: Modal Edit Interface -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeEditModal()">&times;</span>
+      <form id="editFormModal" method="POST" action="">
+        <div class="form-group">
+          <label for="editLocation">Location</label>
+          <input type="text" id="editLocation" name="location" required>
+        </div>
+        <div class="form-group">
+          <label for="editPrice">Price (per hour)</label>
+          <input type="number" step="0.01" id="editPrice" name="price" required>
+        </div>
+        <div class="form-group">
+          <label for="editAvailableFrom">Available From</label>
+          <input type="time" id="editAvailableFrom" name="available_from">
+        </div>
+        <div class="form-group">
+          <label for="editAvailableTo">Available To</label>
+          <input type="time" id="editAvailableTo" name="available_to">
+        </div>
+        <div class="form-group">
+          <label for="editDescription">Description</label>
+          <textarea id="editDescription" name="description"></textarea>
+        </div>
+        <!-- Hidden lat/lng fields -->
+        <input type="hidden" id="editLat" name="lat">
+        <input type="hidden" id="editLng" name="lng">
+        <button type="submit" class="btn">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
   <script>
-    /**************************************************************
-     * SIDEBAR COLLAPSE TOGGLE
-     **************************************************************/
-    const sidebar = document.getElementById('sidebar');
-    function toggleSidebar() {
-      sidebar.classList.toggle('collapsed');
-    }
+    document.addEventListener("DOMContentLoaded", function() {
+      /**************************************************************
+       * SIDEBAR COLLAPSE TOGGLE
+       **************************************************************/
+      const sidebar = document.getElementById('sidebar');
+      window.toggleSidebar = function() {
+        sidebar.classList.toggle('collapsed');
+      };
 
-    /**************************************************************
-     * CUSTOM COLLAPSIBLE "ADD SPOT"
-     **************************************************************/
-    const addSpotCollapsible = document.getElementById('addSpotCollapsible');
-    const collapsibleHeader = addSpotCollapsible.querySelector('.collapsible-header');
-    const collapsibleContent = addSpotCollapsible.querySelector('.collapsible-content');
-
-    function toggleAddSpot() {
-      addSpotCollapsible.classList.toggle('expanded');
-      if (addSpotCollapsible.classList.contains('expanded')) {
-        // Expand
-        const contentHeight = collapsibleContent.scrollHeight;
-        collapsibleContent.style.height = contentHeight + 'px';
-      } else {
-        // Collapse
-        collapsibleContent.style.height = 0;
-      }
-    }
-
-    /**************************************************************
-     * MAP + NOMINATIM
-     **************************************************************/
-    // Initialize main map in the "Add Spot" section
-    var map = L.map('map').setView([12.9716, 77.5946], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-
-    var marker;
-    function setMarker(lat, lng) {
-      if (marker) {
-        marker.setLatLng([lat, lng]);
-      } else {
-        marker = L.marker([lat, lng]).addTo(map);
-      }
-      document.getElementById('lat').value = lat;
-      document.getElementById('lng').value = lng;
-    }
-
-    // Click on map => place marker & update lat/lng
-    map.on('click', function(e) {
-      setMarker(e.latlng.lat, e.latlng.lng);
-    });
-
-    // Overlaid search box for partial suggestions
-    var searchInput = document.getElementById('map-search-input');
-    var suggestionsEl = document.getElementById('suggestions');
-    searchInput.addEventListener('input', function() {
-      var query = searchInput.value.trim();
-      if (query.length < 3) {
-        suggestionsEl.innerHTML = "";
-        suggestionsEl.style.display = "none";
-        return;
-      }
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(query)}`)
-        .then(response => response.json())
-        .then(data => {
-          if (!data || data.length === 0) {
-            suggestionsEl.innerHTML = "<div class='suggestion-item'>No results found</div>";
-            suggestionsEl.style.display = "block";
-            return;
-          }
-          suggestionsEl.innerHTML = "";
-          data.forEach(function(item) {
-            var div = document.createElement('div');
-            div.className = "suggestion-item";
-            div.textContent = item.display_name;
-            div.addEventListener('click', function() {
-              var lat = parseFloat(item.lat);
-              var lon = parseFloat(item.lon);
-              map.setView([lat, lon], 15);
-              setMarker(lat, lon);
-              document.getElementById('location').value = item.display_name;
-              suggestionsEl.innerHTML = "";
-              suggestionsEl.style.display = "none";
-            });
-            suggestionsEl.appendChild(div);
-          });
-          suggestionsEl.style.display = "block";
-        })
-        .catch(err => console.error(err));
-    });
-
-    // Arrow button on location input => single forward geocode
-    document.getElementById("location-show-btn").addEventListener("click", function() {
-      var query = document.getElementById("location").value.trim();
-      if (query.length < 3) return;
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data && data.length > 0) {
-            var result = data[0];
-            var lat = parseFloat(result.lat);
-            var lng = parseFloat(result.lon);
-            setMarker(lat, lng);
-            map.setView([lat, lng], 15);
-          }
-        })
-        .catch(err => console.error(err));
-    });
-
-    // Initialize Leaflet maps for each existing parking spot
-    {% for spot in spots %}
-      (function() {
-        var mapEl = document.getElementById("map-{{ spot.id }}");
-        if (mapEl) {
-          var spotMap = L.map(mapEl).setView([{{ spot.lat }}, {{ spot.lng }}], 15);
-          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution: "&copy; OpenStreetMap contributors"
-          }).addTo(spotMap);
-          L.marker([{{ spot.lat }}, {{ spot.lng }}]).addTo(spotMap)
-            .bindPopup("{{ spot.location }}<br>₹{{ spot.price }}");
+      /**************************************************************
+       * COLLAPSIBLE "ADD SPOT" TOGGLE
+       **************************************************************/
+      function toggleAddSpot() {
+        const container = document.getElementById('addSpotCollapsible');
+        const content = container.querySelector('.collapsible-content');
+        container.classList.toggle('expanded');
+        if (container.classList.contains('expanded')) {
+          content.style.height = content.scrollHeight + 'px';
+        } else {
+          content.style.height = 0;
         }
-      })();
-    {% endfor %}
+      }
+      window.toggleAddSpot = toggleAddSpot;
+
+      /**************************************************************
+       * MAP + NOMINATIM FOR "ADD SPOT" SECTION
+       **************************************************************/
+      var map = L.map('map').setView([12.9716, 77.5946], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      var marker;
+      function setMarker(lat, lng) {
+        if (marker) {
+          marker.setLatLng([lat, lng]);
+        } else {
+          marker = L.marker([lat, lng]).addTo(map);
+        }
+        document.getElementById('lat').value = lat;
+        document.getElementById('lng').value = lng;
+      }
+      map.on('click', function(e) {
+        setMarker(e.latlng.lat, e.latlng.lng);
+      });
+      var searchInput = document.getElementById('map-search-input');
+      var suggestionsEl = document.getElementById('map-search-suggestions');
+      searchInput.addEventListener('input', function() {
+        var query = searchInput.value.trim();
+        if (query.length < 3) {
+          suggestionsEl.innerHTML = "";
+          suggestionsEl.style.display = "none";
+          return;
+        }
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(query)}`)
+          .then(response => response.json())
+          .then(data => {
+            if (!data || data.length === 0) {
+              suggestionsEl.innerHTML = "<div class='suggestion-item'>No results found</div>";
+              suggestionsEl.style.display = "block";
+              return;
+            }
+            suggestionsEl.innerHTML = "";
+            data.forEach(function(item) {
+              var div = document.createElement('div');
+              div.className = "suggestion-item";
+              div.textContent = item.display_name;
+              div.addEventListener('click', function() {
+                var lat = parseFloat(item.lat);
+                var lon = parseFloat(item.lon);
+                map.setView([lat, lon], 15);
+                setMarker(lat, lon);
+                document.getElementById('location').value = item.display_name;
+                suggestionsEl.innerHTML = "";
+                suggestionsEl.style.display = "none";
+              });
+              suggestionsEl.appendChild(div);
+            });
+            suggestionsEl.style.display = "block";
+          })
+          .catch(err => console.error(err));
+      });
+      document.getElementById("location-show-btn").addEventListener("click", function() {
+        var query = document.getElementById("location").value.trim();
+        if (query.length < 3) return;
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data && data.length > 0) {
+              var result = data[0];
+              var lat = parseFloat(result.lat);
+              var lng = parseFloat(result.lon);
+              setMarker(lat, lng);
+              map.setView([lat, lng], 15);
+            }
+          })
+          .catch(err => console.error(err));
+      });
+
+      /**************************************************************
+       * INITIALIZE MAPS FOR EACH EXISTING PARKING SPOT
+       **************************************************************/
+      // Available spots maps
+      {% for spot in available_spots %}
+        (function() {
+          var mapEl = document.getElementById("map-available-{{ spot.id }}");
+          if (mapEl) {
+            var spotMap = L.map(mapEl).setView([{{ spot.lat }}, {{ spot.lng }}], 15);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+              attribution: "&copy; OpenStreetMap contributors"
+            }).addTo(spotMap);
+            L.marker([{{ spot.lat }}, {{ spot.lng }}]).addTo(spotMap)
+              .bindPopup("{{ spot.location }}<br>₹{{ spot.price }}");
+          }
+        })();
+      {% endfor %}
+      // Booked out spots maps
+      {% for spot in booked_out_spots %}
+        (function() {
+          var mapEl = document.getElementById("map-booked-{{ spot.id }}");
+          if (mapEl) {
+            var spotMap = L.map(mapEl).setView([{{ spot.lat }}, {{ spot.lng }}], 15);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+              attribution: "&copy; OpenStreetMap contributors"
+            }).addTo(spotMap);
+            L.marker([{{ spot.lat }}, {{ spot.lng }}]).addTo(spotMap)
+              .bindPopup("{{ spot.location }}<br>₹{{ spot.price }}");
+          }
+        })();
+      {% endfor %}
+
+      /**************************************************************
+       * NEW: Modal Edit Form Functions
+       **************************************************************/
+      window.openEditModal = function(spotId, location, price, available_from, available_to, description, lat, lng) {
+        // Set form action dynamically (assuming your update route follows this pattern)
+        document.getElementById('editFormModal').action = "/parking/update_parking_spot/" + spotId;
+        // Pre-fill the form fields with the provided data
+        document.getElementById('editLocation').value = location;
+        document.getElementById('editPrice').value = price;
+        document.getElementById('editAvailableFrom').value = available_from;
+        document.getElementById('editAvailableTo').value = available_to;
+        document.getElementById('editDescription').value = description;
+        document.getElementById('editLat').value = lat;
+        document.getElementById('editLng').value = lng;
+        // Display the modal
+        document.getElementById('editModal').style.display = "block";
+      };
+
+      window.closeEditModal = function() {
+        document.getElementById('editModal').style.display = "none";
+      };
+
+      // Close the modal if user clicks outside the modal content
+      window.onclick = function(event) {
+        var modal = document.getElementById('editModal');
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      };
+
+      /**************************************************************
+       * INDIVIDUAL PARKING SPACES DEFINITION (Owner Interface)
+       **************************************************************/
+      var spaces = [];
+      function updateSpacesList() {
+        // Reassign sequential numbers for each vehicle type
+        var twoW = spaces.filter(function(s){ return s.vehicle_type === "2W"; });
+        var fourW = spaces.filter(function(s){ return s.vehicle_type === "4W"; });
+        twoW.forEach(function(s, i){ s.sub_spot = i + 1; });
+        fourW.forEach(function(s, i){ s.sub_spot = i + 1; });
+        var list = document.getElementById('spacesList');
+        list.innerHTML = "";
+        twoW.forEach(function(space) {
+          var li = document.createElement("li");
+          li.textContent = space.vehicle_type + " - Space #" + space.sub_spot;
+          var removeBtn = document.createElement("button");
+          removeBtn.textContent = "Remove";
+          removeBtn.onclick = function() {
+            var idx = spaces.indexOf(space);
+            if (idx > -1) { spaces.splice(idx, 1); }
+            updateSpacesList();
+          };
+          li.appendChild(removeBtn);
+          list.appendChild(li);
+        });
+        fourW.forEach(function(space) {
+          var li = document.createElement("li");
+          li.textContent = space.vehicle_type + " - Space #" + space.sub_spot;
+          var removeBtn = document.createElement("button");
+          removeBtn.textContent = "Remove";
+          removeBtn.onclick = function() {
+            var idx = spaces.indexOf(space);
+            if (idx > -1) { spaces.splice(idx, 1); }
+            updateSpacesList();
+          };
+          li.appendChild(removeBtn);
+          list.appendChild(li);
+        });
+        document.getElementById('spaces_data').value = JSON.stringify(spaces);
+      }
+      document.getElementById('add2WBtn').addEventListener('click', function() {
+        spaces.push({ vehicle_type: "2W", sub_spot: 0 });
+        updateSpacesList();
+      });
+      document.getElementById('add4WBtn').addEventListener('click', function() {
+        spaces.push({ vehicle_type: "4W", sub_spot: 0 });
+        updateSpacesList();
+      });
+    });
   </script>
 </body>
 </html>

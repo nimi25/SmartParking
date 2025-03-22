@@ -21,21 +21,19 @@
       box-sizing: border-box;
       font-family: 'Poppins', sans-serif;
     }
-
     body {
       background: #121212 url("../static/images/background.jpg") no-repeat center center;
       background-size: cover;
       background-attachment: fixed;
       color: #fff;
-      height: 100vh;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
-
     /* HEADER */
     header {
       background: #1f1f1f;
-      padding: 1.0rem 2rem;
+      padding: 1rem 2rem;
       height: 75px;
       min-height: 75px;
       display: flex;
@@ -44,50 +42,37 @@
       border-bottom: 2px solid #333;
       position: relative;
     }
-    .header-container {
-      width: 100%;
-      max-width: 1200px;
-      margin: auto;
-    }
-
     .hamburger {
-      display: inline-block;
       font-size: 1.5rem;
       cursor: pointer;
       margin-right: 1rem;
       color: #fff;
     }
-
     header h1 {
       font-size: 1.5rem;
       letter-spacing: 1px;
       flex: 1;
       margin-left: 1rem;
     }
-
     nav a {
       margin-left: 1.5rem;
       text-decoration: none;
       transition: opacity 0.3s;
     }
-
     nav a img {
       width: 40px;
       height: 40px;
       vertical-align: middle;
     }
-
     nav a:hover {
       opacity: 0.8;
     }
-
     /* DASHBOARD WRAPPER */
     .dashboard {
       display: grid;
       grid-template-columns: 250px 1fr;
-      height: calc(100vh - 70px);
+      min-height: calc(100vh - 70px);
     }
-
     .sidebar {
       background: #1f1f1f;
       padding: 2rem 1rem;
@@ -96,7 +81,6 @@
       flex-direction: column;
       gap: 1rem;
     }
-
     .sidebar a {
       padding: 0.75rem 1rem;
       color: #e0e0e0;
@@ -104,18 +88,15 @@
       border-left: 4px solid transparent;
       transition: background 0.3s, border-color 0.3s;
     }
-
     .sidebar a:hover,
     .sidebar a.active {
       background: #333;
       border-left: 4px solid #00e5ff;
     }
-
     .content {
       padding: 2rem;
       overflow-y: auto;
     }
-
     .bookings-container {
       background: rgba(31, 31, 31, 0.8);
       padding: 2rem;
@@ -123,86 +104,68 @@
       max-width: 1200px;
       margin: 0 auto;
     }
-
     .bookings-container h2 {
       text-align: center;
       font-size: 1.8rem;
       margin-bottom: 1.5rem;
       color: #00e5ff;
     }
-
+    /* One card per row */
     .bookings-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 2rem;
-      justify-content: center;
+      display: block;
     }
-
     .booking-card {
       background: #1f1f1f;
       border-radius: 8px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-      max-width: 500px;
       width: 100%;
+      margin-bottom: 1.5rem;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
       animation: fadeIn 1s ease;
     }
-
     .booking-header {
       background: #2c2c2c;
       padding: 0.75rem 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       border-bottom: 1px solid #444;
     }
-
     .booking-header .date-time {
       font-weight: 600;
       color: #00e5ff;
     }
-
-    .booking-header .booking-id {
-      font-weight: 600;
-      color: #ccc;
-    }
-
     .booking-body {
       display: flex;
       flex-direction: row;
       gap: 1rem;
       padding: 1rem;
     }
-
     .booking-details {
       flex: 1;
+      overflow-y: auto;
     }
-
+    .booking-details p {
+      margin-bottom: 0.6rem;
+      font-size: 0.95rem;
+      color: #ccc;
+    }
     .booking-map {
       flex: 1;
       min-height: 250px;
     }
-
     .booking-actions {
       display: flex;
       justify-content: center;
       gap: 1rem;
       padding: 1rem;
     }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
     @media (max-width: 800px) {
       .booking-body {
         flex-direction: column;
       }
     }
-
     /****************************************
      *  Buttons & Status Colors
      ****************************************/
@@ -218,7 +181,6 @@
       transform: translateY(-2px);
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
-
     .btn-success {
       background: #28a745;
       color: #fff;
@@ -226,7 +188,6 @@
     .btn-success:hover {
       background: #218838;
     }
-
     .cancel-btn {
       background: #ff4444;
       color: #fff;
@@ -234,7 +195,6 @@
     .cancel-btn:hover {
       background: #ff2222;
     }
-
     .booking-status.pending {
       color: yellow;
     }
@@ -244,7 +204,6 @@
     .booking-status.cancelled {
       color: red;
     }
-
     /****************************************
      *  "Undo" Toast Styling
      ****************************************/
@@ -263,18 +222,10 @@
       animation: fadeInToast 0.3s ease-out;
       z-index: 9999;
     }
-
     @keyframes fadeInToast {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-
     .undo-btn {
       background: #00e5ff;
       color: #000;
@@ -290,16 +241,16 @@
   </style>
 </head>
 <body>
-  <!-- HEADER (with hamburger) -->
+  <!-- HEADER -->
   <header>
     <div class="hamburger" onclick="toggleSidebar()">☰</div>
     <h1>Owner Dashboard</h1>
     <nav>
       <a href="{{ url_for('profile.owner_profile') }}">
-        <img src="../static/images/profile.png" alt="Profile">
+        <img src="{{ url_for('static', filename='images/profile.png') }}" alt="Profile">
       </a>
       <a href="{{ url_for('auth.logout') }}">
-        <img src="../static/images/logout.png" alt="Logout">
+        <img src="{{ url_for('static', filename='images/logout.png') }}" alt="Logout">
       </a>
     </nav>
   </header>
@@ -319,68 +270,58 @@
     <main class="content">
       <div class="bookings-container">
         <h2>Active Bookings</h2>
-        {% if bookings %}
-          <div class="bookings-grid">
-            {% for booking in bookings %}
-              <div class="booking-card" id="booking-card-{{ booking.id }}">
-                <!-- Booking Header -->
+        <div style="text-align: center; margin-bottom: 1rem;">
+          <input type="text" id="bookingSearch" placeholder="Search by Booking ID or Vehicle Number" style="padding: 0.5rem; width: 50%; max-width: 400px; border-radius: 4px; border: 1px solid #ccc;">
+        </div>
+
+        {# All bookings are now listed under one header labeled "Details" #}
+        <h3 style="color:#00e5ff; margin-bottom: 1rem;">Details</h3>
+        <div class="bookings-grid" id="detailsContainer">
+          {% if grouped_bookings|length > 0 %}
+            {% for session_id, bookings in grouped_bookings.items() %}
+              <div class="booking-card" id="booking-card-{{ session_id }}">
                 <div class="booking-header">
                   <span class="date-time">
-                    Booked on: {{ booking.created_at.strftime('%Y-%m-%d') }} at {{ booking.created_at.strftime('%H:%M:%S') }}
+                    Booked on: {{ bookings[0].created_at.strftime('%Y-%m-%d') }} at {{ bookings[0].created_at.strftime('%H:%M:%S') }}
                   </span>
-                  {% if booking.vehicle_number and booking.created_at %}
-                    {% set booking_id = "BK" ~ booking.created_at.strftime('%d%H%M%S') ~ booking.vehicle_number[-2:] %}
-                  {% else %}
-                    {% set booking_id = booking.id %}
-                  {% endif %}
-                  <span class="booking-id">#{{ booking_id }}</span>
                 </div>
-
-                <!-- Booking Body: Details and Map -->
                 <div class="booking-body">
                   <div class="booking-details">
-                    <p><strong>Driver Name:</strong> {{ booking.driver_name }}</p>
-                    <p><strong>Driver Email:</strong> {{ booking.email }}</p>
-                    {% if booking.vehicle_number %}
-                      <p><strong>Vehicle Number:</strong> {{ booking.vehicle_number }}</p>
-                    {% endif %}
-                    <p><strong>Parking Spot:</strong> {{ booking.spot_location }}</p>
-                    <p><strong>Price:</strong> ₹{{ booking.spot_price }}</p>
-                    <p><strong>Start Time:</strong> {{ booking.start_time.strftime('%I:%M %p') }}</p>
-                    <p><strong>End Time:</strong> {{ booking.end_time.strftime('%I:%M %p') }}</p>
-                    <p><strong>Status:</strong>
-                      <span class="booking-status {{ booking.status|lower }}">
-                        {{ booking.status }}
-                      </span>
-                    </p>
+                    <p><strong>Driver Name:</strong> {{ bookings[0].driver_name }}</p>
+                    <p><strong>Driver Email:</strong> {{ bookings[0].email }}</p>
+                    <p><strong>Status:</strong> <span class="booking-status {{ 'approved' if bookings[0].is_approved else 'pending' }}">{{ bookings[0].status }}</span></p>
+                    <hr>
+                    {# Display Parking Spot once #}
+                    <p><strong>Parking Spot:</strong> {{ bookings[0].spot_location }}</p>
+                    <hr>
+                    {# Loop over each booking to display unique details #}
+                    {% for booking in bookings %}
+                      <p><strong>Vehicle Number:</strong> {{ booking.vehicle_number or 'N/A' }}</p>
+                      <p><strong>Booked Space:</strong> {{ booking.vehicle_type }} - Spot #{{ booking.sub_spot_number }}</p>
+                      <p><strong>Price:</strong> ₹{{ booking.spot_price }}</p>
+                      <p><strong>Start Time:</strong> {{ booking.start_time.strftime('%I:%M %p') }}</p>
+                      <p><strong>End Time:</strong> {{ booking.end_time.strftime('%I:%M %p') }}</p>
+                      {% if not loop.last %}<hr>{% endif %}
+                    {% endfor %}
                   </div>
                   <div class="booking-map">
-                    <div id="map-{{ booking.id }}" style="width: 100%; height: 250px;"></div>
+                    <div id="pending-map-{{ session_id }}" style="width: 100%; height: 250px;"></div>
                   </div>
                 </div>
-
-                <!-- Booking Actions -->
                 <div class="booking-actions">
-                  {% if booking.status == 'Pending' %}
-                    <form action="{{ url_for('owner.approve_booking', booking_id=booking.id) }}" method="post" style="display:inline;">
-                      <button type="submit" class="btn btn-success">Approve</button>
-                    </form>
-                  {% endif %}
-                  <form
-                    action="{{ url_for('parking.cancel_booking', booking_id=booking.id) }}"
-                    method="post"
-                    style="display:inline;"
-                    onsubmit="return handleCancel(event, '{{ booking.id }}');"
-                  >
+                  <form action="{{ url_for('owner.approve_booking', booking_id=bookings[0].id) }}" method="post" style="display:inline;" onsubmit="return handleApprove(event, '{{ session_id }}');">
+                    <button type="submit" class="btn btn-success">Approve</button>
+                  </form>
+                  <form action="{{ url_for('parking.cancel_booking', booking_id=bookings[0].id) }}" method="post" style="display:inline;" onsubmit="return handleCancel(event, '{{ session_id }}');">
                     <button type="submit" class="btn cancel-btn">Cancel</button>
                   </form>
                 </div>
               </div>
             {% endfor %}
-          </div>
-        {% else %}
-          <p style="text-align: center;">No active bookings found.</p>
-        {% endif %}
+          {% else %}
+            <p style="text-align:center;">No bookings found.</p>
+          {% endif %}
+        </div>
       </div>
     </main>
   </div>
@@ -390,62 +331,88 @@
       document.querySelector('.sidebar').classList.toggle('collapsed');
     }
 
-    // Initialize Leaflet maps for each booking
-    {% for booking in bookings %}
-      var map{{ booking.id }} = L.map('map-{{ booking.id }}').setView([{{ booking.spot_lat }}, {{ booking.spot_lng }}], 15);
+    // Approve handler: update status, remove Approve button, and send AJAX request.
+    function handleApprove(event, bookingID) {
+      event.preventDefault();
+      event.stopPropagation();
+      var form = event.currentTarget;
+      var card = document.getElementById('booking-card-' + bookingID);
+
+      // Update status text and styling
+      var statusEl = card.querySelector('.booking-status');
+      statusEl.textContent = 'Approved';
+      statusEl.classList.remove('pending');
+      statusEl.classList.add('approved');
+
+      // Remove the Approve button
+      var approveBtn = card.querySelector('.btn-success');
+      if (approveBtn) {
+        approveBtn.remove();
+      }
+
+      // Send AJAX POST request with header so backend returns JSON (preventing page reload)
+      var xhr = new XMLHttpRequest();
+      xhr.open(form.method, form.action, true);
+      xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.send(new URLSearchParams(new FormData(form)).toString());
+
+      return false;
+    }
+
+    // Initialize Leaflet maps for each booking group (using pending-map-IDs)
+    {% for session_id, bookings in grouped_bookings.items() %}
+      var pendingMap{{ session_id }} = L.map('pending-map-{{ session_id }}').setView([{{ bookings[0].spot_lat }}, {{ bookings[0].spot_lng }}], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map{{ booking.id }});
-      L.marker([{{ booking.spot_lat }}, {{ booking.spot_lng }}]).addTo(map{{ booking.id }});
+      }).addTo(pendingMap{{ session_id }});
+      L.marker([{{ bookings[0].spot_lat }}, {{ bookings[0].spot_lng }}]).addTo(pendingMap{{ session_id }});
     {% endfor %}
 
-    // Cancel with "Undo" for 5 seconds (toast at bottom-right)
+    // Cancel with "Undo" toast functionality
     function handleCancel(event, bookingID) {
-      // Step 1: Confirm user wants to cancel
       if (!confirm('Are you sure you want to cancel this booking?')) {
         event.preventDefault();
         return false;
       }
-
-      // Step 2: Prevent immediate form submission
       event.preventDefault();
-
-      // Hide the booking card
       const card = document.getElementById('booking-card-' + bookingID);
       card.style.display = 'none';
-
-      // Create a floating toast
       const toast = document.createElement('div');
       toast.classList.add('undo-toast');
       toast.innerHTML = 'Booking cancelled.';
-
-      // Create "Undo" button
       const undoBtn = document.createElement('button');
       undoBtn.classList.add('undo-btn');
       undoBtn.textContent = 'Undo?';
       undoBtn.onclick = () => {
         clearTimeout(timer);
-        // Show the card again
         card.style.display = 'block';
-        // Remove the toast
         document.body.removeChild(toast);
       };
-
       toast.appendChild(undoBtn);
       document.body.appendChild(toast);
-
-      // Step 3: If user does NOT click Undo within 5s, actually submit
       const form = event.target;
       const timer = setTimeout(() => {
-        // Remove toast and proceed with the form submission
         if (document.body.contains(toast)) {
           document.body.removeChild(toast);
         }
         form.submit();
       }, 5000);
-
-      return false; // Stop the original submit
+      return false;
     }
+
+    // Search functionality for booking cards
+    document.getElementById('bookingSearch').addEventListener('keyup', function() {
+      var query = this.value.toLowerCase();
+      var cards = document.querySelectorAll('.booking-card');
+      cards.forEach(function(card) {
+        if (card.textContent.toLowerCase().indexOf(query) > -1) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
   </script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Smart Parking - Metrics</title>
+  <title>Smart Parking - Metrics Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Poppins Font -->
@@ -10,75 +10,45 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
-  <!-- Chart.js (CDN) -->
+  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    /**************************************************************
-     * BASE + DASHBOARD LAYOUT
-     **************************************************************/
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Poppins', sans-serif;
-    }
+    /* BASE & LAYOUT */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
     body {
       background: #121212 url("../static/images/background.jpg") no-repeat center center;
       background-size: cover;
       background-attachment: fixed;
       color: #e0e0e0;
       min-height: 100vh;
-      overflow: hidden; /* main scrolling in .content */
+      overflow: hidden;
     }
     /* HEADER */
     header {
-      position: fixed;
-      top: 0; left: 0; right: 0;
+      position: fixed; top: 0; left: 0; right: 0;
       height: 60px;
       background: #1f1f1f;
       padding: 1rem 2rem;
       display: flex;
       align-items: center;
       border-bottom: 2px solid #333;
-      z-index: 9999;
+      z-index: 10000;
     }
-    .hamburger {
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: #fff;
-      margin-right: 1rem;
-    }
-    header h1 {
-      font-size: 1.5rem;
-      letter-spacing: 1px;
-      flex: 1;
-      margin-left: 1rem;
-    }
-    nav a {
-      margin-left: 1.5rem;
-      text-decoration: none;
-      transition: opacity 0.3s;
-    }
-    nav a img {
-      width: 40px;
-      height: 40px;
-      vertical-align: middle;
-    }
-    nav a:hover {
-      opacity: 0.8;
-    }
+    .hamburger { font-size: 1.5rem; cursor: pointer; color: #fff; margin-right: 1rem; }
+    header h1 { font-size: 1.5rem; letter-spacing: 1px; flex: 1; margin-left: 1rem; }
+    nav a { margin-left: 1.5rem; text-decoration: none; transition: opacity 0.3s; }
+    nav a img { width: 40px; height: 40px; vertical-align: middle; }
+    nav a:hover { opacity: 0.8; }
 
-    /* DASHBOARD WRAPPER */
+    /* DASHBOARD LAYOUT */
     .dashboard {
       display: grid;
       grid-template-columns: 250px 1fr;
       min-height: calc(100vh - 60px);
+      margin-top: 60px;
       position: relative;
-      margin-top: 60px; /* push content below header */
     }
-
-    /* SIDEBAR */
     .sidebar {
       background: #1f1f1f;
       padding: 2rem 1rem;
@@ -97,16 +67,11 @@
       border-left: 4px solid transparent;
       transition: background 0.3s, border-color 0.3s;
     }
-    .sidebar a:hover,
-    .sidebar a.active {
+    .sidebar a:hover, .sidebar a.active {
       background: #333;
       border-left: 4px solid #00e5ff;
     }
-    .sidebar.collapsed {
-      transform: translateX(-250px);
-    }
-
-    /* MAIN CONTENT */
+    .sidebar.collapsed { transform: translateX(-250px); }
     .content {
       position: absolute;
       top: 60px;
@@ -116,16 +81,71 @@
       padding: 2rem;
       transition: left 0.3s ease;
     }
+    .content.shifted { left: 0; }
 
-    /**************************************************************
-     * CARD + LAYOUT
-     **************************************************************/
+    /* OVERVIEW SECTION */
+    .overview-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+    .overview-card {
+      background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      flex: 1 1 200px;
+      max-width: 250px;
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+    .overview-card:hover {
+      transform: translateY(-5px);
+    }
+    .overview-card h4 {
+      font-size: 1.1rem;
+      color: #00e5ff;
+      margin-bottom: 0.5rem;
+    }
+    .overview-card span {
+      font-size: 1.5rem;
+      font-weight: 600;
+      display: block;
+      margin-top: 0.5rem;
+      color: #fff;
+    }
+
+    /* CHARTS SECTION */
+    .charts-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+    .chart-container {
+      background: rgba(30,30,30,0.9);
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      padding: 1rem;
+      width: 100%;
+      max-width: 600px;
+      height: 400px;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* CARD STYLING */
     .card {
       background: #1f1f1f;
       padding: 2rem;
       border-radius: 8px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-      transition: transform 0.3s, box-shadow 0.3s;
       margin-bottom: 2rem;
       animation: fadeIn 1s ease;
     }
@@ -142,62 +162,6 @@
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
-    /* MONTHLY OVERVIEW BOXES */
-    .monthly-overview {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 2rem;
-      justify-content: center;
-    }
-    .overview-box {
-      background: #2a2a2a;
-      border-radius: 8px;
-      padding: 1rem 1.5rem;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      text-align: center;
-      transition: transform 0.3s, box-shadow 0.3s;
-      min-width: 180px;
-    }
-    .overview-box:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-    }
-    .overview-box h4 {
-      color: #00e5ff;
-      margin-bottom: 0.5rem;
-      font-size: 1.1rem;
-    }
-    .overview-box span {
-      font-size: 1.3rem;
-      font-weight: 600;
-      display: block;
-      margin-top: 0.5rem;
-    }
-
-    /* CHARTS ROW */
-    .chart-row {
-      display: flex;
-      flex-direction: row;
-      gap: 2rem;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .chart-container {
-      flex: 1;
-      min-width: 300px;
-      max-width: 600px;
-      height: 400px;
-      position: relative;
-      margin: 1rem 0;
-    }
-    canvas {
-      background: rgba(50,50,50,0.8);
-      border-radius: 8px;
-      padding: 1rem;
-      width: 100%;
-      height: 100%;
-    }
   </style>
 </head>
 <body>
@@ -206,11 +170,11 @@
     <div class="hamburger" onclick="toggleSidebar()">☰</div>
     <h1>Owner Dashboard</h1>
     <nav>
-      <a href="{{ url_for('profile.driver_profile') }}">
-        <img src="../static/images/profile.png" alt="Profile" />
+      <a href="{{ url_for('profile.owner_profile') }}">
+        <img src="{{ url_for('static', filename='images/profile.png') }}" alt="Profile" />
       </a>
       <a href="{{ url_for('auth.logout') }}">
-        <img src="../static/images/logout.png" alt="Logout" />
+        <img src="{{ url_for('static', filename='images/logout.png') }}" alt="Logout" />
       </a>
     </nav>
   </header>
@@ -228,43 +192,46 @@
 
     <!-- MAIN CONTENT -->
     <main class="content" id="mainContent">
-
-      <!-- Monthly Overview Card -->
+      <!-- Overview Section -->
       <div class="card">
         <h3>Monthly Overview</h3>
-        <div class="monthly-overview">
-          <!-- This Month's Bookings -->
-          <div class="overview-box">
+        <div class="overview-section">
+          <div class="overview-card">
             <h4>This Month's Bookings</h4>
-            <span>{{this_month_bookings}}</span>
+            <span>{{ this_month_bookings }}</span>
           </div>
-
-          <!-- This Month's Revenue -->
-          <div class="overview-box">
+          <div class="overview-card">
             <h4>This Month's Revenue (₹)</h4>
-            <span>{{this_month_revenue}}</span>
+            <span>{{ this_month_revenue }}</span>
           </div>
-
-          <!-- Active Spots (real-time) -->
-          <div class="overview-box">
-            <h4>Available Spots</h4>
-            <span>{{active_spots}}</span>
+          <div class="overview-card">
+            <h4>Active Spots</h4>
+            <span>{{ active_spots }}</span>
           </div>
+          {% if total_spots is defined %}
+          <div class="overview-card">
+            <h4>Total Spots</h4>
+            <span>{{ total_spots }}</span>
+          </div>
+          {% endif %}
         </div>
       </div>
 
-
-      <!-- Charts Card -->
+      <!-- Charts Section -->
       <div class="card">
         <h3>Analytics Dashboard</h3>
-        <div class="chart-row">
-          <!-- Bookings Over Time (Line Chart) -->
+        <div class="charts-section">
+          <!-- Line Chart: Bookings Over Time -->
           <div class="chart-container">
             <canvas id="bookingsChart"></canvas>
           </div>
-          <!-- Revenue Over Time (Bar Chart) -->
+          <!-- Bar Chart: Revenue Over Time -->
           <div class="chart-container">
             <canvas id="revenueChart"></canvas>
+          </div>
+          <!-- Doughnut Chart: Spots Availability -->
+          <div class="chart-container">
+            <canvas id="spotsChart"></canvas>
           </div>
         </div>
       </div>
@@ -272,7 +239,7 @@
   </div>
 
   <script>
-    // Collapsible sidebar
+    // Sidebar toggle
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const mainContent = document.getElementById('mainContent');
@@ -280,48 +247,40 @@
       mainContent.classList.toggle('shifted');
     }
 
-    // Chart.js dark defaults
+    // Chart.js global dark defaults
     Chart.defaults.color = '#e0e0e0';
     Chart.defaults.borderColor = '#444';
 
-    // 1) Bookings Over Time (Line Chart)
+    // 1) Line Chart: Bookings Over Time
     const ctxBookings = document.getElementById('bookingsChart').getContext('2d');
     const bookingsChart = new Chart(ctxBookings, {
       type: 'line',
       data: {
-        labels: {{ months|tojson }},         // e.g. ["Feb","Mar","Apr","May","Jun","Jul"]
+        labels: {{ months|tojson }},
         datasets: [{
           label: 'Bookings',
-          data: {{ bookings_data|tojson }},  // e.g. [5,10,7,12,20,15]
+          data: {{ bookings_data|tojson }},
           borderColor: '#00e5ff',
           backgroundColor: 'rgba(0,229,255,0.2)',
           fill: true,
-          tension: 0.3
+          tension: 0.3,
+          pointRadius: 4,
+          pointHoverRadius: 6
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true }
-        },
+        scales: { y: { beginAtZero: true } },
         plugins: {
           legend: { labels: { color: '#e0e0e0' } },
-          title: {
-            display: true,
-            text: 'Bookings Over Time (Monthly)',
-            color: '#00e5ff',
-            font: { size: 16 }
-          },
-          tooltip: {
-            mode: 'index',
-            intersect: false
-          }
+          title: { display: true, text: 'Monthly Bookings', color: '#00e5ff', font: { size: 16 } },
+          tooltip: { mode: 'index', intersect: false }
         }
       }
     });
 
-    // 2) Revenue Over Time (Bar Chart)
+    // 2) Bar Chart: Revenue Over Time
     const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
     const revenueChart = new Chart(ctxRevenue, {
       type: 'bar',
@@ -336,21 +295,38 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true }
-        },
+        scales: { y: { beginAtZero: true } },
         plugins: {
           legend: { labels: { color: '#e0e0e0' } },
-          title: {
-            display: true,
-            text: 'Revenue Over Time (Monthly)',
-            color: '#00e5ff',
-            font: { size: 16 }
-          },
-          tooltip: {
-            mode: 'index',
-            intersect: false
-          }
+          title: { display: true, text: 'Monthly Revenue', color: '#00e5ff', font: { size: 16 } },
+          tooltip: { mode: 'index', intersect: false }
+        }
+      }
+    });
+
+    // 3) Doughnut Chart: Spots Availability
+    // Compute inactive spots if total_spots is defined; otherwise, assume 100% active.
+    const totalSpots = {{ total_spots if total_spots is defined else active_spots }};
+    const inactiveSpots = totalSpots - {{ active_spots }};
+    const ctxSpots = document.getElementById('spotsChart').getContext('2d');
+    const spotsChart = new Chart(ctxSpots, {
+      type: 'doughnut',
+      data: {
+        labels: ['Active', 'Inactive'],
+        datasets: [{
+          data: [{{ active_spots }}, inactiveSpots],
+          backgroundColor: ['#00e5ff', '#ff4444'],
+          borderWidth: 2,
+          borderColor: '#121212'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#e0e0e0' } },
+          title: { display: true, text: 'Spots Availability', color: '#00e5ff', font: { size: 16 } },
+          tooltip: { callbacks: { label: context => `${context.label}: ${context.parsed} (${((context.parsed/totalSpots)*100).toFixed(1)}%)` } }
         }
       }
     });
