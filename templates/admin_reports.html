@@ -34,8 +34,12 @@
   <header>
     <h1>Admin Dashboard</h1>
     <nav>
-      <a href="{{ url_for('profile.admin_profile') }}"><img src="{{ url_for('static', filename='images/profile_icon.png') }}" alt="Profile" /></a>
-      <a href="{{ url_for('auth.logout') }}"><img src="{{ url_for('static', filename='images/logout_icon.png') }}" alt="Logout" /></a>
+      <a href="{{ url_for('profile.admin_profile') }}">
+        <img src="{{ url_for('static', filename='images/profile.png') }}" alt="Profile" />
+      </a>
+      <a href="{{ url_for('auth.logout') }}">
+        <img src="{{ url_for('static', filename='images/logout.png') }}" alt="Logout" />
+      </a>
     </nav>
   </header>
   <div class="dashboard">
@@ -45,7 +49,6 @@
       <a href="{{ url_for('admin.parking_management') }}">Parking Management</a>
       <a href="{{ url_for('admin.reports') }}" class="active">Reports</a>
       <a href="{{ url_for('admin.analytics') }}">Analytics</a>
-      <a href="{{ url_for('admin.system_settings') }}">System Settings</a>
     </aside>
     <main class="content">
       <div class="card" style="animation: fadeIn 1s ease;">
@@ -74,7 +77,7 @@
           </tr>
           <tr>
             <th>Total Revenue</th>
-            <td>${{ revenue if revenue is defined else 'N/A' }}</td>
+            <td>₹{{ revenue if revenue is defined else 'N/A' }}</td>
           </tr>
         </table>
       </div>
