@@ -1,11 +1,12 @@
 from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import login_required, current_user
-from models import db, ParkingSpot, User
+from models import db, ParkingSpot, User, ParkingSpace, Booking, PaymentDetails
 from datetime import datetime
-from sqlalchemy import func  # <-- for SUM, COUNT, etc.
+from sqlalchemy import func
 
 admin_bp = Blueprint('admin', __name__)
+
 
 # Decorator to enforce admin-only access
 def admin_required(func):
@@ -15,7 +16,9 @@ def admin_required(func):
             flash("Unauthorized access!", "danger")
             return redirect(url_for('dashboard.driver_dashboard'))
         return func(*args, **kwargs)
+
     return wrapper
+
 
 # Admin dashboard route
 @admin_bp.route('/', methods=['GET'])
@@ -23,6 +26,7 @@ def admin_required(func):
 @admin_required
 def admin_dashboard():
     return render_template('admin_dashboard.html')
+
 
 # User Management page
 @admin_bp.route('/user_management', methods=['GET'])
@@ -32,6 +36,7 @@ def user_management():
     users = User.query.all()
     return render_template('admin_user_management.html', users=users)
 
+
 # Parking Management page
 @admin_bp.route('/parking_management', methods=['GET'])
 @login_required
@@ -40,20 +45,30 @@ def parking_management():
     spots = ParkingSpot.query.all()
     return render_template('admin_parking_management.html', spots=spots)
 
-# Reports page
+
+# Reports page with updated booking metrics
 @admin_bp.route('/reports', methods=['GET'])
 @login_required
 @admin_required
 def reports():
     total_users = User.query.count()
     total_spots = ParkingSpot.query.count()
-
     available_spots = ParkingSpot.query.filter_by(availability=True).count()
-    booked_spots = ParkingSpot.query.filter_by(availability=False).count()
-    total_bookings = booked_spots
 
+    # Calculate booked spots as the count of distinct parking spaces with active bookings
+    booked_spots = db.session.query(Booking.parking_space_id) \
+        .filter_by(active=True) \
+        .distinct() \
+        .count()
+
+    # Total active booking records
+    total_bookings = Booking.query.filter_by(active=True).count()
+
+    # Revenue calculation (in rupees)
     revenue = db.session.query(func.sum(ParkingSpot.price)) \
-                  .filter(ParkingSpot.availability == False) \
+                  .join(ParkingSpace, ParkingSpace.parking_spot_id == ParkingSpot.id) \
+                  .join(Booking, Booking.parking_space_id == ParkingSpace.id) \
+                  .filter(Booking.active == True) \
                   .scalar() or 0
 
     return render_template(
@@ -66,31 +81,31 @@ def reports():
         revenue=revenue
     )
 
+
 # Analytics page
-@admin_bp.route('/analytics', methods=['GET'])
+@admin_bp.route('/analytics')
 @login_required
 @admin_required
 def analytics():
-    total_two_wheeler = db.session.query(func.sum(ParkingSpot.two_wheeler_spaces)).scalar() or 0
-    total_four_wheeler = db.session.query(func.sum(ParkingSpot.four_wheeler_spaces)).scalar() or 0
+    # Calculate the number of booked parking spaces (distinct parking_space IDs with an active booking)
+    booked_spots = db.session.query(Booking.parking_space_id) \
+        .filter_by(active=True) \
+        .distinct() \
+        .count()
+
+    total_bookings = Booking.query.filter_by(active=True).count()
+    # Example revenue calculation (adjust this logic as needed)
+    revenue = db.session.query(db.func.sum(ParkingSpot.price)).scalar() or 0
+    total_payment_details = PaymentDetails.query.count()
 
     return render_template(
         'admin_analytics.html',
-        total_two_wheeler=total_two_wheeler,
-        total_four_wheeler=total_four_wheeler
+        booked_spots=booked_spots,
+        total_bookings=total_bookings,
+        revenue=revenue,
+        total_payment_details=total_payment_details
     )
 
-# System Settings page
-@admin_bp.route('/system_settings', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def system_settings():
-    if request.method == 'POST':
-        site_name = request.form.get('site_name')
-        maintenance_mode = request.form.get('maintenance_mode')
-        flash("System settings updated.", "success")
-        return redirect(url_for('admin.system_settings'))
-    return render_template('admin_system_settings.html')
 
 # Add New User route
 @admin_bp.route('/add_user', methods=['GET', 'POST'])
@@ -103,7 +118,6 @@ def add_user():
         password = request.form.get('password')
         role = request.form.get('role')  # Capture the role from the form
 
-        # Debug flash messages if any field is missing.
         if not username or not email or not password or not role:
             flash("One or more fields are missing.", "danger")
             return redirect(url_for('admin.add_user'))
@@ -112,7 +126,6 @@ def add_user():
             flash("Invalid role selected. Please try again.", "danger")
             return redirect(url_for('admin.user_management'))
 
-        # Create a new user using keyword arguments to ensure all required parameters are passed.
         new_user = User(username=username, email=email, role=role)
         new_user.set_password(password)
 
@@ -123,6 +136,7 @@ def add_user():
         return redirect(url_for('admin.user_management'))
 
     return render_template('admin_add_user.html')
+
 
 # Edit Parking Spot route
 @admin_bp.route('/edit_spot/<int:spot_id>', methods=['GET', 'POST'])
@@ -143,12 +157,6 @@ def edit_spot(spot_id):
         except (ValueError, KeyError):
             flash("Invalid location coordinates.", "danger")
             return redirect(url_for('admin.edit_spot', spot_id=spot_id))
-        try:
-            spot.two_wheeler_spaces = int(request.form.get('two_wheeler_spaces', spot.two_wheeler_spaces or 0))
-            spot.four_wheeler_spaces = int(request.form.get('four_wheeler_spaces', spot.four_wheeler_spaces or 0))
-        except ValueError:
-            flash("Vehicle space counts must be integers.", "danger")
-            return redirect(url_for('admin.edit_spot', spot_id=spot_id))
         spot.description = request.form.get('description', spot.description)
         available_from_str = request.form.get('available_from', '')
         available_to_str = request.form.get('available_to', '')
@@ -165,6 +173,7 @@ def edit_spot(spot_id):
         return redirect(url_for('admin.admin_dashboard'))
     return render_template('admin_edit_spot.html', spot=spot)
 
+
 # Delete Parking Spot route
 @admin_bp.route('/delete_spot/<int:spot_id>', methods=['POST'])
 @login_required
@@ -179,6 +188,7 @@ def delete_spot(spot_id):
         db.session.rollback()
         flash("Error deleting spot: " + str(e), "danger")
     return redirect(url_for('admin.admin_dashboard'))
+
 
 # Delete User route
 @admin_bp.route('/delete_user/<int:user_id>', methods=['POST'])
@@ -195,3 +205,19 @@ def delete_user(user_id):
         flash("Error deleting user: " + str(e), "danger")
     return redirect(url_for('admin.admin_dashboard'))
 
+
+# Delete Parking Space route
+@admin_bp.route('/delete_space/<int:space_id>', methods=['POST'], endpoint="delete_space")
+@login_required
+@admin_required
+def delete_space(space_id):
+    space = ParkingSpace.query.get_or_404(space_id)
+    spot_id = space.parking_spot_id  # Retrieve parent spot id for redirection
+    try:
+        db.session.delete(space)
+        db.session.commit()
+        flash("Parking space deleted successfully.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash("Error deleting parking space: " + str(e), "danger")
+    return redirect(url_for('admin.edit_spot', spot_id=spot_id))

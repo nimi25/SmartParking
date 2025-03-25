@@ -150,7 +150,7 @@
   <header>
     <h1>Admin Dashboard</h1>
     <nav>
-      <a href="{{ url_for('profile.admin_profile') }}">
+      <a href="{{ url_for('profile.owner_profile') }}">
         <img src="{{ url_for('static', filename='images/profile.png') }}" alt="Profile" />
       </a>
       <a href="{{ url_for('auth.logout') }}">
@@ -166,7 +166,6 @@
       <a href="{{ url_for('admin.parking_management') }}">Parking Management</a>
       <a href="{{ url_for('admin.reports') }}">Reports</a>
       <a href="{{ url_for('admin.analytics') }}">Analytics</a>
-      <a href="{{ url_for('admin.system_settings') }}">System Settings</a>
     </aside>
     <!-- Main Content -->
     <main class="content">

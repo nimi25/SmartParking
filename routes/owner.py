@@ -11,6 +11,14 @@ from models import db, ParkingSpot, Booking, User, PaymentDetails, ParkingSpace
 
 owner_bp = Blueprint('owner', __name__)
 
+# Custom filter to convert ParkingSpace objects to dicts for JSON serialization.
+@owner_bp.app_template_filter('space_to_dict')
+def space_to_dict(space):
+    return {
+        'vehicle_type': space.vehicle_type,
+        'sub_spot': space.sub_spot_number
+    }
+
 @owner_bp.route('/', methods=['GET'])
 @login_required
 def owner_dashboard():
@@ -45,7 +53,7 @@ def owner_dashboard():
                 sub_spot_number=ps.sub_spot_number,
                 active=b.active,
                 status=b.status,
-                is_approved=b.is_approved,  # pass the approval flag
+                is_approved=b.is_approved,
                 session_id=b.session_id if b.session_id is not None else str(b.id),
                 phone_number=b.phone_number
             )
@@ -67,7 +75,6 @@ def bookings():
         flash("Unauthorized access!", "danger")
         return redirect(url_for('dashboard.dashboard'))
 
-    # Fetch bookings for the current owner with status Pending or Approved
     joined_data = (
         db.session.query(Booking, User, ParkingSpace, ParkingSpot)
         .join(User, Booking.user_id == User.id)
@@ -95,7 +102,7 @@ def bookings():
                 sub_spot_number=ps.sub_spot_number,
                 active=b.active,
                 status=b.status,
-                is_approved=b.is_approved,  # include the approval flag for template logic
+                is_approved=b.is_approved,
                 session_id=b.session_id if b.session_id is not None else str(b.id),
                 phone_number=b.phone_number
             )
@@ -304,7 +311,6 @@ def history():
         payment_history=[]
     )
 
-
 @owner_bp.route('/approve_booking/<int:booking_id>', methods=['POST'])
 @login_required
 def approve_booking(booking_id):
@@ -312,19 +318,64 @@ def approve_booking(booking_id):
         flash("Unauthorized action!", "danger")
         return redirect(url_for('dashboard.dashboard'))
 
-    # Get the booking to be approved
     booking = Booking.query.get_or_404(booking_id)
     session_id = booking.session_id if booking.session_id else str(booking.id)
-    # Update all bookings with the same session_id
     bookings_in_session = Booking.query.filter_by(session_id=session_id).all()
     for b in bookings_in_session:
         b.status = "Approved"
         b.is_approved = True
     db.session.commit()
     flash("Booking(s) approved!", "success")
-
-    # Check if the request is AJAX. If so, return JSON.
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return {"success": True}
-
     return redirect(url_for('owner.bookings'))
+
+@owner_bp.route('/edit_parking_spot/<int:spot_id>', methods=['POST'])
+@login_required
+def edit_parking_spot(spot_id):
+    # This route replaces the removed update_parking_spot route.
+    spot = ParkingSpot.query.filter_by(id=spot_id, owner_id=current_user.id).first_or_404()
+    location = request.form.get('location')
+    price = request.form.get('price')
+    description = request.form.get('description')
+    lat = request.form.get('lat')
+    lng = request.form.get('lng')
+    spaces_data = request.form.get('spaces_data')
+
+    if not location or not price or not lat or not lng:
+        flash("Missing required fields.", "danger")
+        return redirect(url_for('owner.parkingspace'))
+    try:
+        price = float(price)
+        lat = float(lat)
+        lng = float(lng)
+    except ValueError:
+        flash("Invalid numeric values.", "danger")
+        return redirect(url_for('owner.parkingspace'))
+
+    spot.location = location
+    spot.price = price
+    spot.description = description
+    spot.lat = lat
+    spot.lng = lng
+
+    if spaces_data:
+        import json
+        try:
+            new_spaces = json.loads(spaces_data)
+        except Exception as e:
+            flash("Error processing spaces data.", "danger")
+            return redirect(url_for('owner.parkingspace'))
+        for ps in spot.spaces:
+            db.session.delete(ps)
+        for space in new_spaces:
+            new_space = ParkingSpace(
+                parking_spot_id=spot.id,
+                vehicle_type=space.get('vehicle_type'),
+                sub_spot_number=space.get('sub_spot')
+            )
+            db.session.add(new_space)
+
+    db.session.commit()
+    flash("Parking spot updated successfully.", "success")
+    return redirect(url_for('owner.parkingspace'))

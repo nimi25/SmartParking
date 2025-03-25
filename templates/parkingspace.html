@@ -43,7 +43,6 @@
     nav a { margin-left: 1.5rem; text-decoration: none; transition: opacity 0.3s; }
     nav a img { width: 40px; height: 40px; vertical-align: middle; }
     nav a:hover { opacity: 0.8; }
-
     .dashboard {
       display: grid;
       grid-template-columns: 250px 1fr;
@@ -146,7 +145,6 @@
     }
     .form-group input[type="text"],
     .form-group input[type="number"],
-    .form-group input[type="time"],
     .form-group textarea {
       width: 100%;
       padding: 10px;
@@ -309,7 +307,6 @@
     }
     .edit-btn { background: #00e5ff; color: #000; }
     .cancel-btn { background: #ff4444; color: #fff; }
-    /* Removed Manage Spaces button */
     /* "Booked Out" Styles */
     .booked-out-card { background: rgba(60,60,60,0.95); }
     .parking-spot-item.booked-out { background: rgba(80,80,80,0.95); }
@@ -319,7 +316,7 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* NEW: Modal Edit Interface Styles */
+    /* Modal Edit Interface Styles */
     .modal {
       display: none;
       position: fixed;
@@ -329,24 +326,76 @@
       width: 100%;
       height: 100%;
       overflow: auto;
-      background-color: rgba(0,0,0,0.7);
+      background-color: rgba(0,0,0,0.8);
     }
     .modal-content {
-      background: #1e1e1e;
-      margin: 10% auto;
-      padding: 20px;
-      border-radius: 8px;
+      background: #2b2b2b;
+      margin: 8% auto;
+      padding: 30px;
+      border-radius: 10px;
       width: 90%;
       max-width: 500px;
       position: relative;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
     }
     .close {
       position: absolute;
-      right: 15px;
-      top: 10px;
-      font-size: 1.5rem;
+      right: 20px;
+      top: 15px;
+      font-size: 1.8rem;
       cursor: pointer;
       color: #fff;
+    }
+    /* Editable Parking Spaces Section in Modal */
+    .spaces-section {
+      margin-top: 2rem;
+    }
+    .spaces-section h3 {
+      margin-bottom: 1rem;
+      color: #00e5ff;
+    }
+    .spaces-list {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 1rem;
+    }
+    .spaces-list li {
+      padding: 0.5rem;
+      background: #3a3a3a;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 4px;
+      color: #fff;
+    }
+    .spaces-list button {
+      background: #ff4444;
+      color: #fff;
+      border: none;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .add-space-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+    .add-space-buttons button {
+      background: #00e5ff;
+      color: #000;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    /* Map for Editing Coordinates in Modal */
+    #editModalMap {
+      width: 100%;
+      height: 300px;
+      margin-bottom: 15px;
+      border-radius: 8px;
     }
   </style>
 </head>
@@ -460,13 +509,21 @@
                 <p><strong>4-Wheeler Spaces:</strong> {{ spot.spaces | selectattr('vehicle_type', 'equalto', '4W') | list | length }}</p>
                 <p><strong>Description:</strong> {{ spot.description or "N/A" }}</p>
                 <div class="spot-actions">
-                  <!-- NEW: Edit Button now triggers the modal with pre-filled details -->
-                  <button type="button" class="edit-btn" onclick="openEditModal({{ spot.id }}, '{{ spot.location|escape }}', '{{ spot.price }}', '{{ spot.available_from.strftime('%H:%M') if spot.available_from else '' }}', '{{ spot.available_to.strftime('%H:%M') if spot.available_to else '' }}', '{{ spot.description|escape }}', '{{ spot.lat }}', '{{ spot.lng }}')">Edit</button>
+                  <!-- Edit Button triggers modal with pre-filled details and spaces data -->
+                  <button type="button" class="edit-btn"
+                    onclick="openEditModal(
+                      {{ spot.id }},
+                      {{ spot.location|tojson }},
+                      {{ spot.price }},
+                      {{ spot.description|tojson }},
+                      {{ spot.lat }},
+                      {{ spot.lng }},
+                      {{ (spot.spaces|default([]))|map('space_to_dict')|list|tojson }}
+                    )">Edit</button>
                   <form method="POST" action="{{ url_for('parking.delete_parking_spot', spot_id=spot.id) }}" onsubmit="return confirm('Are you sure you want to delete this spot?');" style="display:inline;">
                     <button type="submit" class="cancel-btn">Delete</button>
                   </form>
                 </div>
-                <!-- The old inline edit form is now hidden -->
                 <div id="editForm-{{ spot.id }}" class="edit-form" style="display: none;"></div>
               </div>
             {% endfor %}
@@ -500,10 +557,11 @@
     </main>
   </div>
 
-  <!-- NEW: Modal Edit Interface -->
+  <!-- Modal Edit Interface -->
   <div id="editModal" class="modal">
     <div class="modal-content">
       <span class="close" onclick="closeEditModal()">&times;</span>
+      <!-- The form action will be set dynamically using openEditModal -->
       <form id="editFormModal" method="POST" action="">
         <div class="form-group">
           <label for="editLocation">Location</label>
@@ -514,20 +572,24 @@
           <input type="number" step="0.01" id="editPrice" name="price" required>
         </div>
         <div class="form-group">
-          <label for="editAvailableFrom">Available From</label>
-          <input type="time" id="editAvailableFrom" name="available_from">
-        </div>
-        <div class="form-group">
-          <label for="editAvailableTo">Available To</label>
-          <input type="time" id="editAvailableTo" name="available_to">
-        </div>
-        <div class="form-group">
           <label for="editDescription">Description</label>
           <textarea id="editDescription" name="description"></textarea>
+        </div>
+        <!-- Editable Parking Spaces Section -->
+        <div class="form-group spaces-section">
+          <h3>Parking Spaces</h3>
+          <ul id="editSpacesList" class="spaces-list"></ul>
+          <input type="hidden" id="edit_spaces_data" name="spaces_data" value="">
+          <div class="add-space-buttons">
+            <button type="button" id="editAdd2WBtn">Add 2-Wheeler Space</button>
+            <button type="button" id="editAdd4WBtn">Add 4-Wheeler Space</button>
+          </div>
         </div>
         <!-- Hidden lat/lng fields -->
         <input type="hidden" id="editLat" name="lat">
         <input type="hidden" id="editLng" name="lng">
+        <!-- Map Window for Editing Coordinates -->
+        <div id="editModalMap"></div>
         <button type="submit" class="btn">Save Changes</button>
       </form>
     </div>
@@ -665,28 +727,69 @@
       {% endfor %}
 
       /**************************************************************
-       * NEW: Modal Edit Form Functions
+       * Modal Edit Form Functions and Editable Spaces
        **************************************************************/
-      window.openEditModal = function(spotId, location, price, available_from, available_to, description, lat, lng) {
-        // Set form action dynamically (assuming your update route follows this pattern)
-        document.getElementById('editFormModal').action = "/parking/update_parking_spot/" + spotId;
-        // Pre-fill the form fields with the provided data
-        document.getElementById('editLocation').value = location;
+      var editMap, editMarker;
+      var editSpaces = [];
+      function updateEditSpacesList() {
+        var list = document.getElementById('editSpacesList');
+        list.innerHTML = "";
+        editSpaces.forEach(function(space, index) {
+          var li = document.createElement("li");
+          li.textContent = space.vehicle_type + " - Space #" + (index + 1);
+          var removeBtn = document.createElement("button");
+          removeBtn.textContent = "Remove";
+          removeBtn.onclick = function() {
+            editSpaces.splice(index, 1);
+            updateEditSpacesList();
+          };
+          li.appendChild(removeBtn);
+          list.appendChild(li);
+        });
+        document.getElementById('edit_spaces_data').value = JSON.stringify(editSpaces);
+      }
+      // Note: Renamed parameter "location" to "spotLocation" to avoid clashing with window.location.
+      window.openEditModal = function(spotId, spotLocation, price, description, lat, lng, spacesData) {
+        console.log("openEditModal called", spotId, spotLocation, price, description, lat, lng, spacesData);
+        // Use the new route name 'owner.edit_parking_spot' instead of the removed update route.
+        var baseUrl = "{{ url_for('owner.edit_parking_spot', spot_id=0) }}";
+        document.getElementById('editFormModal').action = baseUrl.replace("0", spotId);
+        document.getElementById('editLocation').value = spotLocation;
         document.getElementById('editPrice').value = price;
-        document.getElementById('editAvailableFrom').value = available_from;
-        document.getElementById('editAvailableTo').value = available_to;
         document.getElementById('editDescription').value = description;
         document.getElementById('editLat').value = lat;
         document.getElementById('editLng').value = lng;
-        // Display the modal
+        try {
+          editSpaces = JSON.parse(spacesData);
+        } catch (e) {
+          editSpaces = [];
+        }
+        updateEditSpacesList();
         document.getElementById('editModal').style.display = "block";
+        if (!editMap) {
+          editMap = L.map('editModalMap').setView([lat, lng], 15);
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OpenStreetMap contributors"
+          }).addTo(editMap);
+          editMarker = L.marker([lat, lng], {draggable: true}).addTo(editMap);
+          editMarker.on('dragend', function(e) {
+            var newLatLng = e.target.getLatLng();
+            document.getElementById('editLat').value = newLatLng.lat;
+            document.getElementById('editLng').value = newLatLng.lng;
+          });
+          editMap.on('click', function(e) {
+            editMarker.setLatLng(e.latlng);
+            document.getElementById('editLat').value = e.latlng.lat;
+            document.getElementById('editLng').value = e.latlng.lng;
+          });
+        } else {
+          editMap.setView([lat, lng], 15);
+          editMarker.setLatLng([lat, lng]);
+        }
       };
-
       window.closeEditModal = function() {
         document.getElementById('editModal').style.display = "none";
       };
-
-      // Close the modal if user clicks outside the modal content
       window.onclick = function(event) {
         var modal = document.getElementById('editModal');
         if (event.target == modal) {
@@ -695,11 +798,10 @@
       };
 
       /**************************************************************
-       * INDIVIDUAL PARKING SPACES DEFINITION (Owner Interface)
+       * INDIVIDUAL PARKING SPACES DEFINITION (Add Spot Form)
        **************************************************************/
       var spaces = [];
       function updateSpacesList() {
-        // Reassign sequential numbers for each vehicle type
         var twoW = spaces.filter(function(s){ return s.vehicle_type === "2W"; });
         var fourW = spaces.filter(function(s){ return s.vehicle_type === "4W"; });
         twoW.forEach(function(s, i){ s.sub_spot = i + 1; });
@@ -742,7 +844,7 @@
         spaces.push({ vehicle_type: "4W", sub_spot: 0 });
         updateSpacesList();
       });
-    });
+    }); // End of DOMContentLoaded
   </script>
 </body>
 </html>
