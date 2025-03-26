@@ -15,6 +15,7 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <style>
+    /* (Your existing CSS remains unchanged) */
     * {
       margin: 0;
       padding: 0;
@@ -110,7 +111,6 @@
       margin-bottom: 1.5rem;
       color: #00e5ff;
     }
-    /* One card per row */
     .bookings-grid {
       display: block;
     }
@@ -122,6 +122,10 @@
       margin-bottom: 1.5rem;
       overflow: hidden;
       animation: fadeIn 1s ease;
+    }
+    .booking-card.highlight {
+      border: 2px solid #00e5ff;
+      box-shadow: 0 0 10px #00e5ff;
     }
     .booking-header {
       background: #2c2c2c;
@@ -166,9 +170,7 @@
         flex-direction: column;
       }
     }
-    /****************************************
-     *  Buttons & Status Colors
-     ****************************************/
+    /* Buttons & Status Colors */
     .btn {
       padding: 0.5rem 1rem;
       border: none;
@@ -201,12 +203,10 @@
     .booking-status.approved {
       color: green;
     }
-    .booking-status.cancelled {
+    .booking-status.rejected {
       color: red;
     }
-    /****************************************
-     *  "Undo" Toast Styling
-     ****************************************/
+    /* "Undo" Toast Styling */
     .undo-toast {
       position: fixed;
       bottom: 20px;
@@ -238,6 +238,11 @@
     .undo-btn:hover {
       background: #00cce0;
     }
+    /* Highlight for search results */
+    .highlight {
+      border: 2px solid #00e5ff;
+      box-shadow: 0 0 10px #00e5ff;
+    }
   </style>
 </head>
 <body>
@@ -256,7 +261,6 @@
   </header>
 
   <div class="dashboard">
-    <!-- SIDEBAR -->
     <aside class="sidebar">
       <a href="{{ url_for('dashboard.dashboard') }}">Home</a>
       <a href="{{ url_for('owner.bookings') }}" class="active">Bookings</a>
@@ -266,41 +270,54 @@
       <a href="{{ url_for('owner.history') }}">History</a>
     </aside>
 
-    <!-- MAIN CONTENT -->
     <main class="content">
       <div class="bookings-container">
         <h2>Active Bookings</h2>
         <div style="text-align: center; margin-bottom: 1rem;">
-          <input type="text" id="bookingSearch" placeholder="Search by Booking ID or Vehicle Number" style="padding: 0.5rem; width: 50%; max-width: 400px; border-radius: 4px; border: 1px solid #ccc;">
+          <input type="text" id="bookingSearch" placeholder="Search by Booking ID, Phone, or Vehicle Number" style="padding: 0.5rem; width: 50%; max-width: 400px; border-radius: 4px; border: 1px solid #ccc;">
         </div>
 
-        {# All bookings are now listed under one header labeled "Details" #}
-        <h3 style="color:#00e5ff; margin-bottom: 1rem;">Details</h3>
-        <div class="bookings-grid" id="detailsContainer">
-          {% if grouped_bookings|length > 0 %}
-            {% for session_id, bookings in grouped_bookings.items() %}
-              <div class="booking-card" id="booking-card-{{ session_id }}">
+        {# Group bookings into pending, approved, and rejected #}
+        {% set pending_sessions = {} %}
+        {% set approved_sessions = {} %}
+        {% set rejected_sessions = {} %}
+        {% for session_id, bookings in grouped_bookings.items() %}
+          {% if bookings[0].status|lower == "pending" %}
+            {% set _ = pending_sessions.update({session_id: bookings}) %}
+          {% elif bookings[0].status|lower == "approved" %}
+            {% set _ = approved_sessions.update({session_id: bookings}) %}
+          {% elif bookings[0].status|lower == "rejected" %}
+            {% set _ = rejected_sessions.update({session_id: bookings}) %}
+          {% endif %}
+        {% endfor %}
+
+        <!-- Pending Bookings Section -->
+        <h3 style="color:#00e5ff; margin-bottom: 1rem;">Pending Bookings</h3>
+        <div class="bookings-grid" id="pendingBookings">
+          {% if pending_sessions|length > 0 %}
+            {% for session_id, bookings in pending_sessions.items() %}
+              <div class="booking-card" id="pending-booking-card-{{ session_id }}">
                 <div class="booking-header">
                   <span class="date-time">
-                    Booked on: {{ bookings[0].created_at.strftime('%Y-%m-%d') }} at {{ bookings[0].created_at.strftime('%H:%M:%S') }}
+                    Booked on: {{ bookings[0].created_at.strftime('%Y-%m-%d %H:%M:%S') }}
                   </span>
                 </div>
                 <div class="booking-body">
                   <div class="booking-details">
                     <p><strong>Driver Name:</strong> {{ bookings[0].driver_name }}</p>
-                    <p><strong>Driver Email:</strong> {{ bookings[0].email }}</p>
-                    <p><strong>Status:</strong> <span class="booking-status {{ 'approved' if bookings[0].is_approved else 'pending' }}">{{ bookings[0].status }}</span></p>
+                    <p><strong>Email:</strong> {{ bookings[0].email }}</p>
+                    <p><strong>Phone:</strong> {{ bookings[0].phone_number }}</p>
+                    <p><strong>Status:</strong> <span class="booking-status pending">{{ bookings[0].status }}</span></p>
                     <hr>
-                    {# Display Parking Spot once #}
                     <p><strong>Parking Spot:</strong> {{ bookings[0].spot_location }}</p>
                     <hr>
-                    {# Loop over each booking to display unique details #}
                     {% for booking in bookings %}
+                      <p><strong>Booking ID:</strong> {{ booking.booking_id }}</p>
                       <p><strong>Vehicle Number:</strong> {{ booking.vehicle_number or 'N/A' }}</p>
                       <p><strong>Booked Space:</strong> {{ booking.vehicle_type }} - Spot #{{ booking.sub_spot_number }}</p>
                       <p><strong>Price:</strong> ₹{{ booking.spot_price }}</p>
-                      <p><strong>Start Time:</strong> {{ booking.start_time.strftime('%I:%M %p') }}</p>
-                      <p><strong>End Time:</strong> {{ booking.end_time.strftime('%I:%M %p') }}</p>
+                      <p><strong>Start:</strong> {{ booking.start_time.strftime('%I:%M %p') }}</p>
+                      <p><strong>End:</strong> {{ booking.end_time.strftime('%I:%M %p') }}</p>
                       {% if not loop.last %}<hr>{% endif %}
                     {% endfor %}
                   </div>
@@ -309,17 +326,99 @@
                   </div>
                 </div>
                 <div class="booking-actions">
-                  <form action="{{ url_for('owner.approve_booking', booking_id=bookings[0].id) }}" method="post" style="display:inline;" onsubmit="return handleApprove(event, '{{ session_id }}');">
+                  <form action="{{ url_for('owner.approve_booking', booking_id=bookings[0].id) }}" method="post" style="display:inline;" onsubmit="return handleApprove(event, 'pending-booking-card-{{ session_id }}');">
                     <button type="submit" class="btn btn-success">Approve</button>
                   </form>
-                  <form action="{{ url_for('parking.cancel_booking', booking_id=bookings[0].id) }}" method="post" style="display:inline;" onsubmit="return handleCancel(event, '{{ session_id }}');">
-                    <button type="submit" class="btn cancel-btn">Cancel</button>
+                  <form action="{{ url_for('owner.reject_booking', booking_id=bookings[0].id) }}" method="post" style="display:inline;" onsubmit="return handleReject(event, 'pending-booking-card-{{ session_id }}');">
+                    <button type="submit" class="btn cancel-btn">Reject</button>
                   </form>
                 </div>
               </div>
             {% endfor %}
           {% else %}
-            <p style="text-align:center;">No bookings found.</p>
+            <p style="text-align:center;">No pending bookings found.</p>
+          {% endif %}
+        </div>
+
+        <!-- Approved Bookings Section -->
+        <h3 style="color:#00e5ff; margin-bottom: 1rem;">Approved Bookings</h3>
+        <div class="bookings-grid" id="approvedBookings">
+          {% if approved_sessions|length > 0 %}
+            {% for session_id, bookings in approved_sessions.items() %}
+              <div class="booking-card" id="approved-booking-card-{{ session_id }}">
+                <div class="booking-header">
+                  <span class="date-time">
+                    Booked on: {{ bookings[0].created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                  </span>
+                </div>
+                <div class="booking-body">
+                  <div class="booking-details">
+                    <p><strong>Driver Name:</strong> {{ bookings[0].driver_name }}</p>
+                    <p><strong>Email:</strong> {{ bookings[0].email }}</p>
+                    <p><strong>Phone:</strong> {{ bookings[0].phone_number }}</p>
+                    <p><strong>Status:</strong> <span class="booking-status approved">{{ bookings[0].status }}</span></p>
+                    <hr>
+                    <p><strong>Parking Spot:</strong> {{ bookings[0].spot_location }}</p>
+                    <hr>
+                    {% for booking in bookings %}
+                      <p><strong>Booking ID:</strong> {{ booking.booking_id }}</p>
+                      <p><strong>Vehicle Number:</strong> {{ booking.vehicle_number or 'N/A' }}</p>
+                      <p><strong>Booked Space:</strong> {{ booking.vehicle_type }} - Spot #{{ booking.sub_spot_number }}</p>
+                      <p><strong>Price:</strong> ₹{{ booking.spot_price }}</p>
+                      <p><strong>Start:</strong> {{ booking.start_time.strftime('%I:%M %p') }}</p>
+                      <p><strong>End:</strong> {{ booking.end_time.strftime('%I:%M %p') }}</p>
+                      {% if not loop.last %}<hr>{% endif %}
+                    {% endfor %}
+                  </div>
+                  <div class="booking-map">
+                    <div id="approved-map-{{ session_id }}" style="width: 100%; height: 250px;"></div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p style="text-align:center;">No approved bookings found.</p>
+          {% endif %}
+        </div>
+
+        <!-- Rejected Bookings Section -->
+        <h3 style="color:#00e5ff; margin-bottom: 1rem;">Rejected Bookings</h3>
+        <div class="bookings-grid" id="rejectedBookings">
+          {% if rejected_sessions|length > 0 %}
+            {% for session_id, bookings in rejected_sessions.items() %}
+              <div class="booking-card" id="rejected-booking-card-{{ session_id }}">
+                <div class="booking-header">
+                  <span class="date-time">
+                    Booked on: {{ bookings[0].created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                  </span>
+                </div>
+                <div class="booking-body">
+                  <div class="booking-details">
+                    <p><strong>Driver Name:</strong> {{ bookings[0].driver_name }}</p>
+                    <p><strong>Email:</strong> {{ bookings[0].email }}</p>
+                    <p><strong>Phone:</strong> {{ bookings[0].phone_number }}</p>
+                    <p><strong>Status:</strong> <span class="booking-status rejected">{{ bookings[0].status }}</span></p>
+                    <hr>
+                    <p><strong>Parking Spot:</strong> {{ bookings[0].spot_location }}</p>
+                    <hr>
+                    {% for booking in bookings %}
+                      <p><strong>Booking ID:</strong> {{ booking.booking_id }}</p>
+                      <p><strong>Vehicle Number:</strong> {{ booking.vehicle_number or 'N/A' }}</p>
+                      <p><strong>Booked Space:</strong> {{ booking.vehicle_type }} - Spot #{{ booking.sub_spot_number }}</p>
+                      <p><strong>Price:</strong> ₹{{ booking.spot_price }}</p>
+                      <p><strong>Start:</strong> {{ booking.start_time.strftime('%I:%M %p') }}</p>
+                      <p><strong>End:</strong> {{ booking.end_time.strftime('%I:%M %p') }}</p>
+                      {% if not loop.last %}<hr>{% endif %}
+                    {% endfor %}
+                  </div>
+                  <div class="booking-map">
+                    <div id="rejected-map-{{ session_id }}" style="width: 100%; height: 250px;"></div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p style="text-align:center;">No rejected bookings found.</p>
           {% endif %}
         </div>
       </div>
@@ -331,86 +430,89 @@
       document.querySelector('.sidebar').classList.toggle('collapsed');
     }
 
-    // Approve handler: update status, remove Approve button, and send AJAX request.
-    function handleApprove(event, bookingID) {
+    // Approve handler: update status, remove buttons, and send AJAX request.
+    function handleApprove(event, uniqueID) {
       event.preventDefault();
       event.stopPropagation();
       var form = event.currentTarget;
-      var card = document.getElementById('booking-card-' + bookingID);
-
-      // Update status text and styling
+      var card = document.getElementById(uniqueID);
       var statusEl = card.querySelector('.booking-status');
       statusEl.textContent = 'Approved';
       statusEl.classList.remove('pending');
       statusEl.classList.add('approved');
-
-      // Remove the Approve button
-      var approveBtn = card.querySelector('.btn-success');
-      if (approveBtn) {
-        approveBtn.remove();
-      }
-
-      // Send AJAX POST request with header so backend returns JSON (preventing page reload)
+      var actions = card.querySelector('.booking-actions');
+      if (actions) { actions.remove(); }
       var xhr = new XMLHttpRequest();
       xhr.open(form.method, form.action, true);
       xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
       xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
       xhr.send(new URLSearchParams(new FormData(form)).toString());
-
       return false;
     }
 
-    // Initialize Leaflet maps for each booking group (using pending-map-IDs)
-    {% for session_id, bookings in grouped_bookings.items() %}
-      var pendingMap{{ session_id }} = L.map('pending-map-{{ session_id }}').setView([{{ bookings[0].spot_lat }}, {{ bookings[0].spot_lng }}], 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(pendingMap{{ session_id }});
-      L.marker([{{ bookings[0].spot_lat }}, {{ bookings[0].spot_lng }}]).addTo(pendingMap{{ session_id }});
-    {% endfor %}
-
-    // Cancel with "Undo" toast functionality
-    function handleCancel(event, bookingID) {
-      if (!confirm('Are you sure you want to cancel this booking?')) {
-        event.preventDefault();
-        return false;
-      }
+    // Reject handler: update status, remove buttons, and send AJAX request.
+    function handleReject(event, uniqueID) {
       event.preventDefault();
-      const card = document.getElementById('booking-card-' + bookingID);
-      card.style.display = 'none';
-      const toast = document.createElement('div');
-      toast.classList.add('undo-toast');
-      toast.innerHTML = 'Booking cancelled.';
-      const undoBtn = document.createElement('button');
-      undoBtn.classList.add('undo-btn');
-      undoBtn.textContent = 'Undo?';
-      undoBtn.onclick = () => {
-        clearTimeout(timer);
-        card.style.display = 'block';
-        document.body.removeChild(toast);
-      };
-      toast.appendChild(undoBtn);
-      document.body.appendChild(toast);
-      const form = event.target;
-      const timer = setTimeout(() => {
-        if (document.body.contains(toast)) {
-          document.body.removeChild(toast);
-        }
-        form.submit();
-      }, 5000);
+      event.stopPropagation();
+      var form = event.currentTarget;
+      var card = document.getElementById(uniqueID);
+      var statusEl = card.querySelector('.booking-status');
+      statusEl.textContent = 'Rejected';
+      statusEl.classList.remove('pending');
+      statusEl.classList.add('rejected');
+      var actions = card.querySelector('.booking-actions');
+      if (actions) { actions.remove(); }
+      var xhr = new XMLHttpRequest();
+      xhr.open(form.method, form.action, true);
+      xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.send(new URLSearchParams(new FormData(form)).toString());
       return false;
     }
 
-    // Search functionality for booking cards
-    document.getElementById('bookingSearch').addEventListener('keyup', function() {
-      var query = this.value.toLowerCase();
-      var cards = document.querySelectorAll('.booking-card');
-      cards.forEach(function(card) {
-        if (card.textContent.toLowerCase().indexOf(query) > -1) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
+    // Initialize maps for each booking group.
+    {% for session_id, bookings in grouped_bookings.items() %}
+      {% if bookings[0].status|lower == "pending" %}
+        var pendingMap_{{ session_id }} = L.map('pending-map-{{ session_id }}').setView([{{ bookings[0].spot_lat }}, {{ bookings[0].spot_lng }}], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(pendingMap_{{ session_id }});
+        L.marker([{{ bookings[0].spot_lat }}, {{ bookings[0].spot_lng }}]).addTo(pendingMap_{{ session_id }});
+      {% elif bookings[0].status|lower == "approved" %}
+        var approvedMap_{{ session_id }} = L.map('approved-map-{{ session_id }}').setView([{{ bookings[0].spot_lat }}, {{ bookings[0].spot_lng }}], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(approvedMap_{{ session_id }});
+        L.marker([{{ bookings[0].spot_lat }}, {{ bookings[0].spot_lng }}]).addTo(approvedMap_{{ session_id }});
+      {% elif bookings[0].status|lower == "rejected" %}
+        var rejectedMap_{{ session_id }} = L.map('rejected-map-{{ session_id }}').setView([{{ bookings[0].spot_lat }}, {{ bookings[0].spot_lng }}], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(rejectedMap_{{ session_id }});
+        L.marker([{{ bookings[0].spot_lat }}, {{ bookings[0].spot_lng }}]).addTo(rejectedMap_{{ session_id }});
+      {% endif %}
+    {% endfor %}
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const searchInput = document.getElementById("bookingSearch");
+      if (!searchInput) {
+        console.error("Element with id 'bookingSearch' not found.");
+        return;
+      }
+      searchInput.addEventListener("input", function() {
+        console.log("Input event triggered. Value:", this.value);
+        const query = this.value.toLowerCase().trim();
+        const cards = document.querySelectorAll(".booking-card");
+        let firstMatchFound = false;
+        cards.forEach(card => {
+          card.classList.remove("highlight");
+          const cardText = card.textContent.toLowerCase();
+          console.log("Checking card (" + card.id + "):", cardText);
+          if (query && cardText.includes(query)) {
+            card.classList.add("highlight");
+            if (!firstMatchFound) {
+              console.log("First match found in card:", card.id);
+              card.scrollIntoView({ behavior: "smooth", block: "start" });
+              firstMatchFound = true;
+            }
+          }
+        });
       });
     });
   </script>

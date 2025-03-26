@@ -15,8 +15,10 @@ owner_bp = Blueprint('owner', __name__)
 @owner_bp.app_template_filter('space_to_dict')
 def space_to_dict(space):
     return {
+        'id': space.id,
         'vehicle_type': space.vehicle_type,
-        'sub_spot': space.sub_spot_number
+        'sub_spot': space.sub_spot_number,
+        'has_booking': True if space.bookings and len(space.bookings) > 0 else False
     }
 
 @owner_bp.route('/', methods=['GET'])
@@ -80,14 +82,22 @@ def bookings():
         .join(User, Booking.user_id == User.id)
         .join(ParkingSpace, Booking.parking_space_id == ParkingSpace.id)
         .join(ParkingSpot, ParkingSpace.parking_spot_id == ParkingSpot.id)
-        .filter(ParkingSpot.owner_id == current_user.id, Booking.status.in_(["Pending", "Approved"]))
+        .filter(ParkingSpot.owner_id == current_user.id,
+                Booking.status.in_(["Pending", "Approved", "Rejected"]))
         .all()
     )
     all_bookings = []
     for b, u, ps, s in joined_data:
+        # Compute the booking ID string exactly as in my_bookings.html
+        booking_id_str = "BK" + b.created_at.strftime('%d%H%M%S')
+        if b.vehicle_number:
+            booking_id_str += b.vehicle_number[-2:]
+        else:
+            booking_id_str += str(b.id)
         all_bookings.append(
             SimpleNamespace(
                 id=b.id,
+                booking_id=booking_id_str,
                 driver_name=u.username,
                 email=u.email,
                 vehicle_number=b.vehicle_number,
@@ -330,10 +340,37 @@ def approve_booking(booking_id):
         return {"success": True}
     return redirect(url_for('owner.bookings'))
 
+
+@owner_bp.route('/reject_booking/<int:booking_id>', methods=['POST'])
+@login_required
+def reject_booking(booking_id):
+    if session.get('role') != 'owner':
+        flash("Unauthorized action!", "danger")
+        return redirect(url_for('dashboard.dashboard'))
+
+    booking = Booking.query.get_or_404(booking_id)
+    session_id = booking.session_id if booking.session_id else str(booking.id)
+    bookings_in_session = Booking.query.filter_by(session_id=session_id).all()
+
+    for b in bookings_in_session:
+        b.status = "Rejected"
+        b.active = False
+        b.is_approved = False
+        # Optionally, free the parking space by marking it available.
+        space = ParkingSpace.query.get(b.parking_space_id)
+        if space:
+            space.status = "available"
+
+    db.session.commit()
+    flash("Booking(s) rejected!", "success")
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return {"success": True}
+    return redirect(url_for('owner.bookings'))
+
 @owner_bp.route('/edit_parking_spot/<int:spot_id>', methods=['POST'])
 @login_required
 def edit_parking_spot(spot_id):
-    # This route replaces the removed update_parking_spot route.
+    # Retrieve the parking spot belonging to the current owner.
     spot = ParkingSpot.query.filter_by(id=spot_id, owner_id=current_user.id).first_or_404()
     location = request.form.get('location')
     price = request.form.get('price')
@@ -345,6 +382,7 @@ def edit_parking_spot(spot_id):
     if not location or not price or not lat or not lng:
         flash("Missing required fields.", "danger")
         return redirect(url_for('owner.parkingspace'))
+
     try:
         price = float(price)
         lat = float(lat)
@@ -366,15 +404,45 @@ def edit_parking_spot(spot_id):
         except Exception as e:
             flash("Error processing spaces data.", "danger")
             return redirect(url_for('owner.parkingspace'))
-        for ps in spot.spaces:
-            db.session.delete(ps)
-        for space in new_spaces:
-            new_space = ParkingSpace(
-                parking_spot_id=spot.id,
-                vehicle_type=space.get('vehicle_type'),
-                sub_spot_number=space.get('sub_spot')
-            )
-            db.session.add(new_space)
+
+        # Get existing spaces sorted by sub_spot_number.
+        existing_spaces = sorted(spot.spaces, key=lambda s: s.sub_spot_number)
+        new_count = len(new_spaces)
+        existing_count = len(existing_spaces)
+        min_count = min(new_count, existing_count)
+
+        # Update the common spaces.
+        for i in range(min_count):
+            # Update vehicle type.
+            existing_spaces[i].vehicle_type = new_spaces[i].get('vehicle_type', existing_spaces[i].vehicle_type)
+            # Use indexing to fetch 'sub_spot'; if missing, fallback to i+1.
+            try:
+                existing_spaces[i].sub_spot_number = int(new_spaces[i]['sub_spot'])
+            except (KeyError, ValueError, TypeError):
+                existing_spaces[i].sub_spot_number = i + 1
+
+        # If more new spaces than existing, add the extras.
+        if new_count > existing_count:
+            for i in range(existing_count, new_count):
+                try:
+                    sub_spot = int(new_spaces[i]['sub_spot'])
+                except (KeyError, ValueError, TypeError):
+                    sub_spot = i + 1
+                new_space = ParkingSpace(
+                    parking_spot_id=spot.id,
+                    vehicle_type=new_spaces[i].get('vehicle_type'),
+                    sub_spot_number=sub_spot
+                )
+                db.session.add(new_space)
+
+        # If fewer new spaces than existing, remove the extras only if they have no bookings.
+        if existing_count > new_count:
+            for space in existing_spaces[new_count:]:
+                if space.bookings:
+                    flash("Cannot remove a parking space that has existing bookings.", "danger")
+                    return redirect(url_for('owner.parkingspace'))
+                else:
+                    db.session.delete(space)
 
     db.session.commit()
     flash("Parking spot updated successfully.", "success")
