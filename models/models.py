@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask_login import UserMixin
 from flask_bcrypt import Bcrypt
 from sqlalchemy import func
@@ -15,7 +16,6 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), nullable=False)
 
-    # Timestamps
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
     updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -48,14 +48,11 @@ class ParkingSpot(db.Model):
     available_from = db.Column(db.Time)
     available_to = db.Column(db.Time)
 
-    # Timestamps
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
     updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    # Relationships
     owner = db.relationship('User', foreign_keys=[owner_id], backref='owned_spots')
     booked_user = db.relationship('User', foreign_keys=[booked_by], backref='booked_spots', lazy=True)
-    # Each parking spot now has a list of individual spaces
     spaces = db.relationship('ParkingSpace', backref='parking_spot', lazy=True)
 
 
@@ -65,11 +62,10 @@ class ParkingSpace(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     parking_spot_id = db.Column(db.Integer, db.ForeignKey('parking_spot.id'), nullable=False)
-    vehicle_type = db.Column(db.String(10), nullable=False)  # e.g., '2W' or '4W'
-    sub_spot_number = db.Column(db.Integer, nullable=False)  # to keep order within a parking spot
-    status = db.Column(db.String(20), default='available')  # available, booked, etc.
+    vehicle_type = db.Column(db.String(10), nullable=False)  # '2W' or '4W'
+    sub_spot_number = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(20), default='available')
 
-    # Timestamps
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
     updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -80,27 +76,26 @@ class Booking(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    # Reference to a specific parking space
     parking_space_id = db.Column(db.Integer, db.ForeignKey('parking_space.id'), nullable=False)
-    start_time = db.Column(db.Time, nullable=False)
-    end_time = db.Column(db.Time, nullable=False)
+    # Updated to store full datetime values.
+    start_time = db.Column(db.DateTime, nullable=False)
+    end_time = db.Column(db.DateTime, nullable=False)
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
-    # booked_vehicle_type is optional now since vehicle_type is stored in ParkingSpace
     booked_vehicle_type = db.Column(db.String(50))
     vehicle_number = db.Column(db.String(20))
     phone_number = db.Column(db.String(20))
-    # Existing status field (e.g., for textual representation)
     status = db.Column(db.String(20), default='Pending')
-    # NEW SESSION_ID COLUMN TO GROUP BOOKINGS BY SESSION
-    session_id = db.Column(db.String(64))  # You can adjust the length as needed
-
-    # NEW FIELD: is_approved flag for approved bookings
+    session_id = db.Column(db.String(64))
     is_approved = db.Column(db.Boolean, default=False)
 
-    # Relationships
     parking_space = db.relationship('ParkingSpace', backref='bookings')
     user = db.relationship('User', backref='bookings')
+
+    @property
+    def is_expired(self):
+        """Return True if the booking's end datetime is earlier than current datetime."""
+        return datetime.now() > self.end_time
 
 
 # ------------------- PAYMENT DETAILS MODEL -------------------
@@ -113,9 +108,7 @@ class PaymentDetails(db.Model):
     phone_number = db.Column(db.String(15))
     qr_code = db.Column(db.String(255))
 
-    # Timestamps
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
     updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    # One PaymentDetails per owner
     owner = db.relationship('User', backref='payment_details', uselist=False)

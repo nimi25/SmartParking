@@ -39,7 +39,6 @@
     header h1 {
       font-size: 1.6rem;
       letter-spacing: 1px;
-      text-align: left;
       flex: 1;
       margin: 0;
     }
@@ -96,7 +95,7 @@
       padding: 2rem;
       transition: left 0.3s ease;
     }
-    /* Rounded Container for Bookings */
+    /* Bookings Container */
     .bookings-container {
       background: rgba(31,31,31,0.95);
       border-radius: 16px;
@@ -104,43 +103,43 @@
       margin: 0 auto;
       max-width: 1200px;
     }
-    /* Heading Container */
-    .page-heading {
-      margin-bottom: 1.5rem;
-    }
+    .page-heading { margin-bottom: 1.5rem; }
     .page-heading h2 {
       font-size: 1.8rem;
       color: #00e5ff;
       text-align: left;
       margin: 0;
     }
-    /* Booking Cards Grid */
-    .bookings-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 2rem;
-    }
+    /* Booking Card Styles */
     .booking-card {
       background: #1f1f1f;
       border-radius: 12px;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
       box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      margin-bottom: 2rem;
     }
     .booking-card:hover {
       transform: translateY(-5px);
       box-shadow: 0 8px 16px rgba(0,0,0,0.6);
     }
+    /* Changed: Show parking spot's name instead of Date */
+    .session-date {
+      background: #333;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      text-align: left;
+      color: #ccc;
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+    }
     .booking-header {
-      background: #2c2c2c;
       padding: 1rem;
       border-bottom: 1px solid #444;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
+    /* Changed: Format "Booked on" as dd-mm-yyyy */
     .booking-header .meta {
       font-size: 0.9rem;
       color: #ccc;
@@ -195,7 +194,6 @@
       gap: 1rem;
       justify-content: flex-end;
     }
-    /* Common Button Styling for Booking Footer */
     .booking-footer button {
       padding: 0.75rem 1.25rem;
       font-size: 1rem;
@@ -207,30 +205,13 @@
       transition: background 0.3s ease, transform 0.2s ease;
       text-decoration: none;
     }
-    .directions-btn {
-      background: #00e5ff;
-      color: #000;
-    }
-    .directions-btn:hover {
-      background: #00cce0;
-      transform: scale(1.03);
-    }
-    .invoice-btn {
-      background: #ffc107;
-      color: #000;
-    }
-    .invoice-btn:hover {
-      background: #ffb300;
-      transform: scale(1.03);
-    }
-    .cancel-btn {
-      background: #ff4444;
-      color: #fff;
-    }
-    .cancel-btn:hover {
-      background: #ff2222;
-      transform: scale(1.03);
-    }
+    .directions-btn { background: #00e5ff; color: #000; }
+    .directions-btn:hover { background: #00cce0; transform: scale(1.03); }
+    /* Changed: Added btn class to invoice and cancel buttons */
+    .invoice-btn { background: #ffc107; color: #000; }
+    .invoice-btn:hover { background: #ffb300; transform: scale(1.03); }
+    .cancel-btn { background: #ff4444; color: #fff; }
+    .cancel-btn:hover { background: #ff2222; transform: scale(1.03); }
     .invoice-section {
       background: #2a2a2a;
       padding: 1rem;
@@ -330,16 +311,22 @@
     <!-- Main Content -->
     <main class="content" id="mainContent">
       <div class="bookings-container">
+        <!-- Active Bookings Section -->
         <div class="page-heading">
-          <h2>Your Bookings</h2>
+          <h2>Your Active Bookings</h2>
         </div>
-        {% if grouped_bookings and grouped_bookings|length > 0 %}
+        {% if active_bookings and active_bookings|length > 0 %}
           <div class="bookings-grid">
-            {% for session_id, bookings in grouped_bookings.items() %}
-              <div class="booking-card" id="booking-card-{{ session_id }}">
+            {% for session_id, bookings in active_bookings.items() %}
+              <div class="booking-card" id="active-booking-card-{{ session_id }}">
+                <!-- Changed: Display parking spot's name (spot_location) instead of Date -->
+                <div class="session-date">
+                  {{ bookings[0].spot_location }}
+                </div>
                 <div class="booking-header">
                   <div class="meta">
-                    <span>Booked on: {{ bookings[0].created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+                    <!-- Changed: Format "Booked on" as dd-mm-yyyy -->
+                    <span>Booked on: {{ bookings[0].created_at.strftime('%d-%m-%Y') }}</span>
                   </div>
                 </div>
                 <div class="booking-body">
@@ -349,7 +336,7 @@
                     {% else %}
                       <p><strong>Description:</strong> No description available.</p>
                     {% endif %}
-                    <table id="booking-table-{{ session_id }}">
+                    <table id="active-booking-table-{{ session_id }}">
                       <thead>
                         <tr>
                           <th>Vehicle Type</th>
@@ -363,16 +350,14 @@
                       </thead>
                       <tbody>
                         {% set ns = namespace(total_hours=0) %}
-                        {% for booking in bookings %}
+                        {% for booking in active_bookings[session_id] %}
                           {% set start_str = booking.start_time.strftime('%H:%M') %}
                           {% set end_str = booking.end_time.strftime('%H:%M') %}
-                          {% set start_parts = start_str.split(':') %}
-                          {% set end_parts = end_str.split(':') %}
-                          {% set start_minutes = (start_parts[0]|int * 60) + (start_parts[1]|int) %}
-                          {% set end_minutes = (end_parts[0]|int * 60) + (end_parts[1]|int) %}
+                          {% set start_minutes = (start_str.split(':')[0]|int * 60) + (start_str.split(':')[1]|int) %}
+                          {% set end_minutes = (end_str.split(':')[0]|int * 60) + (end_str.split(':')[1]|int) %}
                           {% set diff = (end_minutes - start_minutes) / 60 %}
                           {% set ns.total_hours = ns.total_hours + diff %}
-                          <tr id="booking-row-{{ booking.id }}">
+                          <tr id="active-booking-row-{{ booking.id }}">
                             <td>{{ booking.vehicle_type }}</td>
                             <td>{{ booking.sub_spot_number }}</td>
                             <td>{{ start_str }} - {{ end_str }}</td>
@@ -381,7 +366,8 @@
                             <td>{{ booking.booking_id }}</td>
                             <td>
                               {% if booking.status == 'Pending' %}
-                                <button class="cancel-btn" onclick="cancelBooking({{ booking.id }}, '{{ session_id }}')">Cancel</button>
+                                <!-- Changed: Use type="button" and add btn class -->
+                                <button type="button" class="btn cancel-btn" onclick="cancelBooking({{ booking.id }})">Cancel</button>
                               {% else %}
                                 Locked
                               {% endif %}
@@ -390,8 +376,9 @@
                         {% endfor %}
                       </tbody>
                     </table>
-                    <button class="invoice-btn" onclick="toggleInvoice('invoice-{{ session_id }}')">View Invoice</button>
-                    <div class="invoice-section" id="invoice-{{ session_id }}">
+                    <!-- Changed: Use type="button" and add btn class -->
+                    <button type="button" class="btn invoice-btn" onclick="toggleInvoice('active-invoice-{{ session_id }}')">View Invoice</button>
+                    <div class="invoice-section" id="active-invoice-{{ session_id }}">
                       <table>
                         <thead>
                           <tr>
@@ -402,13 +389,11 @@
                           </tr>
                         </thead>
                         <tbody>
-                          {% for booking in bookings %}
+                          {% for booking in active_bookings[session_id] %}
                             {% set start_str = booking.start_time.strftime('%H:%M') %}
                             {% set end_str = booking.end_time.strftime('%H:%M') %}
-                            {% set start_parts = start_str.split(':') %}
-                            {% set end_parts = end_str.split(':') %}
-                            {% set start_minutes = (start_parts[0]|int * 60) + (start_parts[1]|int) %}
-                            {% set end_minutes = (end_parts[0]|int * 60) + (end_parts[1]|int) %}
+                            {% set start_minutes = (start_str.split(':')[0]|int * 60) + (start_str.split(':')[1]|int) %}
+                            {% set end_minutes = (end_str.split(':')[0]|int * 60) + (end_str.split(':')[1]|int) %}
                             {% set hours = ((end_minutes - start_minutes) / 60)|round(2) %}
                             <tr>
                               <td>{{ booking.vehicle_type }} - #{{ booking.sub_spot_number }}</td>
@@ -419,76 +404,185 @@
                           {% endfor %}
                         </tbody>
                       </table>
-                      <div class="invoice-total" id="invoice-total-{{ session_id }}">
+                      <div class="invoice-total" id="active-invoice-total-{{ session_id }}">
                         Total Hours: {{ ns.total_hours|round(2) }}<br/>
-                        Total Amount: ₹{{ (ns.total_hours * bookings[0].spot_price)|round(2) }}
+                        Total Amount: ₹{{ (ns.total_hours * active_bookings[session_id][0].spot_price)|round(2) }}
                       </div>
                     </div>
                   </div>
-                  <div class="booking-map" id="map-{{ session_id }}"></div>
+                  <div class="booking-map" id="active-map-{{ session_id }}"></div>
                 </div>
                 <div class="booking-footer">
                   <button class="directions-btn"
-                          data-lat="{{ bookings[0].spot_lat }}"
-                          data-lng="{{ bookings[0].spot_lng }}">
+                          data-lat="{{ active_bookings[session_id][0].spot_lat }}"
+                          data-lng="{{ active_bookings[session_id][0].spot_lng }}">
                     Get Directions
                   </button>
-                  <button class="invoice-btn" onclick="openPaymentModal({{ bookings[0].id }})">Pay Now</button>
+                  <button type="button" class="btn invoice-btn" onclick="openPaymentModal({{ active_bookings[session_id][0].id }})">Pay Now</button>
                 </div>
               </div>
             {% endfor %}
           </div>
         {% else %}
-          <p style="text-align: center; font-size: 1.2rem; margin-top: 2rem;">No bookings found.</p>
+          <p style="text-align: center; font-size: 1.2rem; margin-top: 2rem;">No active bookings found.</p>
+        {% endif %}
+
+        <!-- Completed Bookings Section (Non-Expired Only) -->
+        <div class="page-heading" style="margin-top:2rem;">
+          <h2>Completed Bookings</h2>
+        </div>
+        {% set non_expired_completed = {} %}
+        {% for session_id, bookings in completed_bookings.items() %}
+          {% set valid = [] %}
+          {% for booking in bookings %}
+            {% if booking.status != "Expired" %}
+              {% set _ = valid.append(booking) %}
+            {% endif %}
+          {% endfor %}
+          {% if valid|length > 0 %}
+            {% set _ = non_expired_completed.update({session_id: valid}) %}
+          {% endif %}
+        {% endfor %}
+        {% if non_expired_completed|length > 0 %}
+          <div class="bookings-grid" id="completedBookingsGrid">
+            {% for session_id, bookings in non_expired_completed.items() %}
+              <div class="booking-card" id="completed-booking-card-{{ session_id }}" data-date="{{ bookings[0].created_at.strftime('%Y-%m-%d') }}">
+                <div class="session-date">
+                  Date: {{ bookings[0].created_at.strftime('%Y-%m-%d') }}
+                </div>
+                <div class="booking-header">
+                  <div class="meta">
+                    <span>Booked on: {{ bookings[0].created_at.strftime('%d-%m-%Y') }}</span>
+                  </div>
+                </div>
+                <div class="booking-body">
+                  <div class="booking-details">
+                    {% if bookings[0].spot_description %}
+                      <p><strong>Description:</strong> {{ bookings[0].spot_description }}</p>
+                    {% else %}
+                      <p><strong>Description:</strong> No description available.</p>
+                    {% endif %}
+                    <table id="completed-booking-table-{{ session_id }}">
+                      <thead>
+                        <tr>
+                          <th>Vehicle Type</th>
+                          <th>Space #</th>
+                          <th>Time</th>
+                          <th>Vehicle Number</th>
+                          <th>Status</th>
+                          <th>Booking ID</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% set ns = namespace(total_hours=0) %}
+                        {% for booking in non_expired_completed[session_id] %}
+                          {% set start_str = booking.start_time.strftime('%H:%M') %}
+                          {% set end_str = booking.end_time.strftime('%H:%M') %}
+                          {% set start_minutes = (start_str.split(':')[0]|int * 60) + (start_str.split(':')[1]|int) %}
+                          {% set end_minutes = (end_str.split(':')[0]|int * 60) + (end_str.split(':')[1]|int) %}
+                          {% set diff = (end_minutes - start_minutes) / 60 %}
+                          {% set ns.total_hours = ns.total_hours + diff %}
+                          <tr id="completed-booking-row-{{ booking.id }}">
+                            <td>{{ booking.vehicle_type }}</td>
+                            <td>{{ booking.sub_spot_number }}</td>
+                            <td>{{ start_str }} - {{ end_str }}</td>
+                            <td>{{ booking.vehicle_number }}</td>
+                            <td>{{ booking.status }}</td>
+                            <td>{{ booking.booking_id }}</td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                    <button type="button" class="btn invoice-btn" onclick="toggleInvoice('completed-invoice-{{ session_id }}')">View Invoice</button>
+                    <div class="invoice-section" id="completed-invoice-{{ session_id }}">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Space</th>
+                            <th>Hours</th>
+                            <th>Price/hr (₹)</th>
+                            <th>Amount (₹)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for booking in non_expired_completed[session_id] %}
+                            {% set start_str = booking.start_time.strftime('%H:%M') %}
+                            {% set end_str = booking.end_time.strftime('%H:%M') %}
+                            {% set start_minutes = (start_str.split(':')[0]|int * 60) + (start_str.split(':')[1]|int) %}
+                            {% set end_minutes = (end_str.split(':')[0]|int * 60) + (end_str.split(':')[1]|int) %}
+                            {% set hours = ((end_minutes - start_minutes) / 60)|round(2) %}
+                            <tr>
+                              <td>{{ booking.vehicle_type }} - #{{ booking.sub_spot_number }}</td>
+                              <td>{{ hours }}</td>
+                              <td>{{ booking.spot_price }}</td>
+                              <td>{{ (hours * booking.spot_price)|round(2) }}</td>
+                            </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                      <div class="invoice-total" id="completed-invoice-total-{{ session_id }}">
+                        Total Hours: {{ ns.total_hours|round(2) }}<br/>
+                        Total Amount: ₹{{ (ns.total_hours * non_expired_completed[session_id][0].spot_price)|round(2) }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="booking-map" id="completed-map-{{ session_id }}"></div>
+                </div>
+                <div class="booking-footer">
+                  <button class="directions-btn"
+                          data-lat="{{ non_expired_completed[session_id][0].spot_lat }}"
+                          data-lng="{{ non_expired_completed[session_id][0].spot_lng }}">
+                    Get Directions
+                  </button>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="text-align: center; font-size: 1.2rem; margin-top: 2rem;">No completed bookings found.</p>
+        {% endif %}
+
+        <!-- Expired Booking Requests Section -->
+        <div class="page-heading" style="margin-top:2rem;">
+          <h2>Expired Booking Requests</h2>
+        </div>
+        {% if expired_bookings|length > 0 %}
+          <div class="bookings-grid" id="expiredBookingsGrid">
+            {% for session_id, bookings in expired_bookings.items() %}
+              <div class="booking-card" id="expired-booking-card-{{ session_id }}" style="padding: 1rem; margin-bottom: 1rem;">
+                <div class="booking-header">
+                  <span class="date-time">
+                    Booked on: {{ bookings[0].created_at.strftime('%d-%m-%Y') }}
+                  </span>
+                </div>
+                <div class="booking-body" style="padding: 1rem;">
+                  <div class="booking-details" style="color: #ccc; font-size: 0.95rem;">
+                    <p><strong>Booking ID:</strong> {{ bookings[0].booking_id }}</p>
+                    <p><strong>Vehicle No.:</strong> {{ bookings[0].vehicle_number or 'N/A' }}</p>
+                    <p><strong>Date:</strong> {{ bookings[0].created_at.strftime('%Y-%m-%d') }}</p>
+                    <p><strong>Status:</strong> <span class="booking-status expired">{{ bookings[0].status }}</span></p>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="text-align:center;">No expired booking requests found.</p>
         {% endif %}
       </div>
     </main>
   </div>
-  <!-- Modal Popup for Payment Details -->
-  <div id="paymentModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closePaymentModal()">&times;</span>
-      <div id="paymentModalContent">
-        <!-- Payment details will be loaded here via AJAX -->
-      </div>
-    </div>
-  </div>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
     function toggleSidebar() {
-      document.getElementById("sidebar").classList.toggle("collapsed");
+      document.querySelector('.sidebar').classList.toggle('collapsed');
     }
     function toggleInvoice(id) {
       var el = document.getElementById(id);
-      if (el.style.display === "none" || el.style.display === "") {
-        el.style.display = "flex";
-      } else {
-        el.style.display = "none";
-      }
+      el.style.display = (el.style.display === "none" || el.style.display === "") ? "flex" : "none";
     }
-    // Dynamically update invoice totals for a given booking card
-    function updateInvoiceTotals(session_id) {
-      var tableBody = document.querySelector("#booking-table-" + session_id + " tbody");
-      var rows = tableBody.querySelectorAll("tr");
-      var totalHours = 0;
-      rows.forEach(function(row) {
-        var timeText = row.cells[2].innerText.trim();
-        var parts = timeText.split(" - ");
-        if (parts.length === 2) {
-          var startParts = parts[0].split(":");
-          var endParts = parts[1].split(":");
-          var startMinutes = parseInt(startParts[0], 10) * 60 + parseInt(startParts[1], 10);
-          var endMinutes = parseInt(endParts[0], 10) * 60 + parseInt(endParts[1], 10);
-          totalHours += (endMinutes - startMinutes) / 60;
-        }
-      });
-      var spotPrice = parseFloat(document.querySelector("#invoice-" + session_id + " tbody tr td:nth-child(3)").innerText);
-      var totalAmount = totalHours * spotPrice;
-      var invoiceTotalEl = document.getElementById("invoice-total-" + session_id);
-      invoiceTotalEl.innerHTML = "Total Hours: " + totalHours.toFixed(2) + "<br/>Total Amount: ₹" + totalAmount.toFixed(2);
-    }
-    // Cancel booking via AJAX and update the card dynamically
-    function cancelBooking(booking_id, session_id) {
+    // Updated cancelBooking function – uses fixed row ID prefix
+    function cancelBooking(booking_id) {
       if(confirm("Are you sure you want to cancel this booking?")) {
         fetch("{{ url_for('parking.cancel_booking', booking_id=0) }}".replace("0", booking_id), {
           method: "POST",
@@ -499,18 +593,8 @@
               alert(data.error);
             } else {
               alert("Booking cancelled.");
-              var row = document.getElementById("booking-row-" + booking_id);
-              if(row) {
-                row.parentNode.removeChild(row);
-              }
-              updateInvoiceTotals(session_id);
-              var tableBody = document.querySelector("#booking-table-" + session_id + " tbody");
-              if(tableBody.children.length === 0) {
-                var card = document.getElementById("booking-card-" + session_id);
-                if(card) {
-                  card.parentNode.removeChild(card);
-                }
-              }
+              var row = document.getElementById("active-booking-row-" + booking_id);
+              if(row) { row.parentNode.removeChild(row); }
             }
           }).catch(err => {
             console.error(err);
@@ -518,19 +602,66 @@
           });
       }
     }
-    // Initialize map for each booking card (one map per session)
-    {% for session_id, bookings in grouped_bookings.items() %}
+    // Initialize maps for active bookings
+    {% for session_id, bookings in active_bookings.items() %}
       (function() {
-        var mapEl = document.getElementById("map-" + "{{ session_id }}");
+        var mapEl = document.getElementById("active-map-{{ session_id }}");
         if (mapEl) {
           var map = L.map(mapEl, { zoomControl: false, attributionControl: false })
-                      .setView([{{ bookings[0].spot_lat }}, {{ bookings[0].spot_lng }}], 15);
+                      .setView([{{ active_bookings[session_id][0].spot_lat }}, {{ active_bookings[session_id][0].spot_lng }}], 15);
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {}).addTo(map);
-          L.marker([{{ bookings[0].spot_lat }}, {{ bookings[0].spot_lng }}]).addTo(map);
+          L.marker([{{ active_bookings[session_id][0].spot_lat }}, {{ active_bookings[session_id][0].spot_lng }}]).addTo(map);
         }
       })();
     {% endfor %}
-    // Directions button functionality
+    // Initialize maps for completed bookings
+    {% for session_id, bookings in completed_bookings.items() %}
+      (function() {
+        var mapEl = document.getElementById("completed-map-{{ session_id }}");
+        if (mapEl) {
+          var map = L.map(mapEl, { zoomControl: false, attributionControl: false })
+                      .setView([{{ completed_bookings[session_id][0].spot_lat }}, {{ completed_bookings[session_id][0].spot_lng }}], 15);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {}).addTo(map);
+          L.marker([{{ completed_bookings[session_id][0].spot_lat }}, {{ completed_bookings[session_id][0].spot_lng }}]).addTo(map);
+        }
+      })();
+    {% endfor %}
+    document.addEventListener("DOMContentLoaded", function() {
+      const searchInput = document.getElementById("bookingSearch");
+      if (!searchInput) {
+        console.error("Element with id 'bookingSearch' not found.");
+        return;
+      }
+      searchInput.addEventListener("input", function() {
+        const query = this.value.toLowerCase().trim();
+        const cards = document.querySelectorAll(".booking-card");
+        let firstMatchFound = false;
+        cards.forEach(card => {
+          card.classList.remove("highlight");
+          const cardText = card.textContent.toLowerCase();
+          if (query && cardText.includes(query)) {
+            card.classList.add("highlight");
+            if (!firstMatchFound) {
+              card.scrollIntoView({ behavior: "smooth", block: "start" });
+              firstMatchFound = true;
+            }
+          }
+        });
+      });
+    });
+    function filterCompletedBookings() {
+      var selectedDate = document.getElementById("dateFilter").value;
+      var cards = document.querySelectorAll("[id^='completed-booking-card-']");
+      cards.forEach(function(card) {
+        var cardDate = card.getAttribute("data-date");
+        if (selectedDate === "all" || cardDate === selectedDate) {
+          card.style.display = "block";
+        } else {
+          card.style.display = "none";
+        }
+      });
+    }
+    // Directions functionality
     document.querySelectorAll(".directions-btn").forEach(function(btn) {
       btn.addEventListener("click", function() {
         if (navigator.geolocation) {
@@ -549,7 +680,7 @@
         }
       });
     });
-    // Payment modal functions: load payment details via AJAX using booking id
+    // Payment modal functions
     function openPaymentModal(bookingId) {
       fetch("{{ url_for('payment.payment_details', booking_id=0) }}".replace("0", bookingId), {
         method: "GET",
@@ -573,7 +704,11 @@
       if (event.target == modal) {
         modal.style.display = "none";
       }
-    }
+    };
+    // Periodically refresh the page to update expired bookings.
+    setTimeout(function() {
+      window.location.reload();
+    }, 5 * 60 * 1000);
   </script>
 </body>
 </html>

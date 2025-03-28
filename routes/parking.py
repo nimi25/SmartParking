@@ -1,10 +1,10 @@
-import json  # For JSON handling
-import uuid  # For generating unique session IDs
+import json
+import uuid
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_login import login_required, current_user
 from models import db, ParkingSpot, Booking, ParkingSpace
-from datetime import datetime, time
-import requests  # For OSRM API requests
+from datetime import datetime, time, timedelta
+import requests
 
 parking_bp = Blueprint('parking', __name__)
 
@@ -32,8 +32,8 @@ def add_parking_spot():
     else:
         two_wheeler = int(request.form.get('two_wheeler_spaces', 0))
         four_wheeler = int(request.form.get('four_wheeler_spaces', 0))
-    available_from = request.form.get('available_from')  # e.g. "06:00"
-    available_to = request.form.get('available_to')      # e.g. "22:00"
+    available_from = request.form.get('available_from')
+    available_to = request.form.get('available_to')
     description = request.form.get('description')
 
     if not location or not lat or not lng or not price:
@@ -224,24 +224,61 @@ def book_spot(spot_id):
 
     errors = []
     session_id = str(uuid.uuid4())
+    today_date = datetime.today().date()
+    now_datetime = datetime.now()
+
+    # Get the owner's available_to time for this spot
+    spot_obj = ParkingSpot.query.get_or_404(spot_id)
+    available_to_time = spot_obj.available_to or time(23, 0)
+    # Last available start time is available_to - 1 hour
+    last_slot = datetime.combine(today_date, available_to_time) - timedelta(hours=1)
+
     for selection in selections:
         vehicle_type = selection.get("vehicle_type")
         sub_spot = selection.get("sub_spot")
         booking_start = selection.get("booking_start")
         booking_end = selection.get("booking_end")
         sel_vehicle_number = selection.get("vehicle_number")
-        if vehicle_type is None or booking_start is None or booking_end is None or sub_spot is None or (sel_vehicle_number is None or sel_vehicle_number.strip() == ""):
+        if (vehicle_type is None or booking_start is None or
+            booking_end is None or sub_spot is None or
+            (sel_vehicle_number is None or sel_vehicle_number.strip() == "")):
             errors.append("Missing booking information in one of your selections.")
             continue
         try:
-            booking_start_time = datetime.strptime(booking_start, "%H:%M").time()
-            booking_end_time = datetime.strptime(booking_end, "%H:%M").time()
+            # Parse submitted times
+            start_time_obj = datetime.strptime(booking_start, "%H:%M").time()
+            end_time_obj = datetime.strptime(booking_end, "%H:%M").time()
+            booking_start_time = datetime.combine(today_date, start_time_obj)
+            # Calculate the intended duration based on the submitted end time
+            submitted_duration = datetime.combine(today_date, end_time_obj) - booking_start_time
+            # If the submitted duration is more than 1 hour, use it as-is.
+            # Otherwise, if duration is zero then adjust:
+            if submitted_duration > timedelta(hours=1):
+                booking_end_time = datetime.combine(today_date, end_time_obj)
+            elif submitted_duration == timedelta(0):
+                # If booking start equals the last slot, set end to available_to, else default to one hour.
+                if booking_start_time >= last_slot:
+                    booking_end_time = datetime.combine(today_date, available_to_time)
+                else:
+                    booking_end_time = booking_start_time + timedelta(hours=1)
+            else:
+                booking_end_time = booking_start_time + timedelta(hours=1)
+            # In case the computed end time goes beyond the owner's available_to, cap it.
+            max_possible = datetime.combine(today_date, available_to_time)
+            if booking_end_time > max_possible:
+                booking_end_time = max_possible
         except ValueError:
             errors.append("Invalid time format in one of your selections. Use HH:MM.")
             continue
+
         if booking_end_time <= booking_start_time:
             errors.append("One selection has an end time not after its start time.")
             continue
+        # Allow booking only if current time is within 45 minutes after the slot start.
+        if now_datetime > booking_start_time + timedelta(minutes=45):
+            errors.append("Cannot book a slot that has already started.")
+            continue
+
         sub_spot_db = int(sub_spot) + 1
         space = ParkingSpace.query.filter_by(
             parking_spot_id=spot_id,
@@ -303,6 +340,7 @@ def book_spot(spot_id):
     flash("All selected spots booked successfully!", "success")
     return redirect(url_for('dashboard.driver_dashboard'))
 
+
 @parking_bp.route('/cancel_booking/<int:booking_id>', methods=['POST'])
 @login_required
 def cancel_booking(booking_id):
@@ -357,6 +395,9 @@ def get_available_slots(spot_id):
 
     start_mins = time_to_minutes(available_from)
     end_mins = time_to_minutes(available_to)
+    now_mins = time_to_minutes(datetime.now().time())
+    if now_mins > start_mins:
+        start_mins = now_mins
     all_slots = []
     for m in range(start_mins, end_mins, 60):
         if m + 60 <= end_mins:
@@ -364,8 +405,8 @@ def get_available_slots(spot_id):
     active_bookings = Booking.query.filter_by(active=True).all()
     blocked_ranges = []
     for booking in active_bookings:
-        bs = time_to_minutes(booking.start_time)
-        be = time_to_minutes(booking.end_time)
+        bs = time_to_minutes(booking.start_time.time())
+        be = time_to_minutes(booking.end_time.time())
         blocked_ranges.append((bs, be))
     free_slots = []
     for slot in all_slots:

@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Smart Parking - Admin Reports</title>
+  <!-- Include Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     /* Base Styles (same as admin_dashboard.html) */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
@@ -19,15 +21,35 @@
     .sidebar a:hover { background: #333; border-left: 4px solid #00e5ff; }
     .sidebar a.active { background: #333; border-left: 4px solid #00e5ff; }
     .content { padding: 2rem; display: flex; flex-direction: column; gap: 2rem; }
-    .card { background: #1f1f1f; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: transform 0.3s, box-shadow 0.3s; }
-    .card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.6); }
+    .card {
+      background: #1f1f1f;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+    }
     .card h3 { color: #00e5ff; margin-bottom: 1rem; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     table, th, td { border: 1px solid #333; }
     th, td { padding: 0.75rem; text-align: left; }
-    .action-btn { background: #00e5ff; color: #000; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 600; text-decoration: none; transition: background 0.3s; }
+    .action-btn {
+      background: #00e5ff;
+      color: #000;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
     .action-btn:hover { background: #00cce0; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
@@ -51,8 +73,9 @@
       <a href="{{ url_for('admin.analytics') }}">Analytics</a>
     </aside>
     <main class="content">
+      <!-- Summary Table Card -->
       <div class="card" style="animation: fadeIn 1s ease;">
-        <h3>Reports</h3>
+        <h3>Summary Reports</h3>
         <p>Overview of system performance and user activity:</p>
         <table>
           <tr>
@@ -81,7 +104,83 @@
           </tr>
         </table>
       </div>
+
+      <!-- Charts Section Card -->
+      <div class="card" style="animation: fadeIn 1s ease;">
+        <h3>Monthly Trends</h3>
+        <canvas id="monthlyChart" style="width:100%; height:400px;"></canvas>
+      </div>
+
+      <!-- Top 5 Parking Spots Card -->
+      <div class="card" style="animation: fadeIn 1s ease;">
+        <h3>Top 5 Parking Spots (by active bookings)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Parking Spot</th>
+              <th>Active Bookings</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for location, count in top_spots %}
+            <tr>
+              <td>{{ location }}</td>
+              <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </main>
   </div>
+
+  <script>
+    // Prepare data for Monthly Trends Line Chart
+    const ctxMonthly = document.getElementById('monthlyChart').getContext('2d');
+    const monthlyChart = new Chart(ctxMonthly, {
+      type: 'line',
+      data: {
+        labels: {{ months|tojson }},
+        datasets: [
+          {
+            label: 'Bookings',
+            data: {{ monthly_bookings|tojson }},
+            borderColor: '#00e5ff',
+            backgroundColor: 'rgba(0,229,255,0.2)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          },
+          {
+            label: 'Revenue (₹)',
+            data: {{ monthly_revenue|tojson }},
+            borderColor: '#ffc107',
+            backgroundColor: 'rgba(255,193,7,0.2)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Monthly Bookings & Revenue Trends',
+            color: '#00e5ff',
+            font: { size: 16 }
+          },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          x: { ticks: { color: '#e0e0e0' } },
+          y: { beginAtZero: true, ticks: { color: '#e0e0e0' } }
+        }
+      }
+    });
+  </script>
 </body>
 </html>

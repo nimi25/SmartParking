@@ -4,11 +4,11 @@ from flask_login import login_required, current_user
 from models import db, ParkingSpot, User, ParkingSpace, Booking, PaymentDetails
 from datetime import datetime
 from sqlalchemy import func
+from collections import defaultdict
+import calendar
 
 admin_bp = Blueprint('admin', __name__)
 
-
-# Decorator to enforce admin-only access
 def admin_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -16,19 +16,14 @@ def admin_required(func):
             flash("Unauthorized access!", "danger")
             return redirect(url_for('dashboard.driver_dashboard'))
         return func(*args, **kwargs)
-
     return wrapper
 
-
-# Admin dashboard route
 @admin_bp.route('/', methods=['GET'])
 @login_required
 @admin_required
 def admin_dashboard():
     return render_template('admin_dashboard.html')
 
-
-# User Management page
 @admin_bp.route('/user_management', methods=['GET'])
 @login_required
 @admin_required
@@ -36,8 +31,6 @@ def user_management():
     users = User.query.all()
     return render_template('admin_user_management.html', users=users)
 
-
-# Parking Management page
 @admin_bp.route('/parking_management', methods=['GET'])
 @login_required
 @admin_required
@@ -45,31 +38,97 @@ def parking_management():
     spots = ParkingSpot.query.all()
     return render_template('admin_parking_management.html', spots=spots)
 
-
-# Reports page with updated booking metrics
 @admin_bp.route('/reports', methods=['GET'])
 @login_required
 @admin_required
 def reports():
+    """
+    Displays summary stats and monthly charts for all bookings
+    that are not 'Rejected' or 'Expired' (i.e., 'Pending', 'Approved', etc.).
+    Also shows top 5 parking spots by counting how many
+    active bookings reference *any* ParkingSpace for each ParkingSpot.
+    """
+    # Basic aggregates
     total_users = User.query.count()
     total_spots = ParkingSpot.query.count()
     available_spots = ParkingSpot.query.filter_by(availability=True).count()
 
-    # Calculate booked spots as the count of distinct parking spaces with active bookings
-    booked_spots = db.session.query(Booking.parking_space_id) \
-        .filter_by(active=True) \
-        .distinct() \
+    # 'Booked Spots' = distinct ParkingSpaces with status not in (Rejected, Expired)
+    booked_spots = (
+        db.session.query(Booking.parking_space_id)
+        .filter(~Booking.status.in_(["Rejected", "Expired"]))
+        .distinct()
         .count()
+    )
 
-    # Total active booking records
-    total_bookings = Booking.query.filter_by(active=True).count()
+    # Total Bookings that are not 'Rejected'/'Expired'
+    total_bookings = (
+        db.session.query(Booking.id)
+        .filter(~Booking.status.in_(["Rejected", "Expired"]))
+        .count()
+    )
 
-    # Revenue calculation (in rupees)
-    revenue = db.session.query(func.sum(ParkingSpot.price)) \
-                  .join(ParkingSpace, ParkingSpace.parking_spot_id == ParkingSpot.id) \
-                  .join(Booking, Booking.parking_space_id == ParkingSpace.id) \
-                  .filter(Booking.active == True) \
-                  .scalar() or 0
+    # Summation of spot.price for all non-rejected/expired bookings
+    revenue = (
+        db.session.query(func.sum(ParkingSpot.price))
+        .join(ParkingSpace, ParkingSpace.parking_spot_id == ParkingSpot.id)
+        .join(Booking, Booking.parking_space_id == ParkingSpace.id)
+        .filter(~Booking.status.in_(["Rejected", "Expired"]))
+        .scalar()
+        or 0
+    )
+
+    # Prepare monthly bookings & revenue
+    monthly_bookings = defaultdict(int)
+    monthly_revenue = defaultdict(float)
+
+    # Get all booking->spot pairs
+    all_rows = (
+        db.session.query(Booking, ParkingSpot)
+        .join(ParkingSpace, Booking.parking_space_id == ParkingSpace.id)
+        .join(ParkingSpot, ParkingSpace.parking_spot_id == ParkingSpot.id)
+        .all()
+    )
+
+    for booking, spot in all_rows:
+        if booking.status not in ["Rejected", "Expired"]:
+            dt = booking.created_at
+            if dt is None:
+                continue  # skip if missing created_at
+            key = f"{dt.year}-{dt.month:02d}"
+            monthly_bookings[key] += 1
+            monthly_revenue[key] += spot.price
+
+    sorted_months = sorted(monthly_bookings.keys())
+    monthly_bookings_list = [monthly_bookings[m] for m in sorted_months]
+    monthly_revenue_list = [monthly_revenue[m] for m in sorted_months]
+
+    # 'inactive_spots' is used in the template, even though the pie chart was removed
+    inactive_spots = total_spots - available_spots
+
+    # ----- TOP 5 PARKING SPOTS by non-rejected/expired bookings -----
+    # For each ParkingSpot, we count how many Bookings reference ANY ParkingSpace
+    # that belongs to this ParkingSpot, ignoring Rejected/Expired.
+    spot_booking_counts = defaultdict(int)
+    all_spots = ParkingSpot.query.all()
+
+    for sp in all_spots:
+        # 1) gather all ParkingSpace IDs under this ParkingSpot
+        space_ids = [space.id for space in sp.spaces]
+        if not space_ids:
+            continue
+        # 2) count bookings for these spaces
+        count = (
+            db.session.query(Booking.id)
+            .filter(
+                Booking.parking_space_id.in_(space_ids),
+                ~Booking.status.in_(["Rejected", "Expired"])
+            )
+            .count()
+        )
+        spot_booking_counts[sp.location] = count
+
+    top_spots = sorted(spot_booking_counts.items(), key=lambda x: x[1], reverse=True)[:5]
 
     return render_template(
         'admin_reports.html',
@@ -78,24 +137,30 @@ def reports():
         available_spots=available_spots,
         booked_spots=booked_spots,
         total_bookings=total_bookings,
-        revenue=revenue
+        revenue=revenue,
+        # monthly chart
+        months=sorted_months,
+        monthly_bookings=monthly_bookings_list,
+        monthly_revenue=monthly_revenue_list,
+        # summary usage
+        active_spots=available_spots,
+        inactive_spots=inactive_spots,
+        # top 5
+        top_spots=top_spots
     )
 
-
-# Analytics page
 @admin_bp.route('/analytics')
 @login_required
 @admin_required
 def analytics():
-    # Calculate the number of booked parking spaces (distinct parking_space IDs with an active booking)
-    booked_spots = db.session.query(Booking.parking_space_id) \
-        .filter_by(active=True) \
-        .distinct() \
+    booked_spots = (
+        db.session.query(Booking.parking_space_id)
+        .filter_by(active=True)
+        .distinct()
         .count()
-
+    )
     total_bookings = Booking.query.filter_by(active=True).count()
-    # Example revenue calculation (adjust this logic as needed)
-    revenue = db.session.query(db.func.sum(ParkingSpot.price)).scalar() or 0
+    revenue = db.session.query(func.sum(ParkingSpot.price)).scalar() or 0
     total_payment_details = PaymentDetails.query.count()
 
     return render_template(
@@ -106,8 +171,6 @@ def analytics():
         total_payment_details=total_payment_details
     )
 
-
-# Add New User route
 @admin_bp.route('/add_user', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -116,7 +179,7 @@ def add_user():
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
-        role = request.form.get('role')  # Capture the role from the form
+        role = request.form.get('role')
 
         if not username or not email or not password or not role:
             flash("One or more fields are missing.", "danger")
@@ -128,7 +191,6 @@ def add_user():
 
         new_user = User(username=username, email=email, role=role)
         new_user.set_password(password)
-
         db.session.add(new_user)
         db.session.commit()
 
@@ -137,8 +199,6 @@ def add_user():
 
     return render_template('admin_add_user.html')
 
-
-# Edit Parking Spot route
 @admin_bp.route('/edit_spot/<int:spot_id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -173,8 +233,6 @@ def edit_spot(spot_id):
         return redirect(url_for('admin.admin_dashboard'))
     return render_template('admin_edit_spot.html', spot=spot)
 
-
-# Delete Parking Spot route
 @admin_bp.route('/delete_spot/<int:spot_id>', methods=['POST'])
 @login_required
 @admin_required
@@ -189,8 +247,6 @@ def delete_spot(spot_id):
         flash("Error deleting spot: " + str(e), "danger")
     return redirect(url_for('admin.admin_dashboard'))
 
-
-# Delete User route
 @admin_bp.route('/delete_user/<int:user_id>', methods=['POST'])
 @login_required
 @admin_required
@@ -205,14 +261,12 @@ def delete_user(user_id):
         flash("Error deleting user: " + str(e), "danger")
     return redirect(url_for('admin.admin_dashboard'))
 
-
-# Delete Parking Space route
 @admin_bp.route('/delete_space/<int:space_id>', methods=['POST'], endpoint="delete_space")
 @login_required
 @admin_required
 def delete_space(space_id):
     space = ParkingSpace.query.get_or_404(space_id)
-    spot_id = space.parking_spot_id  # Retrieve parent spot id for redirection
+    spot_id = space.parking_spot_id
     try:
         db.session.delete(space)
         db.session.commit()
@@ -221,3 +275,5 @@ def delete_space(space_id):
         db.session.rollback()
         flash("Error deleting parking space: " + str(e), "danger")
     return redirect(url_for('admin.edit_spot', spot_id=spot_id))
+
+admin_bp.add_url_rule('/', endpoint='dashboard')

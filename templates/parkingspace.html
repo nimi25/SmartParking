@@ -341,67 +341,121 @@
         }
       })();
       {% endfor %}
-      var editMap, editMarker, editSpaces=[];
+
+      var editMap, editMarker, editSpaces = [];
       function updateEditSpacesList(){
-        editSpaces.forEach(function(space,index){ space.sub_spot=index+1; });
-        var list=document.getElementById('editSpacesList');
-        list.innerHTML="";
-        editSpaces.forEach(function(space,i){
-          var li=document.createElement("li");
-          li.textContent=space.vehicle_type+" - Space #"+space.sub_spot;
-          var removeBtn=document.createElement("button");
-          removeBtn.textContent="Remove";
-          if(space.has_booking){ removeBtn.onclick=function(){ alert("Cannot remove booked space."); }; removeBtn.disabled=true; }
-          else { removeBtn.onclick=function(){ editSpaces.splice(i,1); updateEditSpacesList(); }; }
+        // Separate the editSpaces into 2W and 4W arrays and reassign sub_spot numbers per type
+        let twoWSpaces = editSpaces.filter(s => s.vehicle_type === "2W");
+        let fourWSpaces = editSpaces.filter(s => s.vehicle_type === "4W");
+        twoWSpaces.forEach((s, i) => s.sub_spot = i + 1);
+        fourWSpaces.forEach((s, i) => s.sub_spot = i + 1);
+        // Merge them back so that the server receives spaces with correct numbering
+        editSpaces = twoWSpaces.concat(fourWSpaces);
+
+        var list = document.getElementById('editSpacesList');
+        list.innerHTML = "";
+        editSpaces.forEach(function(space, i){
+          var li = document.createElement("li");
+          li.textContent = space.vehicle_type + " - Space #" + space.sub_spot;
+          var removeBtn = document.createElement("button");
+          removeBtn.textContent = "Remove";
+          if(space.has_booking){
+              removeBtn.onclick = function(){ alert("Cannot remove booked space."); };
+              removeBtn.disabled = true;
+          } else {
+              removeBtn.onclick = function(){
+                editSpaces.splice(i, 1);
+                updateEditSpacesList();
+              };
+          }
           li.appendChild(removeBtn);
           list.appendChild(li);
         });
-        document.getElementById('edit_spaces_data').value=JSON.stringify(editSpaces);
+        document.getElementById('edit_spaces_data').value = JSON.stringify(editSpaces);
       }
       document.getElementById('editFormModal').addEventListener('submit', function(){ updateEditSpacesList(); });
+
       window.openEditModal = function(spotId, spotLocation, price, description, lat, lng, spacesData){
-        var baseUrl="{{ url_for('owner.edit_parking_spot', spot_id=0) }}";
-        document.getElementById('editFormModal').action=baseUrl.replace("0", spotId);
-        document.getElementById('editLocation').value=spotLocation;
-        document.getElementById('editPrice').value=price;
-        document.getElementById('editDescription').value=description||"";
-        document.getElementById('editLat').value=lat;
-        document.getElementById('editLng').value=lng;
-        try { editSpaces = typeof spacesData==="string" ? JSON.parse(spacesData) : spacesData; } catch(e){ editSpaces = []; }
+        var baseUrl = "{{ url_for('owner.edit_parking_spot', spot_id=0) }}";
+        document.getElementById('editFormModal').action = baseUrl.replace("0", spotId);
+        document.getElementById('editLocation').value = spotLocation;
+        document.getElementById('editPrice').value = price;
+        document.getElementById('editDescription').value = description || "";
+        document.getElementById('editLat').value = lat;
+        document.getElementById('editLng').value = lng;
+        try {
+          editSpaces = typeof spacesData === "string" ? JSON.parse(spacesData) : spacesData;
+        } catch(e){
+          editSpaces = [];
+        }
         updateEditSpacesList();
-        document.getElementById('editModal').style.display="block";
+        document.getElementById('editModal').style.display = "block";
         if(!editMap){
           editMap = L.map('editModalMap').setView([lat,lng],15);
-          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{ attribution:"&copy; OpenStreetMap contributors" }).addTo(editMap);
-          editMarker = L.marker([lat,lng],{draggable:true}).addTo(editMap);
-          editMarker.on('dragend', function(e){ var newLatLng=e.target.getLatLng(); document.getElementById('editLat').value=newLatLng.lat; document.getElementById('editLng').value=newLatLng.lng; });
-          editMap.on('click', function(e){ editMarker.setLatLng(e.latlng); document.getElementById('editLat').value=e.latlng.lat; document.getElementById('editLng').value=e.latlng.lng; });
-        } else { editMap.setView([lat,lng],15); editMarker.setLatLng([lat,lng]); }
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution:"&copy; OpenStreetMap contributors" }).addTo(editMap);
+          editMarker = L.marker([lat,lng], {draggable:true}).addTo(editMap);
+          editMarker.on('dragend', function(e){
+            var newLatLng = e.target.getLatLng();
+            document.getElementById('editLat').value = newLatLng.lat;
+            document.getElementById('editLng').value = newLatLng.lng;
+          });
+          editMap.on('click', function(e){
+            editMarker.setLatLng(e.latlng);
+            document.getElementById('editLat').value = e.latlng.lat;
+            document.getElementById('editLng').value = e.latlng.lng;
+          });
+        } else {
+          editMap.setView([lat,lng],15);
+          editMarker.setLatLng([lat,lng]);
+        }
       };
-      window.closeEditModal = function(){ document.getElementById('editModal').style.display="none"; };
-      window.onclick = function(event){ var modal=document.getElementById('editModal'); if(event.target==modal){ modal.style.display="none"; } };
-      var spaces=[];
+      window.closeEditModal = function(){ document.getElementById('editModal').style.display = "none"; };
+      window.onclick = function(event){
+        var modal = document.getElementById('editModal');
+        if(event.target == modal){ modal.style.display = "none"; }
+      };
+
+      var spaces = [];
       function updateSpacesList(){
-        var twoW = spaces.filter(s=>s.vehicle_type==="2W"),
-            fourW = spaces.filter(s=>s.vehicle_type==="4W");
-        twoW.forEach((s,i)=>s.sub_spot=i+1);
-        fourW.forEach((s,i)=>s.sub_spot=i+1);
-        var list=document.getElementById('spacesList'); list.innerHTML="";
+        var twoW = spaces.filter(s => s.vehicle_type === "2W"),
+            fourW = spaces.filter(s => s.vehicle_type === "4W");
+        twoW.forEach((s, i) => s.sub_spot = i + 1);
+        fourW.forEach((s, i) => s.sub_spot = i + 1);
+        var list = document.getElementById('spacesList');
+        list.innerHTML = "";
         twoW.concat(fourW).forEach(function(space){
-          var li=document.createElement("li");
-          li.textContent=space.vehicle_type+" - Space #"+space.sub_spot;
-          var removeBtn=document.createElement("button");
-          removeBtn.textContent="Remove";
-          removeBtn.onclick=function(){ var idx=spaces.indexOf(space); if(idx>-1){ spaces.splice(idx,1); } updateSpacesList(); };
+          var li = document.createElement("li");
+          li.textContent = space.vehicle_type + " - Space #" + space.sub_spot;
+          var removeBtn = document.createElement("button");
+          removeBtn.textContent = "Remove";
+          removeBtn.onclick = function(){
+            var idx = spaces.indexOf(space);
+            if(idx > -1){
+              spaces.splice(idx, 1);
+            }
+            updateSpacesList();
+          };
           li.appendChild(removeBtn);
           list.appendChild(li);
         });
-        document.getElementById('spaces_data').value=JSON.stringify(spaces);
+        document.getElementById('spaces_data').value = JSON.stringify(spaces);
       }
-      document.getElementById('add2WBtn').addEventListener('click', function(){ spaces.push({ vehicle_type:"2W", sub_spot:0 }); updateSpacesList(); });
-      document.getElementById('add4WBtn').addEventListener('click', function(){ spaces.push({ vehicle_type:"4W", sub_spot:0 }); updateSpacesList(); });
-      document.getElementById('editAdd2WBtn').addEventListener('click', function(){ editSpaces.push({ vehicle_type:"2W", sub_spot:0, has_booking:false }); updateEditSpacesList(); });
-      document.getElementById('editAdd4WBtn').addEventListener('click', function(){ editSpaces.push({ vehicle_type:"4W", sub_spot:0, has_booking:false }); updateEditSpacesList(); });
+      document.getElementById('add2WBtn').addEventListener('click', function(){
+        spaces.push({ vehicle_type:"2W", sub_spot:0 });
+        updateSpacesList();
+      });
+      document.getElementById('add4WBtn').addEventListener('click', function(){
+        spaces.push({ vehicle_type:"4W", sub_spot:0 });
+        updateSpacesList();
+      });
+      document.getElementById('editAdd2WBtn').addEventListener('click', function(){
+        editSpaces.push({ vehicle_type:"2W", sub_spot:0, has_booking:false });
+        updateEditSpacesList();
+      });
+      document.getElementById('editAdd4WBtn').addEventListener('click', function(){
+        editSpaces.push({ vehicle_type:"4W", sub_spot:0, has_booking:false });
+        updateEditSpacesList();
+      });
     });
   </script>
 </body>

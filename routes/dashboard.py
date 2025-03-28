@@ -4,6 +4,7 @@ from models import db, ParkingSpot, Booking, User, ParkingSpace
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 from types import SimpleNamespace
+from datetime import datetime
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -11,7 +12,6 @@ dashboard_bp = Blueprint('dashboard', __name__)
 @login_required
 def dashboard():
     role = session.get('role')
-
     if role == 'driver':
         available_spots = ParkingSpot.query.all()
         booked_spots = Booking.query.options(
@@ -20,7 +20,6 @@ def dashboard():
         return render_template('driver_dashboard.html',
                                available_spots=available_spots,
                                booked_spots=booked_spots)
-
     elif role == 'owner':
         spots = ParkingSpot.query.filter_by(owner_id=current_user.id).all()
         joined_data = (
@@ -62,7 +61,6 @@ def dashboard():
                                total_bookings=total_bookings,
                                total_revenue=total_revenue,
                                active_spots=active_spots)
-
     elif role == 'admin':
         users = User.query.all()
         total_users = User.query.count()
@@ -86,27 +84,39 @@ def dashboard():
                                total_two_wheeler=total_two_wheeler,
                                total_four_wheeler=total_four_wheeler,
                                spots=spots)
-
     flash("User role not recognized. Please log in again.", "warning")
     return redirect(url_for('auth.login'))
 
 @dashboard_bp.route('/my_bookings')
 @login_required
 def my_bookings():
-    # For the driver side: group bookings by session_id.
+    now_dt = datetime.now()
+    # Retrieve all bookings for the driver (active flag may still be True even if time has passed)
     bookings = Booking.query.options(
         joinedload(Booking.parking_space).joinedload(ParkingSpace.parking_spot)
     ).filter_by(user_id=current_user.id).all()
 
-    grouped_bookings = {}
+    active_bookings = {}
+    completed_bookings = {}
+    expired_bookings = {}
     for b in bookings:
         session_key = b.session_id if b.session_id is not None else str(b.id)
-        booking_details = {
+        # Ensure start_time and end_time are full datetime objects.
+        if isinstance(b.start_time, datetime):
+            start_dt = b.start_time
+        else:
+            start_dt = datetime.combine(b.created_at.date(), b.start_time)
+        if isinstance(b.end_time, datetime):
+            end_dt = b.end_time
+        else:
+            end_dt = datetime.combine(b.created_at.date(), b.end_time)
+        # Build the details dictionary as used in the template.
+        details = {
             "id": b.id,
             "vehicle_number": b.vehicle_number,
             "created_at": b.created_at,
-            "start_time": b.start_time,
-            "end_time": b.end_time,
+            "start_time": b.start_time,  # Original value for formatting in template
+            "end_time": b.end_time,      # Original value for formatting in template
             "status": b.status,
             "vehicle_type": b.parking_space.vehicle_type,
             "sub_spot_number": b.parking_space.sub_spot_number,
@@ -117,11 +127,25 @@ def my_bookings():
             "spot_description": b.parking_space.parking_spot.description,
             "booking_id": "BK" + b.created_at.strftime('%d%H%M%S') + (b.vehicle_number[-2:] if b.vehicle_number else str(b.id)),
             "session_id": session_key,
-            "phone_number": b.phone_number
+            "phone_number": b.phone_number,
+            # Include computed datetimes for internal comparison if needed.
+            "start_dt": start_dt,
+            "end_dt": end_dt
         }
-        grouped_bookings.setdefault(session_key, []).append(booking_details)
+        # Group the booking based on status.
+        if b.status.lower() == "expired":
+            expired_bookings.setdefault(session_key, []).append(details)
+        elif end_dt > now_dt and b.active:
+            active_bookings.setdefault(session_key, []).append(details)
+        else:
+            completed_bookings.setdefault(session_key, []).append(details)
 
-    return render_template("my_bookings.html", grouped_bookings=grouped_bookings)
+    current_date = datetime.utcnow().strftime('%Y-%m-%d')
+    return render_template("my_bookings.html",
+                           active_bookings=active_bookings,
+                           completed_bookings=completed_bookings,
+                           expired_bookings=expired_bookings,
+                           current_date=current_date)
 
 @dashboard_bp.route('/owner/bookings')
 @login_required
@@ -129,7 +153,6 @@ def owner_bookings():
     if session.get('role') != 'owner':
         flash("Unauthorized", "danger")
         return redirect(url_for('dashboard.dashboard'))
-
     joined_data = (
         db.session.query(Booking, User, ParkingSpace, ParkingSpot)
         .join(User, Booking.user_id == User.id)
